@@ -1,0 +1,100 @@
+[
+  {
+    "a": "franklin",
+    "b": "hodgkin",
+    "title": "The pattern is not the picture",
+    "kind": "method",
+    "text": "Neither of them ever saw a molecule. X-ray diffraction gives you a field of spots, and those spots encode the mathematical transform of a structure — amplitudes without phases. Recovering the object from that is the phase problem, and it is why crystallography is inference rather than photography. Hodgkin attacked it with heavy-atom substitution and early computing, solving penicillin, then vitamin B12, then insulin. Franklin's fibre patterns of DNA pinned down helical parameters and water content precisely enough to constrain any model anyone proposed. When you look at Photo 51, remember you are looking at a diffraction pattern, not a photograph of DNA."
+  },
+  {
+    "a": "hodgkin",
+    "b": "doudna",
+    "title": "Solve the structure, then use it",
+    "kind": "lineage",
+    "text": "Hodgkin spent decades establishing what molecules actually look like, on the argument that you cannot rationally intervene in chemistry you cannot see. Doudna began the same way: her early career was crystallography of catalytic RNA, including the folded core of a self-splicing intron. That structural training is what made CRISPR tractable — Cas9 was not merely a useful enzyme but a machine whose shape explained how a guide RNA steers a cut and why the cut lands where it does. Structure first, intervention second. The lineage runs from diffraction spots to a programmable nuclease, which is why basic structural work keeps turning out to be the precondition for applied work."
+  },
+  {
+    "a": "noether",
+    "b": "einstein",
+    "title": "What symmetry buys you",
+    "kind": "lineage",
+    "text": "General relativity arrived with an embarrassment: energy conservation did not behave the way it had in every earlier theory. Hilbert and Klein brought Noether to Gottingen partly to sort this out, and her 1918 paper on invariant variational problems gave two theorems. The first ties every continuous symmetry of a system's action to a conserved quantity — invariance under time translation yields energy, invariance under spatial translation yields momentum. The second showed that when the symmetry group is infinite-dimensional, as it is in general relativity, the resulting conservation statements become identities rather than independent laws. Not a defect in Einstein's theory. A structural consequence of its shape."
+  },
+  {
+    "a": "newton",
+    "b": "einstein",
+    "title": "Superseded is not refuted",
+    "kind": "tension",
+    "text": "Students are usually told Einstein proved Newton wrong. The useful version is stranger. General relativity reproduces Newtonian gravity almost exactly whenever fields are weak and speeds are small, which is why spacecraft are still navigated with Newton's equations. What changed was less the numbers than the account of what gravity is: not a force reaching instantly across empty space, but the geometry of spacetime itself. The numbers separate only at the margins — Mercury's orbit precessing roughly forty-three arcseconds per century beyond Newton's allowance. A theory can be an excellent limiting case of its successor and still be a false description of what the world is made of."
+  },
+  {
+    "a": "lovelace",
+    "b": "turing",
+    "title": "Can a machine originate anything?",
+    "kind": "tension",
+    "text": "In her 1843 notes on Babbage's Analytical Engine, Lovelace argued that the machine could not originate anything — it could only carry out operations someone already knew how to specify. She also saw that its symbols need not stand for numbers at all, which is the germ of general-purpose computing. A century later Turing named that objection directly in his 1950 paper on machine intelligence and set out to answer it: machines surprise their programmers constantly, and a machine that learns is not confined to what its author could foresee. The disagreement is live every time a trained model does something nobody specified."
+  },
+  {
+    "a": "strickland",
+    "b": "li",
+    "title": "Infrastructure counts as a result",
+    "kind": "pattern",
+    "text": "Neither contribution is a discovery about nature. Chirped pulse amplification stretches a laser pulse in time, amplifies it without destroying the optics, then recompresses it — a 1985 technique other people used to build eye surgery, precision machining and high-field physics. ImageNet was a labelled image collection and an annual benchmark, not a model; the systems that made deep learning famous were trained against it. Both were undervalued while being built, because a field's reward structure points at findings rather than at the apparatus that makes findings possible. Before asking who made the discovery, ask who built the thing that made it reachable."
+  },
+  {
+    "a": "mendeleev",
+    "b": "tu",
+    "title": "Organise the mess, then search it",
+    "kind": "method",
+    "text": "Mendeleev did not stumble onto the periodic table. He sorted sixty-odd known elements by weight and recurring properties until the arrangement itself showed him where the holes were, then described the missing elements before anyone found them. Tu Youyou's team faced a different mess: hundreds of classical Chinese medical texts, most of them useless. They built a systematic index, screened extracts, and kept getting inconsistent results from sweet wormwood — until a fourth-century description of a cold-water preparation suggested that heat was destroying the active compound. Low-temperature extraction gave artemisinin. In both cases the organising step is the discovery; the hit is what organisation makes findable."
+  },
+  {
+    "a": "darwin",
+    "b": "arnold",
+    "title": "Selection without a designer",
+    "kind": "method",
+    "text": "Darwin's argument needs only three ingredients: variation, heritability, and differential reproduction. Given those, adaptation follows with no foresight anywhere in the system. Arnold's directed evolution runs that logic deliberately and fast — mutate a gene, express thousands of variants, keep whichever ones perform, repeat. Her early work drove an enzyme into functioning in an organic solvent it had never encountered in nature. The striking part is epistemic: you do not have to understand why a variant works in order to obtain it. Rational design keeps failing where selection succeeds, which is worth remembering given that Darwin had no working theory of heredity and his mechanism held anyway."
+  },
+  {
+    "a": "curie",
+    "b": "rubin",
+    "title": "The excess that will not go away",
+    "kind": "method",
+    "text": "Curie used a sensitive electrometer to measure how strongly a sample ionised the air around it, turning activity into a number rather than an impression. Pitchblende came out far more active than its uranium content could account for, and instead of trimming the discrepancy she treated it as evidence of something unidentified, then spent years chemically pulling polonium and radium out of tonnes of residue. Rubin, working with Kent Ford's spectrograph, measured how fast stars orbit in spiral galaxies and found the speeds staying high far out, where visible matter has thinned to almost nothing. Same move: a quantified excess that survives every correction is not noise."
+  },
+  {
+    "a": "wu",
+    "b": "noether",
+    "title": "A symmetry is a claim, not an axiom",
+    "kind": "tension",
+    "text": "Noether's first theorem ties continuous symmetries to conservation laws so tightly that physicists began treating symmetry as bedrock. Parity — reflection in a mirror — is a discrete symmetry, so it sits outside that theorem, but by the 1950s it was assumed just as confidently. Lee and Yang pointed out in 1956 that nobody had ever actually tested it in the weak interaction. Wu did: cobalt-60 nuclei polarised in a magnetic field near absolute zero, with beta electrons emerging preferentially in one direction relative to the nuclear spin. The mirror world is not ours. A symmetry earns its place experimentally; none of them are free."
+  },
+  {
+    "a": "kariko",
+    "b": "mcclintock",
+    "title": "How a field mislays a result",
+    "kind": "pattern",
+    "text": "Both stories are usually told badly. McClintock's transposable elements were not simply ridiculed — she was an eminent cytogeneticist, elected to the National Academy of Sciences in 1944 — but her 1950s maize results were hard to interpret with the tools of the time and went largely unused until transposons turned up in bacteria and flies decades later. Kariko's obstacle was money and rank: mRNA looked like a dead end, she was demoted, and her 2005 finding that a modified nucleoside quiets the innate immune response drew little notice until it underpinned covid vaccines. Neglect is rarely conspiracy. It is a field allocating scarce attention and getting it wrong."
+  },
+  {
+    "a": "franklin",
+    "b": "bouman",
+    "title": "Rebuilding an image you never took",
+    "kind": "method",
+    "text": "The Event Horizon Telescope photographs nothing. Radio dishes scattered across the planet sample isolated components of the sky's Fourier transform, leaving enormous gaps, and an image has to be reconstructed from that sparse, noisy set. Franklin's fibre patterns pose the same problem in miniature: you measure a transform and must infer the object behind it. So is the shared danger — every reconstruction method carries assumptions, and assumptions can install structure in the picture that the data never contained. Franklin distrusted models built ahead of the measurements. Bouman's collaboration ran independent pipelines and blind tests on synthetic data for exactly that reason."
+  },
+  {
+    "a": "cajal",
+    "b": "payne",
+    "title": "Same data, opposite conclusions",
+    "kind": "pattern",
+    "text": "Cajal used Golgi's own silver stain and read the slides against Golgi: nervous tissue is a population of separate cells in contact, not one continuous network. They shared the 1906 Nobel while still disagreeing, which tells you the images alone did not settle it. Payne applied Saha's ionisation theory to stellar spectra and concluded that stars are overwhelmingly hydrogen and helium; senior astronomers thought that impossible, and her thesis carried a caution that the abundances were probably spurious. Russell reached the same conclusion himself four years later. Evidence underdetermines interpretation far more often than textbooks suggest, and seniority frequently breaks the tie."
+  },
+  {
+    "a": "chandrasekhar",
+    "b": "molina",
+    "title": "Calculations about places you cannot visit",
+    "kind": "pattern",
+    "text": "Neither could put the system on a laboratory bench. Chandrasekhar applied special relativity to the degenerate electron gas inside a dying star and found a mass above which that pressure simply cannot hold the star up — a result Eddington attacked publicly in 1935, and which took years to be absorbed. Molina and Rowland measured chlorine reaction rates in the lab and concluded that a single chlorine atom released from a refrigerant could destroy many thousands of ozone molecules in the stratosphere. Industry disputed it for a decade. When the object of study is inaccessible, the burden of proof laid on a correct calculation can be enormous."
+  }
+]

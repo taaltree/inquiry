@@ -1,0 +1,212 @@
+[
+  {
+    "id": "einstein",
+    "name": "Albert Einstein",
+    "lifespan": "1879–1955",
+    "era": "historical",
+    "field": "Relativity",
+    "origin": "Germany / Switzerland / United States",
+    "hook": "Gravity is geometry.",
+    "intro": "Come in. People imagine me at a blackboard having a flash of insight, but most of this was seven years of failed equations. Ask your questions — the failures are the interesting part.",
+    "answers": {
+      "question": {
+        "text": "Newton's gravity worked beautifully and told you nothing about how it worked. A force reaching instantly across empty space — instantly, when I had just spent years arguing that nothing outruns light. That contradiction bothered me more than any unexplained measurement did. So the question became: can I write gravity in a form that respects the speed limit, and does the answer still reproduce falling apples?",
+        "concept": "Gravity's Speed Limit"
+      },
+      "method": {
+        "text": "Thought experiments first, then years of mathematics I had to be taught. Imagine a sealed elevator: freely falling, you float; accelerating, you feel weight. If no experiment inside can tell gravity from acceleration, then gravity is not a force at all but the shape of spacetime. Marcel Grossmann showed me the geometry Riemann and Ricci had built for curved surfaces. Then I hunted for field equations that reduced to Newton's for weak fields and slow speeds.",
+        "concept": "Equivalence Principle"
+      },
+      "evidence": {
+        "text": "Two numbers. Mercury's orbit precesses forty-three arc seconds per century more than Newton allows — astronomers had chased that discrepancy for decades, and my equations produced it with nothing adjusted to fit. Then the prediction I could not wriggle out of: starlight grazing the Sun should bend by about 1.75 arc seconds, twice the Newtonian value. Eddington's teams photographed the 1919 eclipse from Brazil and Príncipe and measured close to the larger figure.",
+        "concept": "Risky Prediction Confirmed"
+      },
+      "impact": {
+        "text": "Your satellite navigation would drift kilometres a day without both my corrections — clocks in orbit run fast from weaker gravity and slow from their own speed. Gravitational lensing became a tool for weighing galaxies. Black holes, which I doubted were physical, have now been imaged. In 2015 detectors caught spacetime itself ringing from two merging black holes, a century after the equations said it should. Cosmology exists as a quantitative science because of those field equations.",
+        "concept": "Gravitational Wave Astronomy"
+      },
+      "doubt": {
+        "text": "Plenty. In 1913 I published a version predicting half the correct deflection; a wartime eclipse expedition was stopped before it could catch my error. I inserted a cosmological constant to hold the universe static, then removed it once Hubble showed expansion — and now something like it may be back as dark energy, which is not vindication, only luck. Worst: I spent thirty years insisting quantum mechanics must be incomplete. The EPR argument I co-wrote was sharp, and experiments have gone against me.",
+        "concept": "Wrong About Quanta"
+      }
+    },
+    "misconception": {
+      "myth": "Einstein proved Newton wrong.",
+      "reality": "General relativity contains Newton's law as its weak-gravity, low-speed limit, which is why engineers still use Newton to land spacecraft. The myth is appealing because revolutions sound like demolitions, but a better theory usually has to reproduce everything the old one already got right."
+    },
+    "terms": [
+      { "term": "Spacetime", "def": "The four-dimensional fabric of three space dimensions and time treated as one geometric object, which mass and energy can curve." },
+      { "term": "Equivalence principle", "def": "The statement that no local experiment can distinguish being at rest in a gravitational field from being accelerated in empty space." },
+      { "term": "Perihelion precession", "def": "The slow rotation of the point in an orbit closest to the Sun, which for Mercury runs faster than Newtonian gravity predicts." }
+    ],
+    "recognition": "Nobel Prize in Physics 1921 — awarded for the law of the photoelectric effect, not for relativity."
+  },
+  {
+    "id": "payne",
+    "name": "Cecilia Payne-Gaposchkin",
+    "lifespan": "1900–1979",
+    "era": "historical",
+    "field": "Stellar Astrophysics",
+    "origin": "England / United States",
+    "hook": "Stars are mostly hydrogen.",
+    "intro": "I came to Harvard because Cambridge would not grant a woman a degree. There are hundreds of thousands of photographic plates in this building. My thesis is what happens when you take the physics seriously.",
+    "answers": {
+      "question": {
+        "text": "Everyone knew stars showed different spectra — some with strong hydrogen lines, some with calcium, some with titanium oxide bands. The assumption was that this meant different chemistry, and that on average a star resembled the Earth's crust. But a spectral line's strength depends on how many atoms are in the right state to absorb, not simply on how many atoms are present. So: does the spectral sequence record composition, or temperature?",
+        "concept": "Composition Or Temperature"
+      },
+      "method": {
+        "text": "Meghnad Saha had shown that ionization behaves like a chemical equilibrium: raise the temperature or drop the pressure, and atoms shed electrons in predictable proportions. Fowler and Milne pushed the theory further. I took Annie Jump Cannon's classifications — she had sorted hundreds of thousands of spectra by hand — estimated line intensities across the whole sequence, and worked backwards. For each element I asked what abundance, at that atmosphere's temperature and pressure, would produce the line strength actually on the plate.",
+        "concept": "Saha Ionization Equation"
+      },
+      "evidence": {
+        "text": "The heavy elements came out in roughly the proportions everyone expected — silicon, carbon, iron, all broadly consistent with the Earth. Hydrogen and helium did not. They came out more abundant by a factor of about a million. The spectral sequence turned out to be a temperature ladder, not a chemistry ladder: hot stars and cool stars are made of nearly the same stuff, and that stuff is overwhelmingly the two lightest elements.",
+        "concept": "Cosmic Hydrogen Abundance"
+      },
+      "impact": {
+        "text": "If stars are hydrogen, then stellar energy has an obvious fuel supply, and hydrogen fusion becomes the natural source — Bethe and others worked that out within about fifteen years. Big Bang nucleosynthesis, which predicts a universe roughly three-quarters hydrogen and a quarter helium by mass, is testable only because we know the starting composition. Every model of how galaxies form and how heavy elements accumulate over cosmic time rests on that baseline.",
+        "concept": "Fuel For Fusion"
+      },
+      "doubt": {
+        "text": "Henry Norris Russell, the most senior figure in American astrophysics, read the draft and told me the hydrogen result could not be right. So I added a sentence discounting my own numbers as probably not physically meaningful. They were meaningful. Four years later he reached the same conclusion by a different route, and the field accepted it from him. Some of that was ordinary caution about an extraordinary claim. Some of it was that I was twenty-four and he was Russell.",
+        "concept": "Deference To Seniority"
+      }
+    },
+    "misconception": {
+      "myth": "Science self-corrects immediately, so a correct result always wins on its merits.",
+      "reality": "The hydrogen result was correct in 1925 and only credited from 1929, once a senior man restated it independently. Correction does happen, but it runs through people who hold reputations and appointments, which is slower and far less tidy than the textbook version suggests."
+    },
+    "terms": [
+      { "term": "Saha equation", "def": "A formula linking a gas's temperature and pressure to the fraction of its atoms that have been stripped of electrons." },
+      { "term": "Absorption line", "def": "A dark gap in a star's spectrum where atoms of a particular element have absorbed light at a specific wavelength." },
+      { "term": "Spectral sequence", "def": "The O-B-A-F-G-K-M ordering of stellar spectra, which ranks stars by surface temperature rather than by what they are made of." }
+    ],
+    "recognition": "First recipient of the Annie Jump Cannon Award in Astronomy, 1934; Henry Norris Russell Lecturer, 1976; first woman promoted to full professor in Harvard's Faculty of Arts and Sciences and first to chair a department there."
+  },
+  {
+    "id": "chandrasekhar",
+    "name": "Subrahmanyan Chandrasekhar",
+    "lifespan": "1910–1995",
+    "era": "historical",
+    "field": "Stellar Structure & Relativity",
+    "origin": "British India / United States",
+    "hook": "Stars have a weight limit.",
+    "intro": "I was nineteen, on the long sea voyage from India to Cambridge, carrying Fowler's paper on white dwarfs and weeks of empty time. The arithmetic I did on that crossing was publicly ridiculed for years before anyone used it.",
+    "answers": {
+      "question": {
+        "text": "Fowler had solved the puzzle of white dwarfs in 1926. A star like the Sun burns out, collapses to roughly the size of the Earth, and then stops — held up not by heat but by the Pauli exclusion principle, which forbids electrons from crowding into the same quantum state. Elegant. But nobody had asked whether that support holds for a star of any mass. If it fails somewhere, what happens next?",
+        "concept": "Limits Of Degeneracy"
+      },
+      "method": {
+        "text": "Squeeze electrons hard enough and they must move quickly to stay out of each other's states — at white dwarf densities, around a tonne per cubic centimetre, quickly means near the speed of light. So I redid Fowler's degenerate gas using the relativistic energy-momentum relation instead of the Newtonian one. Pressure still rises with density, but more slowly: the effective stiffness drops from five-thirds to four-thirds. Then I solved the equilibrium equation for that softer gas.",
+        "concept": "Relativistic Degeneracy Pressure"
+      },
+      "evidence": {
+        "text": "A four-thirds gas is exactly the marginal case: the mass comes out fixed, independent of the star's radius. About 1.4 times the Sun's mass, set by fundamental constants and by how many electrons the material carries per nucleon — nothing you can tune. Below it a white dwarf settles quietly. Above it, degeneracy pressure cannot win and the star has no equilibrium to fall into. Edmund Stoner and Wilhelm Anderson had glimpsed the same limit from other directions.",
+        "concept": "The Chandrasekhar Limit"
+      },
+      "impact": {
+        "text": "Everything above the limit has to go somewhere, and that somewhere turned out to be neutron stars and black holes. The limit also handed astronomy a distance ruler: a white dwarf stealing mass from a companion detonates as it nears the same threshold, so Type Ia supernovae release comparable energy. Measure how faint one looks and you get its distance. That is how the accelerating expansion of the universe was found in 1998.",
+        "concept": "Standard Candle Supernovae"
+      },
+      "doubt": {
+        "text": "In 1935 I presented this to the Royal Astronomical Society. Eddington followed me and dismissed the relativistic treatment as nonsense — a star could not behave so absurdly, therefore the physics must be wrong. He was the most respected astrophysicist alive and I was twenty-four. Physicists I spoke with privately agreed with me; almost none said so in print. The result stood, but I left the subject for years, and my own calculation ignored rotation, magnetic fields, and general relativity.",
+        "concept": "Authority Versus Calculation"
+      }
+    },
+    "misconception": {
+      "myth": "Expert consensus filters out mistakes quickly, so if the leading figures reject something it is probably wrong.",
+      "reality": "A correct, fully checkable calculation was dismissed for roughly two decades because the field's most senior figure found its conclusion distasteful. Expertise is genuinely valuable, which is exactly why deferring to it can delay a correction instead of speeding one up."
+    },
+    "terms": [
+      { "term": "Electron degeneracy pressure", "def": "An outward push that arises because the Pauli exclusion principle forbids electrons from sharing a quantum state, and which persists even at zero temperature." },
+      { "term": "White dwarf", "def": "The dense, slowly cooling core left behind when a star like the Sun exhausts its fuel, roughly the Sun's mass packed into Earth's volume." },
+      { "term": "Chandrasekhar limit", "def": "The maximum mass, about 1.4 times the Sun's, that electron degeneracy pressure can hold up against gravity." }
+    ],
+    "recognition": "Nobel Prize in Physics 1983, shared with William A. Fowler; editor of The Astrophysical Journal for nineteen years; NASA's Chandra X-ray Observatory is named for him."
+  },
+  {
+    "id": "rubin",
+    "name": "Vera Rubin",
+    "lifespan": "1928–2016",
+    "era": "contemporary",
+    "field": "Galactic Dynamics",
+    "origin": "United States",
+    "hook": "Galaxies spin too fast.",
+    "intro": "Most of what I did was sit in a cold dome guiding a telescope for hours to collect enough photons for a single spectrum. Then measure the plate. Then do it again on the next galaxy.",
+    "answers": {
+      "question": {
+        "text": "I wanted a problem nobody would fight me over, so I picked something that looked routine: how fast does gas orbit at different distances from a galaxy's centre? In the solar system the answer is obvious — Mercury races, Neptune crawls, because nearly all the mass sits in the middle. Spiral galaxies also concentrate their light toward the centre, so the outer gas should slow down. This was a check, not a hypothesis.",
+        "concept": "Keplerian Falloff Expected"
+      },
+      "method": {
+        "text": "Kent Ford built an image tube spectrograph that amplified faint light electronically before it reached the plate. That turned a week of exposure into an evening. We laid the slit along a galaxy's major axis, so one spectrum sampled many radii at once, and used emission lines from ionized hydrogen and nitrogen in the star-forming regions. Each line tilts: approaching side blueshifted, receding side redshifted. Convert shift to velocity, correct for the galaxy's tilt on the sky, plot velocity against radius.",
+        "concept": "Doppler Rotation Curve"
+      },
+      "evidence": {
+        "text": "The curves went flat. In Andromeda, and then in dozens of spirals, orbital speed climbed near the centre and afterwards simply stayed there — two or three hundred kilometres per second, out as far as we could detect anything at all. No falloff. That gas should have flown off long ago, unless a galaxy holds far more mass than it shows in light. Radio astronomers tracking neutral hydrogen found the curves stayed flat even further out.",
+        "concept": "Flat Rotation Curves"
+      },
+      "impact": {
+        "text": "Dark matter went from a curiosity to the framework. Roughly five-sixths of the matter in the universe appears to be something with mass that emits no light, and the standard cosmological model is built around it. Whole experimental programmes now run in deep mines trying to catch a dark matter particle in a detector; none has succeeded yet. Gravitational lensing and the pattern in the cosmic microwave background point the same way from entirely different evidence.",
+        "concept": "Dark Matter Framework"
+      },
+      "doubt": {
+        "text": "I measured velocities. I did not detect a particle, and nobody has yet. A flat curve tells you either that unseen mass is present or that gravity itself behaves differently at very low accelerations — the observation alone cannot separate those two. I have said publicly that I would find modified gravity the more interesting outcome, but that is a preference, not evidence. And Fritz Zwicky inferred missing mass in the Coma Cluster in 1933; the field mostly ignored it for decades.",
+        "concept": "Inference Not Detection"
+      }
+    },
+    "misconception": {
+      "myth": "Vera Rubin discovered dark matter.",
+      "reality": "She produced the observations that made unseen mass impossible to wave away, but Zwicky had inferred it forty years earlier, radio astronomers extended the curves further out, and nobody has yet identified what dark matter actually is. Discovery language flattens a long chain of measurement into a single tidy moment."
+    },
+    "terms": [
+      { "term": "Rotation curve", "def": "A plot of how fast material orbits a galaxy against its distance from that galaxy's centre." },
+      { "term": "Doppler shift", "def": "The change in the wavelength of light from an object moving toward or away from you, used to measure its speed along the line of sight." },
+      { "term": "Dark matter", "def": "Matter inferred only from its gravitational effects, because it emits and absorbs essentially no light." }
+    ],
+    "recognition": "National Medal of Science 1993; Gold Medal of the Royal Astronomical Society 1996, the first woman awarded it since Caroline Herschel in 1828. Never received a Nobel Prize."
+  },
+  {
+    "id": "bouman",
+    "name": "Katie Bouman",
+    "lifespan": "b. 1989",
+    "era": "contemporary",
+    "field": "Computational Imaging",
+    "origin": "United States",
+    "hook": "An image, not a photograph.",
+    "intro": "I work on the algorithms, not the telescopes. The Event Horizon Telescope has more than two hundred people on it, and the picture you have seen is the output of that whole machine, not of any one program.",
+    "answers": {
+      "question": {
+        "text": "To resolve the shadow of the black hole in M87 you need an angular resolution of about twenty microarcseconds — roughly like reading a newspaper in New York from a café in Paris. A single dish that sharp would have to be the size of the Earth. So the question I worked on was not really astronomical: given data from eight scattered telescopes, with most of that Earth-sized dish missing, can you honestly recover an image at all?",
+        "concept": "Resolution Versus Aperture"
+      },
+      "method": {
+        "text": "Very long baseline interferometry. Each telescope records the raw radio signal at 1.3 millimetres with a hydrogen maser clock stamping the time, straight onto hard drives — the South Pole drives waited months for a flight out. Correlate two stations and you recover one Fourier component of the sky brightness, set by the vector between them. Earth's rotation sweeps out a few more. You end up with a handful of samples where you want millions, so you fit images consistent with the data and penalise implausible ones.",
+        "concept": "Sparse Fourier Sampling"
+      },
+      "evidence": {
+        "text": "Four teams reconstructed the April 2017 data independently and did not compare results for seven weeks. Some used CLEAN, the standard radio-astronomy method going back decades; others used newer forward-modelling code. We also ran the pipelines on synthetic data containing no ring, to check we were not manufacturing one. All four teams produced a ring roughly forty-two microarcseconds across, brighter along the bottom — the asymmetry expected when gas orbits toward us on one side.",
+        "concept": "Blind Independent Pipelines"
+      },
+      "impact": {
+        "text": "The ring size gives a mass, about six and a half billion suns for M87, measured from the geometry of light near the horizon rather than from stellar orbits far away. That is a test of general relativity in the strongest gravity we can observe, and it passed. The imaging methods generalise too: reconstructing a scene from badly incomplete measurements is the same mathematical problem as medical imaging, seismic tomography, and seeing around corners.",
+        "concept": "Testing Strong Gravity"
+      },
+      "doubt": {
+        "text": "Sparse data admits many solutions, and the one you get depends partly on what your algorithm treats as a reasonable image. We designed the blind procedure because we did not trust ourselves, and that limitation has not gone away. The picture is also a time average over nights when the source was genuinely changing. And I want to be exact about credit: this was hundreds of people across dozens of institutions over years, and the framing that put one person at the centre was wrong.",
+        "concept": "Priors Shape Reconstruction"
+      }
+    },
+    "misconception": {
+      "myth": "The Event Horizon Telescope took a photograph of a black hole.",
+      "reality": "No camera recorded that image; it is a reconstruction computed from timed radio recordings made at eight telescopes across six sites, and the black hole itself is invisible — what you see is hot gas around a dark region. Calling it a photograph is appealing because it feels like direct evidence, but the chain of inference is what does the work."
+    },
+    "terms": [
+      { "term": "Very long baseline interferometry", "def": "A technique that combines precisely timed recordings from widely separated radio telescopes so they behave like one dish as wide as the distance between them." },
+      { "term": "Event horizon", "def": "The boundary around a black hole past which nothing, not even light, can escape back out." },
+      { "term": "Regularization", "def": "A rule added to an image reconstruction that favours simpler or smoother solutions when the data alone cannot single one out." }
+    ],
+    "recognition": "Breakthrough Prize in Fundamental Physics 2020, shared across the Event Horizon Telescope collaboration; faculty in computing and mathematical sciences at Caltech."
+  }
+]

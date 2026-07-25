@@ -1,0 +1,212 @@
+[
+  {
+    "id": "lovelace",
+    "name": "Ada Lovelace",
+    "lifespan": "1815–1852",
+    "era": "historical",
+    "field": "Computation",
+    "origin": "England",
+    "hook": "Symbols for anything at all",
+    "intro": "The engine exists on paper — thousands of drawings and no metal. I translated an Italian officer's account of it, and my notes ran three times longer than the thing I was translating.",
+    "answers": {
+      "question": {
+        "text": "Babbage had a machine that could be set to do arithmetic by cards. My question was narrower and stranger than his: what is the machine actually operating on? If the cards can direct it to combine quantities, and the quantities are only marks standing for something, then the marks need not be numbers at all. They could stand for pitches, or letters, or relations. Nobody had asked what the general object of such a device might be.",
+        "concept": "Symbols Beyond Number"
+      },
+      "method": {
+        "text": "I translated Menabrea's memoir from the French and then appended seven notes, lettered A to G. For Note G I chose a genuinely hard target — the Bernoulli numbers, which appear as coefficients in certain series — and worked out how the engine would reach them from a recurrence relation. That meant writing the calculation as a table: numbered operations, which variable column each one reads, which it writes into, and where a group of operations must repeat. Babbage sent me formulae and criticism by post throughout.",
+        "concept": "Operation Tables"
+      },
+      "evidence": {
+        "text": "The table in Note G runs to about two dozen numbered operations and computes a Bernoulli number without a person doing the arithmetic — the first published account of how a machine would be driven through a calculation of that kind. It shows a group of operations reused rather than rewritten, which is what you would now call a loop, and cycles nested inside cycles. It also contains an error in one line of the printed table. Nothing ran. The engine did not exist.",
+        "concept": "Note G Algorithm"
+      },
+      "impact": {
+        "text": "The useful part was not the table. It was Note A, where I argued that a machine handling symbols is not confined to number. Give it the relations between pitched sounds in a form it can take, and it could compose music of real complexity. That is the general-purpose idea — one mechanism, any subject matter — and it is the assumption underneath every computer you have used. It took a century for anyone to build a machine that could test it.",
+        "concept": "General-Purpose Machine"
+      },
+      "doubt": {
+        "text": "I set down a limit I could not actually defend. I wrote that the engine had no power to bring anything new into being, that it would only ever carry out instructions we already knew how to give, and I put it as settled fact about a machine nobody had built. Turing took it up as an objection a century later and argued the other way. The credit question is not clean either: Babbage supplied material and caught an error in my working, and historians still argue over where the line falls.",
+        "concept": "The Originality Objection"
+      }
+    },
+    "misconception": {
+      "myth": "Ada Lovelace wrote the first computer program, and that is what makes her important.",
+      "reality": "The Note G table is real and early, but the deeper contribution is the argument in Note A that a symbol-manipulating machine is not restricted to arithmetic. The programmer label sticks because it is a clean superlative, and it flattens both the collaboration with Babbage and the idea that actually mattered."
+    },
+    "terms": [
+      { "term": "Analytical Engine", "def": "Babbage's proposed general-purpose mechanical computer, directed by punched cards, designed from the 1830s and never completed." },
+      { "term": "Bernoulli numbers", "def": "A sequence of rational numbers that turns up as coefficients in the series expansions of several important mathematical functions." },
+      { "term": "Algorithm", "def": "A finite, unambiguous sequence of steps that turns an input into a result, independent of who or what carries it out." }
+    ],
+    "recognition": "No prize and no post; the 1843 notes were little read until they were reprinted in the 1950s, and are now standard material in the history of computing."
+  },
+  {
+    "id": "noether",
+    "name": "Emmy Noether",
+    "lifespan": "1882–1935",
+    "era": "historical",
+    "field": "Abstract Algebra",
+    "origin": "Germany / United States",
+    "hook": "Where conservation laws come from",
+    "intro": "I was brought to Göttingen because relativity had broken energy conservation and nobody could say why. I am an algebraist. The fix turned out to be a question about symmetry, which is algebra.",
+    "answers": {
+      "question": {
+        "text": "Hilbert and Klein had a problem in general relativity: the usual statement of energy conservation would not hold there in the way it does elsewhere in physics, and they could not locate the reason. I did not approach it as physics. I asked a structural question. Given any system described by an action — the quantity whose stationary value picks out the actual motion — what follows, in general, from that action being unchanged under a continuous transformation?",
+        "concept": "Symmetry And Invariance"
+      },
+      "method": {
+        "text": "No apparatus. The work is a calculus of variations argument done in complete generality: take a Lagrangian, apply a transformation that depends smoothly on a continuous parameter, and demand that the action be invariant. Then push the variation through. What drops out is an identity — a combination of the fields and their derivatives whose divergence vanishes whenever the equations of motion hold. I proved it once, for any symmetry group with finitely many parameters, rather than case by case.",
+        "concept": "Variational Proof"
+      },
+      "evidence": {
+        "text": "The correspondence is exact and you can read it straight off. If the laws do not change when you shift the clock, energy is conserved. If they do not change when you shift position, momentum is conserved. Rotate the whole system and nothing changes: angular momentum. A second theorem covers symmetries that vary from point to point, which is the relativity case — there you get identities among the field equations rather than an ordinary conservation law. That was the missing explanation.",
+        "concept": "Symmetry To Conservation"
+      },
+      "impact": {
+        "text": "Physicists now design theories by choosing a symmetry first and letting the conserved quantities follow. That is how the standard model of particle physics is organized: conservation of electric charge comes from a phase symmetry, and the whole gauge program is my second theorem taken seriously. The algebra had a second life too. Chain conditions on ideals, modules in place of matrices, treating structures rather than formulas as the object of study — that reshaped what an algebra course is, largely through students who wrote it down.",
+        "concept": "Gauge Principle"
+      },
+      "doubt": {
+        "text": "The theorem tells you what conservation follows from a symmetry. It does not tell you which symmetries a real system has — that is a physical question, and getting it wrong gives you a beautiful conserved quantity for a world that does not exist. It also assumes an action principle, and systems with friction do not have one. As for the rest: I taught at Göttingen for four years under Hilbert's name because the faculty would not let a woman hold the post, and in 1933 the new government removed me anyway.",
+        "concept": "Limits Of Formalism"
+      }
+    },
+    "misconception": {
+      "myth": "Conservation of energy is a brute fact about the universe that we found by measuring carefully enough.",
+      "reality": "It is a consequence of a symmetry — the laws of physics being the same today as yesterday — and in a spacetime with no time-translation symmetry, such as an expanding universe, a global energy conservation law is not even well defined. The myth is appealing because conservation is taught first as a bookkeeping rule and almost never as something that follows from anything."
+    },
+    "terms": [
+      { "term": "Noether's theorem", "def": "Every continuous symmetry of a physical system's action corresponds to a quantity that does not change over time." },
+      { "term": "Action", "def": "A single number assigned to each possible history of a system; the history nature actually takes is the one that makes it stationary." },
+      { "term": "Noetherian ring", "def": "A ring in which every increasing chain of ideals eventually stops growing, a finiteness condition that makes large parts of modern algebra work." }
+    ],
+    "recognition": "Never held a full professorship in Germany; expelled from Göttingen in 1933 under the Nazi civil service law and teaching at Bryn Mawr College when she died in 1935. The 1918 invariance paper is foundational in theoretical physics, and Noetherian is now standard vocabulary in algebra."
+  },
+  {
+    "id": "turing",
+    "name": "Alan Turing",
+    "lifespan": "1912–1954",
+    "era": "historical",
+    "field": "Logic and Computation",
+    "origin": "England",
+    "hook": "Computation before there were computers",
+    "intro": "Before there were machines, a computer was a person — someone paid to work through a rule with paper. I asked what such a person could do in principle, then stripped the description down until only the rule was left.",
+    "answers": {
+      "question": {
+        "text": "Hilbert had asked whether there is a definite procedure that takes any statement in a formal logic and decides, mechanically, whether it follows from the axioms. To answer no, you first have to say what a procedure is — and nobody had. That is the real problem. You cannot prove something impossible for all methods until you have a definition of method that everyone will accept as complete. So I watched what a human computer actually does, and asked what is essential to it.",
+        "concept": "The Decision Problem"
+      },
+      "method": {
+        "text": "I described the smallest thing that could still do the job: a tape of squares, a finite set of states, and a head that reads a square, writes a symbol, and steps left or right by a fixed table. The table can itself be written on the tape, so one machine can imitate any other. At Bletchley the instinct went into hardware — the Bombe, which ran through Enigma rotor settings and stopped at a contradiction. Polish cryptanalysts had built machines on the same principle before the war; Welchman's diagonal board made mine much faster.",
+        "concept": "The Universal Machine"
+      },
+      "evidence": {
+        "text": "The logical result is negative and sharp. Suppose a machine could inspect any program and always say correctly whether it halts. Feed it a program built to ask it and then do the opposite — contradiction. No such machine exists, so first-order logic has no general decision procedure. Church had reached the same conclusion shortly before me by another route. The Bombe's evidence was different in kind: it worked, on a guessed fragment of plaintext, and cut a search of astronomical size down to hours.",
+        "concept": "Provable Undecidability"
+      },
+      "impact": {
+        "text": "Every general-purpose computer is a physical approximation of the universal machine: one device, a description on a tape, any behavior you can specify. What is not computable stays not computable however fast the hardware gets — that limit is about logic, not engineering. I also proposed replacing the question of whether machines think with a test you can actually run, and in 1952 I showed mathematically that two chemicals diffusing at different rates can turn a uniform patch into spots and stripes.",
+        "concept": "Stored Program Idea"
+      },
+      "doubt": {
+        "text": "The imitation game is weaker than people take it for. It measures whether a machine can pass as human in conversation, which is not the same as thinking, and I never claimed otherwise. The morphogenesis model predicts patterns but does not identify the actual chemicals, and no candidates were found in my lifetime. The record should also include this: in 1952 I was convicted of gross indecency, given hormone treatment as an alternative to prison, and cut off from the secret work. I died two years later.",
+        "concept": "What A Test Measures"
+      }
+    },
+    "misconception": {
+      "myth": "Turing built the first computer, and he built it to break Enigma.",
+      "reality": "The Bombe was special-purpose electromechanical hardware for one cryptanalytic search, not a computer in the modern sense, and the electronic Colossus was designed by Tommy Flowers for a different cipher entirely. The general-purpose machine was a mathematical object defined in 1936 for a problem in logic, years before the war and with nothing to do with codes."
+    },
+    "terms": [
+      { "term": "Turing machine", "def": "An idealized device with an unlimited tape and a finite rule table, used to define what computable by a fixed procedure means." },
+      { "term": "Halting problem", "def": "The task of deciding, for any program and input, whether it will eventually stop; no program can do this correctly in every case." },
+      { "term": "Reaction–diffusion", "def": "Chemicals that react with each other while spreading at different rates, which can produce regular patterns from a uniform starting state." }
+    ],
+    "recognition": "OBE in 1946 for wartime service; Fellow of the Royal Society 1951. The 1936 paper defines the standard model of computation, and computing's principal prize is named after him."
+  },
+  {
+    "id": "cajal",
+    "name": "Santiago Ramón y Cajal",
+    "lifespan": "1852–1934",
+    "era": "historical",
+    "field": "Neuroanatomy",
+    "origin": "Spain",
+    "hook": "Cells, not a net",
+    "intro": "The stain was Golgi's. It blackens perhaps one cell in a hundred, completely, and leaves the rest invisible — which is exactly why it works. I spent thirty years looking through it and drawing what I saw.",
+    "answers": {
+      "question": {
+        "text": "The question was whether the nervous system is one thing or many. The reticular view held that nerve fibers fuse into a continuous network, so a signal spreads through a shared substance the way current runs through a mesh. The alternative was that each nerve cell is a separate individual, and that signals pass from one to the next across a gap. This is not a small distinction. If the elements are separate, the contacts are where everything interesting happens.",
+        "concept": "Reticulum Versus Cells"
+      },
+      "method": {
+        "text": "Golgi's silver stain does something no other method does: it fills a small, apparently random fraction of cells right out to their finest branches and ignores everything around them. Adult tissue is too crowded and too heavily myelinated to trace. So I worked on embryos and newborn animals, where the cells are smaller, the fibers bare, and the forest thin enough to follow. I ran the dichromate and silver steps twice to strengthen the impregnation, and I drew every preparation by hand.",
+        "concept": "Embryonic Silver Staining"
+      },
+      "evidence": {
+        "text": "In the cerebellum of a young bird I could follow a single axon to its end — and it ended. It broke into a spray of terminals that wrapped around the next cell's body like a basket and stopped there. No fusion, no continuous thread, in preparation after preparation, and the same in retina, spinal cord, and cortex. In embryos I also saw axons still growing, each tipped with a swollen, exploring end that had no network to be part of yet.",
+        "concept": "Free Nerve Endings"
+      },
+      "impact": {
+        "text": "If neurons are separate, then the gap between them is the unit of function, and much of what came after follows from that: Sherrington's synapse, chemical transmission, drugs that act on receptors at the junction, the whole idea that a brain is a circuit whose wiring can change. My drawings are still printed, not out of sentiment but because a good figure is an argument — it fixes what you claim to have seen so that someone else can go and check it.",
+        "concept": "The Synapse"
+      },
+      "doubt": {
+        "text": "My microscope could not resolve the gap I was arguing for. It is around twenty nanometers; light will not show it. I inferred separateness from endings that stopped, which is an interpretation, and Golgi looked at the same stain and read continuity — he said so from the podium in Stockholm when we shared the prize. Electron microscopy settled it fifty years later. I was also wrong that adult nerve paths are fixed and cannot be renewed, and some cells do join directly after all, through electrical junctions.",
+        "concept": "Below The Resolution"
+      }
+    },
+    "misconception": {
+      "myth": "Cajal invented the staining technique that finally let anyone see individual neurons.",
+      "reality": "The stain was Camillo Golgi's, published in 1873, and Cajal learned it from prepared slides shown to him in Madrid; what he added was a modified protocol and the decision to use young, lightly myelinated tissue. It is tempting to attach a method to whoever drew the famous conclusion from it, but the same reagent in Golgi's hands supported the opposite theory."
+    },
+    "terms": [
+      { "term": "Neuron doctrine", "def": "The principle that the nervous system is built from separate cells that communicate at contacts rather than fusing into one continuous network." },
+      { "term": "Golgi stain", "def": "A silver-chromate method that completely blackens a small random subset of neurons, making individual cells visible against an otherwise empty field." },
+      { "term": "Growth cone", "def": "The exploring tip of a growing axon, which extends and steers as a nerve cell wires itself toward a target." }
+    ],
+    "recognition": "Nobel Prize in Physiology or Medicine 1906, shared with Camillo Golgi, who used his own Nobel lecture to argue against the neuron doctrine."
+  },
+  {
+    "id": "li",
+    "name": "Fei-Fei Li",
+    "lifespan": "b. 1976",
+    "era": "contemporary",
+    "field": "Computer Vision",
+    "origin": "China / United States",
+    "hook": "The data was the bottleneck",
+    "intro": "Everyone in vision was tuning models. I want to show you the other half of the problem: what you train on. We spent about three years collecting and labeling images before we had anything to report.",
+    "answers": {
+      "question": {
+        "text": "Around 2006 object recognition was stuck. Models trained on a few thousand images did well on those images and fell apart on anything new. The standard reading was that our algorithms were too weak. I thought the diagnosis was wrong. A child sees an enormous number of examples before she can name a dog reliably, and every dataset we had was tiny by comparison. So the question was whether the limit sat in the model or in what we were feeding it.",
+        "concept": "Data As Bottleneck"
+      },
+      "method": {
+        "text": "We took the noun hierarchy from WordNet, a lexical database already built at Princeton, and set out to fill every category with real photographs. Images came from web search; the labeling was the hard part, and it went out to tens of thousands of crowd workers through Mechanical Turk. That meant designing the task itself — how many independent workers must agree on an image, how to catch people clicking at random, how to hold quality steady across a hundred-plus countries. Then we made it a public competition with a fixed test set.",
+        "concept": "Crowdsourced Labeling At Scale"
+      },
+      "evidence": {
+        "text": "ImageNet grew to roughly fourteen million labeled images across about twenty thousand categories. The competition used a thousand of those categories and around 1.2 million training images. For two years the winning error rates crept down. In 2012 a convolutional network trained on two consumer graphics cards came in at 15.3 percent top-five error against 26.2 for the next best entry. That gap is the whole argument: the core architecture went back decades, the data and the compute did not.",
+        "concept": "The 2012 Result"
+      },
+      "impact": {
+        "text": "That result moved the field to deep learning within about a year, and the pattern — large labeled corpus, shared benchmark, open competition — became the template for how progress gets measured in machine learning. It also set a habit worth questioning. Benchmarks decide what counts as progress, so whoever designs one is making a scientific choice, not a neutral one. My work now is on where these systems touch people directly, including sensing in hospital rooms, and on who gets to build them.",
+        "concept": "Benchmarks Shape Fields"
+      },
+      "doubt": {
+        "text": "The images came from web search, so the dataset inherited whatever the web over-represents, and for the categories describing people WordNet supplied terms that were offensive or not verifiable from a photograph in the first place. A follow-up study I co-authored filtered a large part of that subtree out. Beyond that, a benchmark measures one narrow thing. Winning on ImageNet does not mean a system understands a scene, and treating a leaderboard as a measure of intelligence is a mistake the field made partly because we handed it the leaderboard.",
+        "concept": "Inherited Dataset Bias"
+      }
+    },
+    "misconception": {
+      "myth": "Deep learning worked in 2012 because someone finally invented the right neural network.",
+      "reality": "Convolutional networks and backpropagation had existed since the 1980s and had largely been set aside; what changed was more than a million labeled training images and graphics hardware fast enough to use them. The invention story is more satisfying than the story about three years of labeling work, which is part of why it sticks."
+    },
+    "terms": [
+      { "term": "ImageNet", "def": "A labeled image dataset of roughly fourteen million photographs, organized by the noun hierarchy of the WordNet lexical database and released in 2009." },
+      { "term": "Benchmark", "def": "A shared dataset plus a fixed scoring rule, which lets different research groups compare their methods on identical terms." },
+      { "term": "Top-five error", "def": "The fraction of test images for which the correct label is not among the model's five highest-ranked guesses." }
+    ],
+    "recognition": "Elected to the U.S. National Academy of Engineering and National Academy of Medicine; directed the Stanford AI Lab and co-directs Stanford's Institute for Human-Centered AI. ImageNet and its competition became standard infrastructure in computer vision."
+  }
+]

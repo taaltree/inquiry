@@ -1,0 +1,277 @@
+<div id="app">
+  <canvas id="gl"></canvas>
+
+  <!-- ============ HUD ============ -->
+  <div id="hud">
+    <div id="reticle">
+      <svg viewBox="-60 -60 120 120" aria-hidden="true">
+        <circle id="ret-ring" cx="0" cy="0" r="9" fill="none" stroke="#7fe8ff"
+                stroke-width="1.2" stroke-opacity=".55"/>
+        <circle id="ret-arc" cx="0" cy="0" r="16" fill="none" stroke="#7fe8ff"
+                stroke-width="2" stroke-dasharray="0 400" stroke-linecap="round"
+                transform="rotate(-90)"/>
+        <g id="ret-ticks" stroke="#7fe8ff" stroke-width="1.4" stroke-linecap="round">
+          <line class="ret-tick" x1="0" y1="-15" x2="0" y2="-21"/>
+          <line class="ret-tick" x1="0" y1="15"  x2="0" y2="21"/>
+          <line class="ret-tick" x1="-15" y1="0" x2="-21" y2="0"/>
+          <line class="ret-tick" x1="15" y1="0"  x2="21" y2="0"/>
+        </g>
+        <circle cx="0" cy="0" r="1.3" fill="#fff"/>
+      </svg>
+      <div id="ret-label"><span id="ret-name"></span><span id="ret-sub"></span></div>
+    </div>
+
+    <div id="top">
+      <div id="objective" class="panel">
+        <div class="label">Current Objective</div>
+        <div id="obj-title">Reach the Foundry</div>
+        <div id="obj-where">Follow the lit causeway ahead</div>
+        <div id="tasks"></div>
+      </div>
+
+      <div id="compass">
+        <div id="compass-track"></div>
+        <div id="compass-needle"></div>
+      </div>
+
+      <div id="stats" class="panel">
+        <div class="label">Field Record</div>
+        <div class="stat hot"><span>Insights</span><span id="st-ins">0/0</span></div>
+        <div class="stat"><span>Interviews</span><span id="st-int">0/0</span></div>
+        <div class="stat"><span>Connections</span><span id="st-con">0/0</span></div>
+        <div class="stat"><span>Vaults</span><span id="st-vau">0/5</span></div>
+        <div class="stat"><span>Students taught</span><span id="st-taught">0</span></div>
+        <div class="stat"><span>Claims dismantled</span><span id="st-deb">0</span></div>
+      </div>
+    </div>
+
+    <div id="slots"></div>
+
+    <div id="prompt"></div>
+    <div id="toasts"></div>
+    <div id="log"></div>
+
+    <div id="clutter"></div>
+
+    <div id="noise">
+      <div class="label">Mind pollution</div>
+      <div class="noise-track"><i id="noise-fill"></i></div>
+    </div>
+
+    <div id="intercept"><div id="intercept-inner"><div id="intercept-body"></div></div></div>
+
+    <div id="technique"></div>
+    <div id="secured"></div>
+    <div id="ctrl-hint"></div>
+
+    <div id="map" class="panel">
+      <div class="label">Station</div>
+      <canvas id="mapc" width="360" height="360"></canvas>
+    </div>
+  </div>
+
+  <!-- ============ DIALOGUE ============ -->
+  <div id="dialogue">
+    <div id="dlg-inner">
+      <div id="dlg-head">
+        <div>
+          <div id="dlg-name">—</div>
+          <div id="dlg-meta"></div>
+        </div>
+        <div id="dlg-prog"></div>
+      </div>
+      <div id="dlg-body">
+        <img id="dlg-portrait" alt="" width="132" height="163">
+        <div id="dlg-qtag">
+          <div class="label">Question</div>
+          <div class="big" id="dlg-qname">—</div>
+          <div class="ask" id="dlg-qask"></div>
+        </div>
+        <div style="flex:1">
+          <div id="dlg-text"></div>
+          <div id="dlg-concept"></div>
+        </div>
+      </div>
+      <div id="dlg-foot">
+        <div><kbd>1</kbd>–<kbd>5</kbd> ask &nbsp;·&nbsp; <kbd>click</kbd> skip text</div>
+        <div id="dlg-hint">All five questions logged unlocks the codex entry</div>
+        <div><kbd>E</kbd> / <kbd>Esc</kbd> leave</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TITLE / BRIEFING ============ -->
+  <div class="screen on" id="title">
+    <div id="title-bg"></div>
+    <div class="screen-inner">
+
+      <div class="hero">
+        <div class="crest" aria-hidden="true">
+          <svg viewBox="0 0 64 78"><path d="M32 2 L60 12 v28 c0 18-13 30-28 36C17 70 4 58 4 40V12z"
+            fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M32 20v34M18 34h28M22 26l20 18M42 26L22 44" stroke="currentColor"
+            stroke-width="1.6" opacity=".65"/></svg>
+        </div>
+        <h1 class="title">INQUIRY</h1>
+        <div class="subtitle">The Colloquium · a first-person science interview</div>
+        <p class="pitch">
+          A shooter where the weapon is a question. Walk a university campus, interview
+          <strong>24 real scientists</strong> about how they actually knew what they knew, then use
+          what you learn as ammunition — teaching the students around you and dismantling the
+          misinformation hunting them.
+        </p>
+        <div class="center hero-cta">
+          <button class="btn" id="btn-start">Enter the Colloquium</button>
+        </div>
+      </div>
+
+      <div class="loop">
+        <div class="loop-step"><b>1</b><h4>Ask</h4><p>Five questions, one instrument. Ask all five of
+          a researcher and you have reconstructed their reasoning, not memorised their result.</p></div>
+        <div class="loop-step"><b>2</b><h4>Teach</h4><p>Fire an insight at a student and they take it.
+          Educated students visibly change — and start defending themselves.</p></div>
+        <div class="loop-step"><b>3</b><h4>Dismantle</h4><p>When a claim reaches you the world stops.
+          No timer. Read it, name the technique, pick the one question that breaks it.</p></div>
+        <div class="loop-step"><b>4</b><h4>Secure</h4><p>Finish a district's researchers, vault,
+          students and feed to secure it. Secure all five to reach the Convocation.</p></div>
+      </div>
+
+      <h2 class="sec">Your loadout <span>the five questions, keys 1–5</span></h2>
+      <div class="cols" id="qexplain"></div>
+
+      <h2 class="sec">Controls <span>keyboard and mouse</span></h2>
+      <div class="keyrow">
+        <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
+        <span><kbd>Drag</kbd> or <kbd>Mouse</kbd> look</span>
+        <span><kbd>←</kbd><kbd>→</kbd> turn</span>
+        <span><kbd>Shift</kbd> sprint</span>
+        <span><kbd>Click</kbd> / <kbd>F</kbd> fire</span>
+        <span><kbd>E</kbd> interview</span>
+        <span><kbd>1</kbd>–<kbd>5</kbd> select</span>
+        <span><kbd>Q</kbd><kbd>R</kbd> cycle</span>
+        <span><kbd>Tab</kbd> codex</span>
+      </div>
+      <p class="fineprint">
+        Mouselook is captured when the browser allows it; otherwise hold the left button and drag.
+        Both are fully playable.
+      </p>
+
+      <div class="settings">
+        <label for="sens">Look sensitivity</label>
+        <input type="range" id="sens" min="0.25" max="2.5" step="0.05" value="1">
+        <output id="sens-out">1.00×</output>
+        <label class="chk"><input type="checkbox" id="invert"> Invert vertical</label>
+      </div>
+
+      <div class="notice" id="touch-note">
+        <b>This needs a keyboard and a mouse.</b> It uses WASD movement and mouselook, so it will
+        not play on a phone or tablet.
+      </div>
+
+      <details class="more">
+        <summary>What this is for, and what it is not</summary>
+        <div class="more-body">
+          <h3>Learning outcomes</h3>
+          <div class="cols">
+            <div class="card"><h3>Evidence &amp; inference</h3><p>Separate a claim from the evidence for it, and judge what a result does and does not license.</p></div>
+            <div class="card"><h3>Method literacy</h3><p>See why a specific design could settle a specific question — and where it ran out.</p></div>
+            <div class="card"><h3>Nature of science</h3><p>Consensus can lag correct evidence. Being right is not the same as being believed.</p></div>
+            <div class="card"><h3>Interdisciplinary transfer</h3><p>Trace how a technique moves between fields, and build those links yourself.</p></div>
+            <div class="card"><h3>Epistemic humility</h3><p>Ask what every researcher got wrong. <em>Doubt</em> is the question that matters most.</p></div>
+            <div class="card"><h3>Media literacy</h3><p>Beat a claim by naming the technique carrying it, not by arguing the topic.</p></div>
+          </div>
+          <h3 style="margin-top:26px">Honesty notice</h3>
+          <p class="prose">
+            Every line spoken here was written for this game — <strong>nothing is a real
+            quotation</strong>. The portrait plates are <strong>interpretive illustrations, not
+            likenesses</strong>: each is drawn in code from a handful of described features, and none
+            is traced from a photograph. The research, methods, career histories and controversies
+            are drawn from the public record and are meant to be accurate, but the voices are
+            dramatisations. The manipulative claims the drones fire are invented demonstrations of
+            named techniques, not real quotes from anyone.
+          </p>
+          <p class="prose" style="margin-top:12px">
+            Treat this as a doorway to the primary literature, never as a citable source.
+          </p>
+        </div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ============ CODEX ============ -->
+  <div class="screen" id="codex">
+    <div class="screen-inner">
+      <h1 class="title" style="font-size:clamp(26px,4vw,42px)">FIELD CODEX</h1>
+      <div class="subtitle" id="codex-sub">—</div>
+      <div id="codex-tabs" class="center" style="margin-bottom:24px"></div>
+      <div id="codex-body"></div>
+      <div class="center" style="margin-top:38px">
+        <button class="btn ghost" data-close="codex">Resume · Tab</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ VAULT QUIZ ============ -->
+  <div class="screen" id="quiz">
+    <div class="screen-inner">
+      <div class="subtitle" id="quiz-eyebrow">INSIGHT VAULT</div>
+      <h1 class="title" style="font-size:clamp(24px,4vw,38px)" id="quiz-title">—</h1>
+      <div id="quiz-body" style="margin-top:26px"></div>
+      <div class="center" style="margin-top:34px">
+        <button class="btn ghost" data-close="quiz" id="quiz-close">Leave the Vault</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SYNTHESIS TERMINAL ============ -->
+  <div class="screen" id="synth">
+    <div class="screen-inner">
+      <div class="subtitle">SYNTHESIS TERMINAL</div>
+      <h1 class="title" style="font-size:clamp(24px,4vw,40px)">CONNECT TWO MINDS</h1>
+      <p class="prose center" style="margin:0 auto 6px">
+        Pick two researchers you have fully interviewed. If their work is genuinely linked — by
+        lineage, by shared method, by direct conflict, or by illustrating the same pattern in how
+        science behaves — the terminal will open the connection.
+      </p>
+      <div id="synth-status" class="center" style="font-family:var(--mono);font-size:11px;
+           letter-spacing:.14em;color:var(--acc);min-height:22px;margin:18px 0"></div>
+      <div class="synthgrid" id="synth-grid"></div>
+      <div id="synth-result" style="margin-top:22px"></div>
+      <h2 class="sec">Connections Made <span id="synth-count">0</span></h2>
+      <div class="connlist" id="synth-list"></div>
+      <div class="center" style="margin-top:34px">
+        <button class="btn ghost" data-close="synth">Step Away · E</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CONVOCATION (win) ============ -->
+  <div class="screen" id="win">
+    <div class="screen-inner">
+      <div class="subtitle">THE COLLOQUIUM IS SECURE</div>
+      <h1 class="title" style="font-size:clamp(30px,6vw,64px)">CONVOCATION</h1>
+      <div id="win-body" style="margin-top:26px"></div>
+      <div class="center" style="margin-top:38px">
+        <button class="btn ghost" data-close="win">Walk the grounds again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DEBRIEF ============ -->
+  <div class="screen" id="endgame">
+    <div class="screen-inner">
+      <div class="subtitle">FIELD RECORD COMPLETE</div>
+      <h1 class="title" style="font-size:clamp(28px,5vw,54px)">DEBRIEF</h1>
+      <div id="end-body" style="margin-top:26px"></div>
+      <div class="center" style="margin-top:38px">
+        <button class="btn ghost" data-close="endgame">Return to the Station</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="crash"><div>
+    <h1 class="title" style="font-size:34px">UNABLE TO START</h1>
+    <p class="prose center" id="crash-msg" style="margin:0 auto"></p>
+  </div></div>
+</div>

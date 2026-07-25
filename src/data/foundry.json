@@ -1,0 +1,170 @@
+[
+  {
+    "id": "newton",
+    "name": "Isaac Newton",
+    "lifespan": "1643–1727",
+    "era": "historical",
+    "field": "Mechanics & Optics",
+    "origin": "England",
+    "hook": "Apples and moons, one law",
+    "intro": "You catch me between two lives: Cambridge, where I spent twenty years on mathematics I mostly did not publish, and the Mint, where I now prosecute counterfeiters. Ask me about the Principia.",
+    "answers": {
+      "question": {
+        "text": "Everyone agreed that the heavens and the earth obeyed different rules. Kepler had worked out that planets sweep ellipses, but nobody could say what held them there. Descartes proposed whirlpools of invisible fluid. My question was narrower and stranger: is the pull that drops a stone the very same pull that bends the Moon's path, weakened only by distance? If so, one law governs both, and astronomy becomes a branch of mechanics.",
+        "concept": "One Universal Law"
+      },
+      "method": {
+        "text": "I did not perform an experiment in the modern sense; I demonstrated. From Kepler's rule linking orbital period to distance, I derived that the force must fall off as the square of the distance. Then I built the mathematics to handle continuous change — fluxions, what you call calculus — though I wrote the Principia in old-fashioned geometry so my critics could not dodge it. For light I worked with my hands: prisms, a darkened room, a single beam passed through a second prism to see whether its color would change again.",
+        "concept": "Mathematical Demonstration"
+      },
+      "evidence": {
+        "text": "The Moon sits about sixty Earth radii from us. If gravity thins as the inverse square, its pull out there should be about one part in thirty-six hundred of what we feel at the ground — and when I computed the Moon's fall toward Earth from its orbit, that is roughly the number I got. Not a coincidence. As for the prism: the second prism did not change the color further, which meant white light is a mixture already, not something the glass corrupts.",
+        "concept": "The Moon Test"
+      },
+      "impact": {
+        "text": "Three centuries later you still steer spacecraft with my equations; general relativity corrects them, but only where speeds or masses get extreme. Astronomers found Neptune by watching Uranus wobble and asking what unseen mass was tugging it. The calculus matters more than any of that — yet the notation your textbooks use is Leibniz's, not mine. I fought him for priority, appointed the Royal Society committee that judged the dispute, and wrote much of its report myself, unsigned.",
+        "concept": "Orbital Prediction"
+      },
+      "doubt": {
+        "text": "I never explained gravity. I gave you how much and how it falls off with distance, and nothing at all about why one body should reach across empty space and move another. Huygens and Leibniz called that occult nonsense, and they were not being unfair. I spent thirty years at alchemical furnaces partly hunting for the active principle behind such forces, and found none. I chose to state the law and refuse the cause. Einstein supplied a mechanism, curved spacetime, more than two centuries after I gave up.",
+        "concept": "Action At A Distance"
+      }
+    },
+    "misconception": {
+      "myth": "An apple fell on Newton's head and the theory of gravity arrived in a flash.",
+      "reality": "The apple appears only in Newton's own recollections told some sixty years later, and even in his telling it prompts a question rather than answering one. Twenty years of borrowed observations from Kepler and Flamsteed, disputes with Hooke over the inverse-square law, and mathematics he had to invent separate that garden from the Principia — but one falling fruit is far easier to picture than two decades of grinding work."
+    },
+    "terms": [
+      { "term": "Inverse-square law", "def": "A force that weakens with the square of the distance, so tripling the separation cuts the force to one ninth." },
+      { "term": "Action at a distance", "def": "One object influencing another across empty space with nothing visible passing between them." },
+      { "term": "Fluxions", "def": "Newton's name for derivatives: the rate at which a changing quantity flows, and the core tool of calculus." }
+    ],
+    "recognition": "Principia Mathematica, 1687; President of the Royal Society from 1703; Master of the Royal Mint; knighted in 1705, largely for political and Mint service rather than for science."
+  },
+  {
+    "id": "curie",
+    "name": "Marie Curie",
+    "lifespan": "1867–1934",
+    "era": "historical",
+    "field": "Radioactivity",
+    "origin": "Poland / France",
+    "hook": "Rays from the atom itself",
+    "intro": "This shed was a dissecting room before we took it over. The roof leaks and there is no ventilation. Somewhere in these tons of Bohemian ore residue is an element nobody has ever held.",
+    "answers": {
+      "question": {
+        "text": "Polish universities would not take women, so I studied in secret at home and then came to Paris. When I needed a thesis subject, Becquerel's uranium rays were two years old and almost nobody was working on them, which suited me. The real question was whether the rays came from the uranium compound, the way a chemical reaction produces heat, or from the uranium atom itself. If it was the atom, then atoms were not the permanent, unchanging things everyone assumed.",
+        "concept": "An Atomic Property"
+      },
+      "method": {
+        "text": "Photographic plates only tell you that something happened. Pierre and his brother had built a quartz electrometer, so I used that instead: spread the powdered sample on a plate, let the rays make the air above it conduct, and balance the tiny current against the charge you get by squeezing a quartz crystal with known weights. That gives a number. I measured every element and mineral I could obtain. Then came four years of dissolving, precipitating and recrystallizing tons of ore residue, stirred with an iron rod in a courtyard.",
+        "concept": "Quartz Electrometer"
+      },
+      "evidence": {
+        "text": "The current tracked the amount of uranium present and nothing else — not the compound, not whether the sample was wet or dry, hot or cold, lit or dark. That is what makes it atomic. Then two ores read far higher than their uranium content allowed, which only made sense if something more active was hiding inside them. Polonium and radium. From a ton of residue I finally got about a tenth of a gram of radium chloride, enough to fix its atomic weight near 225.",
+        "concept": "Polonium And Radium"
+      },
+      "impact": {
+        "text": "Radium let doctors place radiation inside a tumor instead of shining it from outside — brachytherapy, still in use. The field it opened handed Rutherford's students the alpha particles they fired at gold foil to find the nucleus. Every smoke detector, every PET scan, every carbon date rests on atoms decaying to their own schedule. One unit of radioactivity carries our name. My later years went to founding institutes and raising money, which is also the work.",
+        "concept": "Nuclear Medicine"
+      },
+      "doubt": {
+        "text": "Two things. We could measure the energy pouring out of radium but not account for it, and for a while we entertained the idea that heavy atoms were absorbing some unknown radiation out of space, because otherwise conservation of energy looked broken. Wrong. It comes from inside the nucleus, and it took mass-energy equivalence to say so. Second, we had no idea what the rays were doing to our bodies. My notebooks are kept in lead-lined boxes now. You sign a waiver to read them.",
+        "concept": "The Missing Energy"
+      }
+    },
+    "misconception": {
+      "myth": "Marie Curie was Pierre's assistant on his research.",
+      "reality": "Radioactivity was her doctoral topic, not his, and Pierre set aside his own work on crystals to join a project she had already started; the chemical isolation that produced radium was hers. The myth is durable partly because the 1903 Nobel committee first proposed the prize to Becquerel and Pierre alone, adding her only after Pierre was tipped off and objected."
+    },
+    "terms": [
+      { "term": "Radioactivity", "def": "The spontaneous emission of particles or rays by unstable atomic nuclei, unaffected by chemistry, temperature or pressure." },
+      { "term": "Pitchblende", "def": "A dense uranium ore whose leftover processing residues turned out to contain radium and polonium." },
+      { "term": "Piezoelectric electrometer", "def": "An instrument that measures a very small electric current by balancing it against charge produced by compressing a quartz crystal." }
+    ],
+    "recognition": "Nobel Prize in Physics 1903, shared with Pierre Curie and Henri Becquerel; Nobel Prize in Chemistry 1911; rejected by the French Académie des sciences in the 1911 election."
+  },
+  {
+    "id": "wu",
+    "name": "Chien-Shiung Wu",
+    "lifespan": "1912–1997",
+    "era": "historical",
+    "field": "Experimental Nuclear Physics",
+    "origin": "China / United States",
+    "hook": "Nature knows left from right",
+    "intro": "It is January in Washington and my cobalt sample sits a few thousandths of a degree above absolute zero inside a borrowed cryostat. If the counters disagree when I flip the field, a law falls.",
+    "answers": {
+      "question": {
+        "text": "Two particles kept showing up in cosmic rays with the same mass and the same lifetime, but one decayed into two pions and the other into three. Those outcomes have opposite parity, so they could not be the same particle — unless parity was not conserved. Lee and Yang went back through the literature and found something startling: nobody had ever tested parity in the weak interaction. It had been checked for the strong and electromagnetic forces and simply assumed everywhere else.",
+        "concept": "An Untested Assumption"
+      },
+      "method": {
+        "text": "You need cobalt-60 nuclei all spinning the same way, and thermal jostling destroys any alignment, so first you get very cold. We went to the National Bureau of Standards, where Ambler, Hayward, Hoppes and Hudson had the cryogenics: a paramagnetic salt crystal demagnetized down to a few thousandths of a kelvin, with a thin cobalt layer on its surface. A scintillator inside the cryostat counted emitted electrons; sodium iodide detectors watched the gamma rays to tell us how well aligned the nuclei really were. Then we reversed the field.",
+        "concept": "Polarized Cobalt Nuclei"
+      },
+      "evidence": {
+        "text": "Electrons came out preferentially against the direction of the nuclear spin, and the two field settings differed by tens of percent — not the fraction of a percent you could blame on drift or a bad detector. The control that convinced me was the warm-up. As the crystal heated and the nuclei lost their alignment over a few minutes, the asymmetry faded exactly in step with the gamma signal. An instrumental artifact would not have politely disappeared on schedule.",
+        "concept": "Broken Mirror Symmetry"
+      },
+      "impact": {
+        "text": "The weak interaction turned out to be built on handedness — it couples only to left-handed particles — and that constraint shaped the theory that eventually merged the weak force with electromagnetism. Within days Garwin, Lederman and Weinrich saw the same violation in muon decay. Seven years later Cronin and Fitch found that the combined mirror-plus-antimatter symmetry breaks too, which is one of the few clues we have about why the universe ended up with matter left over instead of annihilating itself into light.",
+        "concept": "A Handed Universe"
+      },
+      "doubt": {
+        "text": "I showed that the weak force distinguishes left from right. I cannot tell you why. The Standard Model does not derive that handedness; it writes it in at the start as an assumption, exactly the way parity conservation used to be written in. And the matter-antimatter asymmetry measured in the laws since is far too small to explain how much matter the universe actually contains — off by many orders of magnitude. The question my result opened is still open.",
+        "concept": "The Unexplained Handedness"
+      }
+    },
+    "misconception": {
+      "myth": "Lee and Yang disproved the conservation of parity.",
+      "reality": "They did the crucial theoretical work of noticing that the assumption had never been checked and suggesting where to look, but a proposal is not a result — the weak interaction had to be caught breaking the symmetry in an actual apparatus, by Wu together with the four National Bureau of Standards staff who built the cold end. The 1957 Nobel went to the two theorists alone, and the gap between predicting an effect and demonstrating one is exactly where credit tends to go missing."
+    },
+    "terms": [
+      { "term": "Parity", "def": "The symmetry between a process and its mirror image; if parity holds, physics cannot tell the reflection from the original." },
+      { "term": "Weak interaction", "def": "The force responsible for beta decay, which turns neutrons into protons, and the only known force that violates mirror symmetry." },
+      { "term": "Adiabatic demagnetization", "def": "A cooling technique that reaches thousandths of a degree above absolute zero by slowly removing a magnetic field from a chilled salt crystal." }
+    ],
+    "recognition": "First recipient of the Wolf Prize in Physics, 1978; National Medal of Science, 1975; first woman elected president of the American Physical Society, 1975; the 1957 Nobel Prize for parity violation went to Lee and Yang alone."
+  },
+  {
+    "id": "strickland",
+    "name": "Donna Strickland",
+    "lifespan": "b. 1959",
+    "era": "contemporary",
+    "field": "Ultrafast Laser Optics",
+    "origin": "Canada",
+    "hook": "Stretch, amplify, squeeze back down",
+    "intro": "I was a graduate student at Rochester, and laser peak power had been stuck for about a decade. The obstacle was not physics exactly. It was that the beam kept destroying the amplifier meant to strengthen it.",
+    "answers": {
+      "question": {
+        "text": "Peak power is just energy divided by duration, so a short pulse is already intense. Push that pulse through an amplifier to add energy and the intensity climbs until the light starts warping the glass it travels through — the beam self-focuses, collapses into filaments, and punches holes in your optics. So the field had plateaued. The question was not how to build a bigger laser. It was how to get energy into a pulse without ever letting the amplifier see high intensity.",
+        "concept": "The Damage Threshold"
+      },
+      "method": {
+        "text": "Cheat on the duration. Radar engineers had been chirping pulses since the 1950s, and Gérard Mourou saw that the same trick should work for light. We sent the pulse through 1.4 kilometers of single-mode optical fiber, which spreads the colors out in time — red arrives first, blue trails behind — so the energy is smeared across a much longer stretch at far lower intensity. The amplifier sees something harmless. Then a pair of diffraction gratings gives the fast colors a longer path home, stacking it all back into one short pulse.",
+        "concept": "Chirp And Recompress"
+      },
+      "evidence": {
+        "text": "The recompressed pulse came back nearly as short as it started, but now carrying orders of magnitude more energy — the amplifier had never seen an intensity that could hurt it. Our 1985 paper ran a few pages; it was my first. The real evidence is what happened afterward. The same architecture moved tabletop lasers from gigawatts to terawatts within a few years, and the largest facilities today are petawatt-class, focusing to intensities above ten to the twenty-second watts per square centimeter.",
+        "concept": "Terawatts On A Tabletop"
+      },
+      "impact": {
+        "text": "Bladeless LASIK uses a femtosecond pulse to cut the flap in the cornea. The pulse is over before heat can spread into neighboring tissue, so you get a clean cut instead of a burn — the same reason these lasers drill fuel injectors and cut stents without leaving a melted rim. Beyond that: attosecond pulses for watching electrons move, compact particle acceleration, and machining glass from the inside. It is a tool, and tools go places their inventors never planned.",
+        "concept": "Femtosecond Surgery"
+      },
+      "doubt": {
+        "text": "Chirped pulse amplification does not give you arbitrarily short pulses. The amplifier eats the edges of your spectrum — gain narrowing — and a pulse can never be shorter than its bandwidth allows, so amplifying and shortening pull against each other. Then the compressor becomes the bottleneck: the beam reaches full intensity on its way out, so at petawatt scale the gratings must be close to a meter across and sit in vacuum. And whether the extreme-intensity applications people promise actually arrive is not settled.",
+        "concept": "Gain Narrowing"
+      }
+    },
+    "misconception": {
+      "myth": "A more powerful laser just means pumping more energy into the beam.",
+      "reality": "Peak power is energy divided by time, and chirped pulse amplification raised power mostly by controlling the time axis rather than by adding energy: the same joules delivered in a thousandth of the duration is a thousand times the power. Energy sounds like the obvious lever because that is how we think about batteries and engines, but in ultrafast optics duration is the cheaper thing to move."
+    },
+    "terms": [
+      { "term": "Chirped pulse amplification", "def": "Stretching a laser pulse in time, amplifying it at safe intensity, then recompressing it to recover a short and far more powerful pulse." },
+      { "term": "Peak power", "def": "Energy divided by pulse duration, which means shortening a pulse raises its power even when no energy is added." },
+      { "term": "Group velocity dispersion", "def": "The spreading of a pulse in time because different colors of light travel at different speeds through a material." }
+    ],
+    "recognition": "Nobel Prize in Physics 2018, shared with Gérard Mourou and Arthur Ashkin; president of the Optical Society in 2013; professor at the University of Waterloo."
+  }
+]

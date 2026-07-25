@@ -1,0 +1,267 @@
+{
+  "foundry": {
+    "title": "Vault of Forces",
+    "questions": [
+      {
+        "prompt": "A group detects a rare nuclear decay and wants to know whether the process respects mirror symmetry — whether a reflected version of the decay would look like something nature also does. Which measurement would actually distinguish 'mirror-symmetric' from 'not mirror-symmetric'?",
+        "options": [
+          "Count the decays per second and check the rate matches the predicted value.",
+          "Align the spins of the parent nuclei with a magnetic field and check whether the emitted particles come out preferentially along one direction relative to that spin.",
+          "Physically rotate the whole apparatus by 180 degrees and confirm the count rate is unchanged.",
+          "Repeat the measurement at two temperatures and confirm the angular distribution is identical."
+        ],
+        "correct": 1,
+        "why": [
+          "A rate tells you how often the decay happens, not whether it distinguishes left from right. Parity is a claim about spatial orientation, not frequency.",
+          "Correct. Reflection flips positions but not spin, so a correlation between spin direction and emission direction cannot survive mirroring. Wu's cobalt-60 experiment was built exactly this way, and the polarisation is essential — with unaligned nuclei the asymmetry averages away to nothing.",
+          "Rotating the apparatus tests rotational invariance, a different symmetry. No rotation turns a left hand into a right hand, so this can never probe parity.",
+          "Temperature enters only as the means of keeping nuclei aligned. Comparing two temperatures without polarisation just compares two washed-out averages."
+        ]
+      },
+      {
+        "prompt": "A geologist measures heat flowing out of a rock formation and finds it about 20 percent higher than the radioactive isotopes known to be present can produce. Which response follows Curie's reasoning about pitchblende most closely?",
+        "options": [
+          "Conclude that an undiscovered isotope is present in the rock.",
+          "Adjust the assumed decay constants until the heat budget balances.",
+          "Treat the surplus as a real, quantified discrepancy, then design measurements that could separate an unknown source from a calibration error or an unaccounted-for known process.",
+          "Set the result aside as probably within experimental scatter until other sites show the same thing."
+        ],
+        "correct": 2,
+        "why": [
+          "Leaping straight to a new entity is the trap. Curie's anomaly was equally consistent with contamination or bad calibration; what settled it was chemically isolating the substance from tonnes of residue.",
+          "Tuning parameters until an anomaly disappears is how real signals get erased. If the constants are wrong, that must be demonstrated independently, not assumed because it is convenient.",
+          "Correct. The productive move is to hold onto the discrepancy, quantify it, and then eliminate the mundane explanations one at a time. That elimination, not the initial anomaly, is what earns a new claim.",
+          "Replication matters, but a 20 percent surplus is not obviously scatter. Dismissing it as noise is the mirror image of leaping to a new element — both are ways of not doing the work."
+        ]
+      },
+      {
+        "prompt": "Which statement best describes the relationship between Newtonian gravity and general relativity?",
+        "options": [
+          "Newton's theory was falsified, so it is no longer of any use.",
+          "General relativity reduces to Newtonian gravity for weak fields and low speeds, so Newton's equations stay accurate in that regime even though the account of what gravity is has changed completely.",
+          "The two make identical predictions; general relativity is a more elegant restatement of the same physics.",
+          "Newton's theory is approximate because the measurements available to him were less precise than modern ones."
+        ],
+        "correct": 1,
+        "why": [
+          "Falsified as a fundamental account, yes — but spacecraft trajectories are still computed with it every day. A superseded theory can remain an excellent instrument inside its domain.",
+          "Correct. Agreement is near-perfect in the everyday regime and breaks only at the margins, such as Mercury's extra precession of about forty-three arcseconds per century. What changed most is the ontology: curved spacetime instead of instantaneous force.",
+          "They genuinely diverge, just subtly — light bending near mass, orbital precession, and gravitational time dilation large enough that GPS has to correct for it.",
+          "The limitation is structural, not instrumental. Newtonian gravity would still fail near a black hole even if Newton's measurements had been infinitely precise."
+        ]
+      }
+    ]
+  },
+  "observatory": {
+    "title": "Vault of the Deep Field",
+    "questions": [
+      {
+        "prompt": "Rotation curves of spiral galaxies stay flat far beyond the visible disc, instead of falling off as the light does. Strictly, what does that observation license you to conclude?",
+        "options": [
+          "That dark matter exists and makes up most of a galaxy's mass.",
+          "That the outer stars are being flung outward and the galaxies are coming apart.",
+          "That either there is mass we cannot see, or gravity does not behave on galactic scales the way our theory says — the observation alone does not choose between these.",
+          "That the distance measurements to those galaxies must contain a systematic error."
+        ],
+        "correct": 2,
+        "why": [
+          "This is the leading interpretation, supported by independent evidence from lensing, cluster collisions and the cosmic microwave background — but it does not follow from rotation curves alone. Notice how easily the popular version skips that step.",
+          "The curves show stars on stable orbits at high speed, which is the puzzle. If the galaxies were unbound we would expect to see them visibly dispersing.",
+          "Correct. The measurement constrains the relationship between orbital speed and visible mass. Unseen mass and modified gravity both satisfy that constraint, and it took other, independent observations to make the dark matter branch far more credible.",
+          "A distance error would rescale the whole curve rather than change its shape. The flatness is the anomaly, and it is shape, not scale."
+        ]
+      },
+      {
+        "prompt": "Payne's 1925 thesis concluded from stellar spectra that stars are overwhelmingly hydrogen and helium. The result was correct and the field took years to accept it. What is the best account of why?",
+        "options": [
+          "The evidence was weak, and stronger data later settled the question.",
+          "Her conclusion contradicted a well-supported inference that stars and Earth are made of similar stuff, and dissolving that conflict depended on the recently developed ionisation theory — while her standing as a graduate student made the challenge easy to discount.",
+          "Senior astronomers of the period were poor scientists who ignored data that did not suit them.",
+          "She had presented a hypothesis rather than a measurement, and hypotheses cannot be accepted until independently derived."
+        ],
+        "correct": 1,
+        "why": [
+          "Her evidence was not weak. The spectra were good; what was contested was the theoretical step connecting line strength to abundance, which is a different kind of disagreement.",
+          "Correct. Consensus lagged for a mixture of epistemic and social reasons: the prior view was reasonable given pre-ionisation-theory readings of spectra, the new theory was not yet trusted, and a first-year graduate student had little standing. Russell reached the same conclusion four years later.",
+          "Satisfying, but too easy. The prior consensus rested on real evidence, read without the ionisation corrections. Treating past scientists as merely stupid teaches you nothing transferable about how error works.",
+          "She did derive it, from spectra plus ionisation theory. Independent confirmation strengthens a result, but the demand described here is not how any field actually operates."
+        ]
+      },
+      {
+        "prompt": "A seismology team reconstructs a three-dimensional image of the mantle from a sparse network of stations, and the reconstruction shows a narrow plume beneath a volcanic island. A colleague objects that the plume may be an artifact of the reconstruction. Which check most directly answers that objection?",
+        "options": [
+          "Show that the plume feature is statistically significant against the measurement noise.",
+          "Collect more data from the same stations, improving the signal-to-noise ratio.",
+          "Run the same pipeline on synthetic data generated from a mantle model containing no plume, and have independent groups reconstruct the real data using methods with different built-in assumptions.",
+          "Increase the resolution of the reconstruction grid until the plume's shape stabilises."
+        ],
+        "correct": 2,
+        "why": [
+          "Significance against noise does not address the objection. An artifact introduced by the algorithm's assumptions can be perfectly reproducible and highly significant.",
+          "More data at the same station positions reduces noise but not the gaps in coverage. The suspicion is about what the method fills the gaps with.",
+          "Correct. Feeding in synthetic data with a known answer tests whether the pipeline manufactures plumes, and independent methods with different priors test whether the feature depends on one set of assumptions. This is how the Event Horizon Telescope collaboration guarded against imagining its ring.",
+          "A finer grid changes the parameterisation, not the assumptions doing the interpolating. A stable artifact stays stable at higher resolution."
+        ]
+      }
+    ]
+  },
+  "helix": {
+    "title": "Vault of the Living Code",
+    "questions": [
+      {
+        "prompt": "Mice with gene X deleted become obese on a normal diet. What does this result, on its own, actually establish?",
+        "options": [
+          "Gene X causes obesity when it malfunctions.",
+          "Gene X is the gene for body weight regulation.",
+          "In this strain and on this diet, a functioning gene X is required for normal weight regulation — which does not tell you what the gene does, or that it is the control point.",
+          "Increasing the expression of gene X should protect against obesity."
+        ],
+        "correct": 2,
+        "why": [
+          "Close, but it overstates the direction. A knockout shows necessity in one context; the phenotype could arise several steps downstream from anything gene X does directly.",
+          "There is no gene for a trait like body weight. Removing one part of a machine and watching it fail does not make that part the machine's purpose.",
+          "Correct. Loss-of-function evidence licenses a necessity claim, bounded by genetic background and environment. Sufficiency, mechanism, and where the gene sits in the causal chain all require separate experiments.",
+          "This is the sufficiency claim, and it does not follow from a necessity result. Plenty of genes are required for normal function while adding more of them does nothing useful."
+        ]
+      },
+      {
+        "prompt": "A team screens a plant extract for antiviral activity. Most preparations show nothing, but a few batches show strong activity, and the effect will not reproduce reliably. Which next step best reflects how Tu Youyou's group handled the same situation with sweet wormwood?",
+        "options": [
+          "Discard the candidate — an effect that will not reproduce is not an effect.",
+          "Raise the dose until the effect appears consistently across all batches.",
+          "Treat the preparation procedure itself as the variable, and test whether some step — heat, solvent, timing — is destroying or failing to release the active compound.",
+          "Move on to screening other plants, since the hit rate for any single species is low."
+        ],
+        "correct": 2,
+        "why": [
+          "Irreproducibility is a signal that something uncontrolled is varying, not automatically a verdict on the candidate. Written off here, artemisinin never happens.",
+          "Raising the dose scales whatever the extract contains, including nothing. If the active compound is being destroyed during preparation, more extract just means more of the wrong thing.",
+          "Correct. Tu's group inferred from a fourth-century description of a cold-water preparation that heat was destroying the active compound, and switched to low-temperature extraction. The assay was reporting on the method as much as on the plant.",
+          "A reasonable strategy in general, but not here. Inconsistent activity is more informative than no activity, and abandoning it discards the only signal you have."
+        ]
+      },
+      {
+        "prompt": "Both McClintock's transposable elements and Kariko's modified-nucleoside mRNA were correct results that went largely unused for a long time. Which explanation of that delay is best supported?",
+        "options": [
+          "The scientific establishment suppresses outsiders, and both were outsiders.",
+          "The results were not properly published, so the field could not act on them.",
+          "The work was hard to interpret with the tools and questions of its moment, and attention and funding follow expected payoff — so a correct claim can go unused without anyone judging it false.",
+          "Science is not actually self-correcting; consensus tracks fashion rather than evidence."
+        ],
+        "correct": 2,
+        "why": [
+          "Status certainly mattered — Kariko was demoted and repeatedly refused grants. But McClintock was elected to the National Academy in 1944 and led the Genetics Society of America, so the pure-outsider story does not fit the facts.",
+          "Both published. McClintock's maize work appeared in the early 1950s and Kariko's nucleoside result in 2005. Publication is not the bottleneck; uptake is.",
+          "Correct. Neglect here is a resource-allocation failure under uncertainty, not a verdict. Transposons became legible once they turned up in bacteria and flies; mRNA became urgent once a vaccine platform needed it.",
+          "Too strong a conclusion from two cases. Both were eventually recognised, which is correction working — just far more slowly than the tidy version of the story implies."
+        ]
+      }
+    ]
+  },
+  "lattice": {
+    "title": "Vault of Elements",
+    "questions": [
+      {
+        "prompt": "Mendeleev left gaps in his table and described the properties of elements nobody had found. Why did that make the table a stronger claim than simply accommodating the elements already known?",
+        "options": [
+          "Because predictions are always stronger evidence than explanations.",
+          "Because it showed he understood the atomic structure underlying the periodic pattern.",
+          "Because it exposed the scheme to a specific, checkable failure: an element found with the wrong density or the wrong oxide would have counted against the arrangement, and no easy adjustment was available.",
+          "Because it covered more elements, and more data always makes a claim more secure."
+        ],
+        "correct": 2,
+        "why": [
+          "Tempting, and roughly the version most students carry. But a prediction is only strong when it is risky — when the theory could not have quietly accommodated the other outcome. Vague or unfalsifiable predictions cost a theory nothing.",
+          "He did not. Atomic number, electrons and orbitals all came later; Mendeleev ordered by atomic weight and had to reverse a few pairs to make the chemistry work. The table's success ran ahead of any explanation of it.",
+          "Correct. Naming expected weights, densities and oxide formulas for missing elements gave the world a way to be wrong about him. Gallium, scandium and germanium then arrived close to specification, which is what a survived risk is worth.",
+          "The gaps are not extra data — they are the absence of data. Their value lies in the commitment made about what would eventually fill them."
+        ]
+      },
+      {
+        "prompt": "You need an enzyme that stays active at pH 3, and you have no structural model to design from. You can run directed evolution: mutate, express thousands of variants, select, repeat. Which screen actually gets you there?",
+        "options": [
+          "Assay each variant for thermostability, since robust proteins tend to tolerate harsh conditions generally.",
+          "Assay each variant for activity at pH 3 itself, in the condition you ultimately want.",
+          "Sequence the variants and carry forward the ones with the largest number of mutations, maximising the diversity explored.",
+          "Assay at neutral pH, keep the most active variants, then test the winners at pH 3 at the end."
+        ],
+        "correct": 1,
+        "why": [
+          "The most seductive wrong answer, because stability and acid tolerance really are correlated. But a screen gives you exactly what it measures — you would obtain very stable enzymes, some of which happen to fail at pH 3.",
+          "Correct. Selection has no insight into your intentions; it optimises the quantity you score. Applying the target condition inside the screen is the whole trick, and it is why the approach works without any mechanistic understanding.",
+          "Mutation count is not fitness. Most mutations are neutral or harmful, and selecting for quantity of change mainly accumulates damage.",
+          "This selects for activity at neutral pH and then hopes it transfers. You have spent your rounds of evolution improving the wrong property."
+        ]
+      },
+      {
+        "prompt": "In 1974, before any ozone loss had been measured, Molina and Rowland argued from laboratory reaction rates that chlorine from CFCs would deplete stratospheric ozone. What did the lab work actually support at that point?",
+        "options": [
+          "Nothing yet — with no observation of depletion, the claim was not yet scientific.",
+          "That ozone concentrations were already falling and the decline had simply not been detected.",
+          "A conditional prediction: given known rates, transport and photolysis, chlorine reaching the stratosphere would run a catalytic cycle destroying far more ozone than the amount of chlorine alone suggests — with the size of the effect depending on the model's assumptions.",
+          "That CFCs are chemically hazardous substances and should be handled as toxic."
+        ],
+        "correct": 2,
+        "why": [
+          "This confuses 'unobserved' with 'unevidenced'. Measured rate constants plus established atmospheric physics are evidence, and the argument was testable — which is precisely what made it worth acting on.",
+          "Their argument was about what would happen, not a claim about existing measurements. Reading a mechanism as an observation is a common slip.",
+          "Correct. The strength of the case was the catalytic amplification: one chlorine atom destroys many thousands of ozone molecules before removal. Note the model's limits — the Antarctic ozone hole found in 1985 was far worse than predicted, because reactions on polar stratospheric cloud particles were not in the original chemistry.",
+          "CFCs were adopted precisely because they are inert and non-toxic at ground level. The hazard is what they do after ultraviolet light breaks them apart in the stratosphere."
+        ]
+      }
+    ]
+  },
+  "engine": {
+    "title": "Vault of Pattern",
+    "questions": [
+      {
+        "prompt": "Cajal and Golgi examined tissue prepared with the same silver stain and reached opposite conclusions about whether the nervous system is a continuous network or a population of separate cells. What does this best illustrate?",
+        "options": [
+          "One of them was simply a careless observer.",
+          "Microscopy of stained tissue is too unreliable to settle structural questions.",
+          "Observations underdetermine theory: what an image is taken to show depends on the framework brought to it, and the dispute was resolved by additional independent lines of evidence rather than by looking harder.",
+          "The disagreement was really about terminology, since both were describing the same structures."
+        ],
+        "correct": 2,
+        "why": [
+          "Both were outstanding observers, which is what makes the case interesting. If careless work explained every scientific disagreement, disagreement would be easy to fix.",
+          "The stain was genuinely informative — it is why either of them saw anything at all. The limitation was in what the images could adjudicate, not in whether they carried information.",
+          "Correct. The stain shows fibres approaching one another; whether the gap between them is real is not visible at that resolution. Developmental studies, degeneration experiments and eventually electron microscopy of the synaptic cleft settled it.",
+          "It was a substantive disagreement about whether nerve cells are physically continuous, and Golgi was still arguing against the neuron doctrine in his 1906 Nobel lecture."
+        ]
+      },
+      {
+        "prompt": "A modeller builds a simulation whose update rules are exactly the same at every time step — nothing in the rules refers to the date. Someone claims Noether's theorem therefore guarantees a conserved quantity. Is that right?",
+        "options": [
+          "Yes — invariance under time translation always yields a conserved quantity analogous to energy.",
+          "No. Noether's theorem applies to dynamics derived from an action principle with a continuous symmetry; rules that merely repeat each step do not guarantee that structure, and dissipative systems are a standing counterexample.",
+          "Yes, but only if the simulation is also reversible in time.",
+          "No, because Noether's theorem applies only to physical systems, not to models."
+        ],
+        "correct": 1,
+        "why": [
+          "The most common overreach, and it drops the theorem's precondition. Time-translation invariance yields energy conservation within Lagrangian or Hamiltonian dynamics, not for arbitrary rule sets.",
+          "Correct. Consider a rule that halves every velocity each step: perfectly time-invariant, and energy drains away. Noether's theorem is a statement about variational structure, and without an action there is no conserved current to derive.",
+          "Reversibility is related but is neither what the theorem requires nor what it delivers. The requirement is a variational formulation with a continuous symmetry.",
+          "The theorem is mathematics, so it applies to any model with the right structure, physical or not. The failure here is missing structure, not the wrong subject matter."
+        ]
+      },
+      {
+        "prompt": "A colleague proves that a certain task is computable — an algorithm exists that solves it in finite time. What does that establish about whether you can get a working system to do it?",
+        "options": [
+          "That an efficient program for the task can be written, given enough engineering effort.",
+          "That a sufficiently large neural network can be trained to perform it, since such networks can approximate any function.",
+          "Almost nothing practical: computability is a claim about existence in principle, and says nothing about running time, memory, the data required, or whether any procedure can find the solution from examples.",
+          "That the task will be solved eventually, since computable problems always yield to increasing hardware."
+        ],
+        "correct": 2,
+        "why": [
+          "Existence and efficiency are separate questions. Plenty of computable problems have no known algorithm that finishes before the heat death of the universe.",
+          "A tempting misuse of universal approximation. Those results say a network of sufficient size can represent the function — not that training will find those weights, nor that any feasible amount of data would pin them down.",
+          "Correct. Turing settled what can be computed at all; the binding constraints in practice are elsewhere. Computer vision was computable throughout the decades it did not work, and ImageNet's lesson was that the missing ingredient was labelled data at scale, not a new proof.",
+          "Hardware moves the constant factors. It does not rescue a problem whose cost grows exponentially with input size, and it never supplies the data or the training procedure."
+        ]
+      }
+    ]
+  }
+}

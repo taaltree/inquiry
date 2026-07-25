@@ -1,0 +1,170 @@
+[
+  {
+    "id": "mendeleev",
+    "name": "Dmitri Mendeleev",
+    "lifespan": "1834–1907",
+    "era": "historical",
+    "field": "The Periodic System",
+    "origin": "Russia",
+    "hook": "Left gaps on purpose.",
+    "intro": "Come in. The chart behind me has been redrawn more times than I care to count. Ignore how tidy it looks — what matters are the squares I left blank, and why I refused to fill them.",
+    "answers": {
+      "question": {
+        "text": "In 1869 I was writing a chemistry textbook and could not decide what order to put the elements in. Sixty-three were known. Each had a weight, a set of compounds it liked to form, a family of cousins it resembled. Was that resemblance an accident of history, or was there a law underneath it? Others had noticed patterns before me — Döbereiner, Newlands, de Chancourtois. I wanted to know whether the pattern was strong enough to be a rule.",
+        "concept": "Hidden Periodic Law"
+      },
+      "method": {
+        "text": "I wrote each element on a card — atomic weight, valence, the formula of its oxide — and shuffled them until the columns held families: reactive metals in one, halogens in another. Sometimes the weights fought me. Tellurium is heavier than iodine, yet iodine plainly belongs with chlorine and bromine, so I put tellurium first and assumed its weight had been mismeasured. And where a column needed an element nobody had found, I left the square empty instead of closing the gap.",
+        "concept": "Deliberate Gaps"
+      },
+      "evidence": {
+        "text": "Two of the gaps filled themselves while I was alive. I had predicted an element beneath aluminium — eka-aluminium — with an atomic weight near 68 and a density about six times water's. Lecoq de Boisbaudran isolated gallium in 1875 and measured the density at 4.7. I wrote to him and said his sample was impure. He repurified it and got 5.9. Eleven years on, Winkler's germanium matched my eka-silicon nearly line for line: 72.6 against my 72, and a chloride boiling below 100 degrees.",
+        "concept": "Eka-Silicon Confirmed"
+      },
+      "impact": {
+        "text": "Every chemistry classroom now has my chart on the wall, but the useful part is not the shape. It is that the arrangement lets you reason about an element you have never handled. Moseley later showed the true ordering is atomic number, the count of protons, and quantum mechanics explained why the pattern repeats — electron shells filling and refilling. Today people synthesize elements past 110 for fractions of a second and check whether they behave where the table says they should.",
+        "concept": "Predictive Chemistry"
+      },
+      "doubt": {
+        "text": "I never knew why. My law described a rhythm without naming the drummer — protons and electron shells were decades away, and I would not have accepted them; I doubted the atom could be divided at all. I guessed tellurium's weight was wrong when the real answer was isotopes. When Ramsay and Rayleigh announced argon I suggested it might be a form of nitrogen, because nothing in my scheme had room for a gas that refused to react. It took me years to make a column for them.",
+        "concept": "Rhythm Without Cause"
+      }
+    },
+    "misconception": {
+      "myth": "Mendeleev dreamed the finished periodic table in a single night.",
+      "reality": "He had spent years tabulating element properties while writing a textbook, and the table went through repeated public revisions after 1869. The dream story is a late secondhand anecdote, and it appeals because it turns a slow sorting job into a flash of revelation."
+    },
+    "terms": [
+      { "term": "Periodic law", "def": "The chemical properties of the elements repeat at regular intervals when the elements are arranged in order." },
+      { "term": "Eka-element", "def": "Mendeleev's name for a predicted missing element, made by attaching 'eka-' — Sanskrit for one — to the element one row above the empty square." },
+      { "term": "Valence", "def": "The number of bonds an atom typically forms, which for Mendeleev was the main clue to which family an element belonged in." }
+    ],
+    "recognition": "No Nobel Prize — nominated and narrowly passed over in 1906, the year before he died; Davy Medal 1882, shared with Lothar Meyer; element 101, mendelevium, carries his name."
+  },
+  {
+    "id": "hodgkin",
+    "name": "Dorothy Hodgkin",
+    "lifespan": "1910–1994",
+    "era": "historical",
+    "field": "X-ray Crystallography",
+    "origin": "Egypt / Britain",
+    "hook": "Read molecules by their shadows.",
+    "intro": "Sit anywhere. That box holds thirty-five years of insulin crystals. My hands went early — rheumatoid arthritis, from twenty-four — but the work was mostly measuring spots and adding numbers, and I could still do that.",
+    "answers": {
+      "question": {
+        "text": "A molecule does what its shape lets it do. You can write out a chemical formula for penicillin — count the carbons, the nitrogens, the one sulfur — and still have no idea how those atoms sit in space relative to each other. For small compounds you could reason the arrangement out from reactions. For anything protein-sized, that reasoning collapsed. I wanted a method that did not depend on chemical intuition at all: one where the molecule tells you its own shape.",
+        "concept": "Shape Determines Function"
+      },
+      "method": {
+        "text": "You grow a crystal, aim X-rays at it, and record where they scatter. Each spot has an intensity you can measure and a phase you cannot, and that missing phase is the whole difficulty. The trick is a heavy atom — dense enough to dominate the scattering and serve as a reference. Vitamin B12 came with one, the cobalt at its centre; elsewhere we soaked them in. Then Fourier sums, thousands of them, on paper strips and punched cards, in a room up a stair in the university museum.",
+        "concept": "The Phase Problem"
+      },
+      "evidence": {
+        "text": "Penicillin came out with a four-membered beta-lactam ring — a square of atoms so strained that senior chemists had insisted it could not exist. The map showed the square. Vitamin B12 was ninety-odd atoms besides hydrogen, the largest structure anyone had solved, and Kenneth Trueblood ran phase calculations on a machine in California while we worked in Oxford. Insulin took from 1934 to 1969 and came in near 2.8 ångströms. No chair came with any of it; the professorship I held from fifty was funded by the Royal Society, not Oxford.",
+        "concept": "Beta-Lactam Ring"
+      },
+      "impact": {
+        "text": "Structure is the thing you build on. Once you can see the beta-lactam ring you can redesign it — that is where the semi-synthetic penicillins and the cephalosporins came from. Insulin's structure underlies the engineered insulins people inject today, altered at chosen positions to change how fast they act. Hundreds of thousands of structures now sit in public databases. And none of it was solo: Barbara Low, Charles Bunn, Jenny Glusker, Kenneth Trueblood and a long line of students are in those structures with me.",
+        "concept": "Structure-Based Design"
+      },
+      "doubt": {
+        "text": "A crystal structure is a still photograph of an average. The molecule I show you is packed against its neighbours, sitting in a lattice — not floating in a cell doing its job. Hydrogen atoms scatter X-rays so weakly that I mostly could not see them, and hydrogens are where a great deal of chemistry happens. And a map is only as good as its phases; if your starting model is wrong, the density will politely show you what you expected. Knowing insulin's shape did not tell us how it signals.",
+        "concept": "A Static Average"
+      }
+    },
+    "misconception": {
+      "myth": "X-ray crystallography photographs a molecule the way a microscope photographs a cell.",
+      "reality": "The X-rays never form an image; you record a pattern of scattered spots and mathematically reconstruct the electron density from it, and half the needed information — the phases — is not in the recording at all. The myth is appealing because the reconstructions are called pictures and printed like photographs."
+    },
+    "terms": [
+      { "term": "X-ray crystallography", "def": "A technique that works out where atoms sit in a molecule by measuring how a crystal of that molecule scatters X-rays." },
+      { "term": "Phase problem", "def": "A diffraction experiment records how strong each scattered beam is but not where its wave peaks, and both are needed to reconstruct the structure." },
+      { "term": "Heavy-atom method", "def": "Using one very dense atom in a crystal, either native or deliberately added, whose strong scattering provides a reference for estimating the missing phases." }
+    ],
+    "recognition": "Nobel Prize in Chemistry 1964, unshared; Order of Merit 1965; Copley Medal 1976, the first woman to receive it."
+  },
+  {
+    "id": "molina",
+    "name": "Mario Molina",
+    "lifespan": "1943–2020",
+    "era": "contemporary",
+    "field": "Atmospheric Chemistry",
+    "origin": "Mexico / United States",
+    "hook": "A hole predicted, then found.",
+    "intro": "You are standing under about three millimetres of ozone. Compress the whole layer to sea-level pressure and that is all it comes to. In 1974 we worked out how easily a few industrial gases could thin it.",
+    "answers": {
+      "question": {
+        "text": "Chlorofluorocarbons were the ideal industrial chemical. Nontoxic, nonflammable, cheap, and so unreactive that nothing in the lower atmosphere touched them — no rain washed them out, no radical attacked them. That was the selling point. In 1973, working with Sherwood Rowland at Irvine, I asked what struck me as an obvious housekeeping question: if nothing destroys them down here, where do they go? Something has to be the sink. I expected to write a short paper and move on.",
+        "concept": "The Missing Sink"
+      },
+      "method": {
+        "text": "Pencil work, not fieldwork. We pulled measured rate constants and ultraviolet cross-sections from the literature and pushed a CFC molecule up through a one-dimensional model of the atmosphere. It survives the troposphere intact and takes years to reach thirty kilometres, where the ultraviolet finally snaps off a chlorine atom. Crutzen had already shown nitrogen oxides could catalyse ozone loss, and Stolarski and Cicerone had looked at chlorine from rocket exhaust. Our part was the source: refrigerators and spray cans.",
+        "concept": "Modelled Chlorine Release"
+      },
+      "evidence": {
+        "text": "The catalytic cycle is the whole result. Chlorine takes an oxygen from ozone to make chlorine monoxide; the monoxide meets a free oxygen atom, gives up its oxygen, and the chlorine is free again. Nothing is used up. One chlorine atom can take down on the order of a hundred thousand ozone molecules before it is finally locked away. Then in 1985 Farman's team at Halley Bay reported that October ozone over Antarctica had fallen by about a third since the 1960s.",
+        "concept": "Catalytic Ozone Cycle"
+      },
+      "impact": {
+        "text": "Montreal, 1987. Governments agreed to phase out compounds that were profitable and worked well, on the strength of a calculation. Every country in the United Nations eventually ratified it — no other environmental treaty has managed that. Concentrations peaked in the 1990s, and the layer should return to 1980 levels around mid-century. CFCs are also potent greenhouse gases, so the treaty quietly bought decades of avoided warming. Getting there cost thirteen years of hearings, industry advertising against us, and being told we were speculating.",
+        "concept": "Montreal Protocol"
+      },
+      "doubt": {
+        "text": "We got the chemistry right and the geography wrong. Nothing in our 1974 paper anticipated a hole over Antarctica; we expected slow, even thinning worldwide. The Antarctic loss was far faster than gas-phase chemistry allows, because chlorine is activated on the surfaces of polar stratospheric cloud particles — reactions on ice we had not considered. Our depletion estimates also swung by large factors through the early 1980s as the models improved, and critics were not wrong to point at that. The replacements, HFCs, turned out to be serious greenhouse gases.",
+        "concept": "Chemistry On Ice"
+      }
+    },
+    "misconception": {
+      "myth": "The ozone hole and global warming are the same problem.",
+      "reality": "Ozone loss happens when chlorine and bromine break ozone molecules apart high in the stratosphere, while warming is driven mainly by carbon dioxide trapping outgoing heat much lower down. They get conflated because both are global atmospheric problems argued over in the same decades, and because CFCs happen to be powerful greenhouse gases as well."
+    },
+    "terms": [
+      { "term": "Catalytic cycle", "def": "A sequence of reactions in which a molecule drives a change and comes out unaltered at the end, so a tiny amount of it can transform an enormous amount of something else." },
+      { "term": "Photodissociation", "def": "The breaking of a chemical bond by absorbed light; in the stratosphere, ultraviolet photons split CFC molecules and release chlorine atoms." },
+      { "term": "Stratosphere", "def": "The atmospheric layer roughly 10 to 50 kilometres up, where the ozone layer sits and where air mixes only slowly with the air below." }
+    ],
+    "recognition": "Nobel Prize in Chemistry 1995, shared with F. Sherwood Rowland and Paul Crutzen; US Presidential Medal of Freedom 2013."
+  },
+  {
+    "id": "arnold",
+    "name": "Frances Arnold",
+    "lifespan": "b. 1956",
+    "era": "contemporary",
+    "field": "Protein Engineering",
+    "origin": "United States",
+    "hook": "Let selection do the design.",
+    "intro": "That freezer is full of failures — tens of thousands of enzyme variants that did nothing useful. Directed evolution is mostly failure, run cheaply and in parallel, with a good enough test at the end.",
+    "answers": {
+      "question": {
+        "text": "Proteins are the best catalysts we know, and for a long time the plan was to design new ones from first principles: work out the physics of folding, place the residues, predict the function. That plan kept failing. A protein is a few hundred amino acids long, and the space of possible sequences is larger than anything you can search. So I asked a different question. If you cannot compute your way to a good enzyme, can you breed one?",
+        "concept": "Design Versus Selection"
+      },
+      "method": {
+        "text": "Take the gene for your enzyme and copy it sloppily — error-prone PCR, a polymerase making mistakes on purpose — so you get thousands of variants each carrying a mutation or two. Express them, then screen every one for the property you want. Keep the best few. Copy those sloppily. Repeat. The mutation rate has to stay low or everything unfolds, and the screen has to actually measure what you care about, because you will get exactly what you screen for and nothing else.",
+        "concept": "Iterated Mutation And Screening"
+      },
+      "evidence": {
+        "text": "The first case that convinced people was subtilisin E, a protease that works happily in water and loses almost all its activity in organic solvent. Four rounds of mutation and screening in dimethylformamide gave a variant with roughly two hundred and fifty times the parent's activity in sixty percent solvent — and the useful mutations sat in places no designer would have chosen. Later my lab evolved enzymes that form carbon-silicon bonds, chemistry no living thing is known to do.",
+        "concept": "Evolved Solvent Tolerance"
+      },
+      "impact": {
+        "text": "Directed evolution is now routine in industry. Enzymes made this way run steps in drug manufacture that used to need heavy-metal catalysts, high temperatures and solvents you would not want near the water supply; enzymes for biofuel and specialty-chemical production came out of the same approach. The broader point is methodological. When a system is too complicated to design, you can often still improve it — by making variation cheap, making measurement good, and letting selection do the work.",
+        "concept": "Greener Catalysis"
+      },
+      "doubt": {
+        "text": "In 2019 my lab published a paper in Science on enzymatic synthesis of beta-lactams. In January 2020 we retracted it. The results could not be reproduced, and raw data behind key experiments was missing from the first author's records. It was my name and my responsibility; I had not checked the work carefully enough, and I said so publicly. Beyond that: directed evolution finds local peaks, not the best possible enzyme, and it never explains why the winning variant works.",
+        "concept": "Retraction And Responsibility"
+      }
+    },
+    "misconception": {
+      "myth": "Directed evolution means designing a better protein on a computer and then building it.",
+      "reality": "It is close to the opposite: you deliberately give up on designing, generate thousands of random variants, and let a screen pick winners over many rounds. The myth persists because the word engineering suggests blueprints, and because papers report the improved enzyme rather than the tens of thousands of duds behind it."
+    },
+    "terms": [
+      { "term": "Directed evolution", "def": "A laboratory method that improves a protein through repeated rounds of random mutation followed by screening or selection for a desired property." },
+      { "term": "Error-prone PCR", "def": "A deliberately inaccurate DNA copying reaction used to build a large library of gene variants, each carrying a few random mutations." },
+      { "term": "Fitness landscape", "def": "A map of how a protein's performance changes as its sequence changes; directed evolution climbs uphill on this map and can get stranded on a lesser peak." }
+    ],
+    "recognition": "Nobel Prize in Chemistry 2018 (half share, for the directed evolution of enzymes); the first woman elected to all three US National Academies — Sciences, Engineering and Medicine."
+  }
+]

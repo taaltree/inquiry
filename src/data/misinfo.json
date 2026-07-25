@@ -1,0 +1,182 @@
+[
+  {
+    "id": "unfalsifiable_shield",
+    "technique": "UNFALSIFIABLE CLAIM",
+    "weakness": "question",
+    "claim": "The effect is real. It just doesn't show up when skeptics run the equipment, because their expectations interfere with the measurement.",
+    "tell": "The claim arrives pre-loaded with an excuse that converts every failed replication into further proof, so no result can ever count against it.",
+    "debunk": "PROBE asks what would count as being wrong. Here, nothing can: a positive result confirms the effect, a negative one confirms interference. A claim that survives every possible observation isn't strong, it's empty. An honest version names a specific outcome in advance — this reading, in this range — that would sink it.",
+    "domain": "physics"
+  },
+  {
+    "id": "goalposts_on_wheels",
+    "technique": "MOVING GOALPOSTS",
+    "weakness": "question",
+    "claim": "Fine, the satellite record now matches the ground stations. But until a model calls next year's storms exactly, it's still guesswork.",
+    "tell": "A test the evidence just passed is quietly retired and replaced with a harder one, so no amount of agreement ever settles anything.",
+    "debunk": "PROBE pins the claim down before the data arrive: what result would you accept as settling this? Ask that first and the goalpost stops moving, because the standard is now on record. An honest version states its test in advance and takes the answer, including a losing one.",
+    "domain": "climate"
+  },
+  {
+    "id": "merely_curious",
+    "technique": "JUST ASKING QUESTIONS",
+    "weakness": "question",
+    "claim": "Not saying the image is fake. Just asking why a picture assembled by software counts as seeing something nobody photographed.",
+    "tell": "Insinuation is dressed as curiosity, so the speaker gets the force of an accusation while keeping the option to deny having made one.",
+    "debunk": "PROBE forces the hidden claim into the open: are you saying the reconstruction is unconstrained by the data? Stated plainly, that is checkable — hand the same data to independent teams using different assumptions and see whether the structure survives. A real question invites an answer; this one is designed to avoid one.",
+    "domain": "space"
+  },
+  {
+    "id": "nineteen_objections",
+    "technique": "GISH GALLOP",
+    "weakness": "question",
+    "claim": "Here are nineteen problems: a retraction in that lab, bad controls, funding source, sample size, missing raw data. Answer all nineteen.",
+    "tell": "Volume substitutes for weight — each item is too brief to be checked, and the sheer count is meant to read as an argument.",
+    "debunk": "PROBE asks which single claim is load-bearing and what would show it false. Nineteen unexamined objections collapse into one examinable one, and the flood loses its power, because it only worked while nothing was stated precisely enough to test. An honest critic leads with their strongest point.",
+    "domain": "chemistry"
+  },
+  {
+    "id": "wrong_field_expert",
+    "technique": "FAKE EXPERTISE",
+    "weakness": "method",
+    "claim": "A physicist with thirty years of modelling experience has looked at the gene-editing safety data and says it doesn't hold up.",
+    "tell": "The expertise is genuine but belongs to a different field, and the credential is being asked to certify work its training never covered.",
+    "debunk": "METHOD asks who produced this and with what specific expertise. Modelling experience doesn't confer the ability to judge whether a genome edit landed somewhere unintended — that is a bench measurement with its own controls and failure modes. Expertise is domain-shaped. Name the technique under dispute and who is trained to assess it.",
+    "domain": "genetics"
+  },
+  {
+    "id": "citation_laundry",
+    "technique": "CREDENTIAL LAUNDERING",
+    "weakness": "method",
+    "claim": "It's peer-reviewed: the university announced it, a news site covered the announcement, and the article cites the coverage. Fully sourced.",
+    "tell": "Authority is manufactured by circulation — each retelling cites the previous one, until a press release ends up looking like reviewed research.",
+    "debunk": "METHOD asks how this was produced and by whom. Follow the chain back and there is no study at the end, only an announcement quoting itself. Peer review is a specific procedure — named referees, a journal, a revision round — not a synonym for appearing in several places. Ask for the paper.",
+    "domain": "medicine"
+  },
+  {
+    "id": "manufactured_grassroots",
+    "technique": "ASTROTURFING",
+    "weakness": "method",
+    "claim": "Thousands of ordinary users independently raised the same three objections this week, in the same order. That's not a campaign, that's consensus.",
+    "tell": "Coordinated messaging is presented as spontaneous public opinion, and the uniformity that should be the warning sign is offered instead as the proof.",
+    "debunk": "METHOD asks by whom and through what process. Independent people converge on a conclusion, not on identical phrasing inside a single week — real agreement is messy and arrives at different times. Check account histories, timing, and who benefits. Genuine grassroots agreement survives that check; manufactured agreement does not.",
+    "domain": "computing"
+  },
+  {
+    "id": "screening_causes_illness",
+    "technique": "CORRELATION-AS-CAUSE",
+    "weakness": "method",
+    "claim": "Regions that rolled out the new screening program saw diagnoses climb forty percent. The program isn't finding illness, it's creating it.",
+    "tell": "Two things move together and one is declared the cause, with no design that could separate causing a condition from simply detecting more of it.",
+    "debunk": "METHOD asks what procedure could distinguish these two stories. Screening changes who gets looked at, so recorded diagnoses can rise while the number of people actually ill stays flat. A comparison region with similar underlying rates and no program would separate them. Correlation opens the question; study design answers it.",
+    "domain": "statistics"
+  },
+  {
+    "id": "start_year_trick",
+    "technique": "CHERRY-PICKING",
+    "weakness": "evidence",
+    "claim": "Start the chart at that record-hot spike year and the global average has barely moved since. Flat. Look at it yourself.",
+    "tell": "A real dataset is shown starting from an unusually high year, so a rising trend is made to look flat purely by the choice of start point.",
+    "debunk": "EVIDENCE asks for the full series, not the flattering slice. Plot the whole record and the same data show a clear rise; slide the start year forward or back and the flat stretch vanishes. An honest version states the start date, says why it was chosen, and shows what other choices do.",
+    "domain": "climate"
+  },
+  {
+    "id": "hedge_as_confession",
+    "technique": "OUT-OF-CONTEXT QUOTE",
+    "weakness": "evidence",
+    "claim": "Their own paper admits the uncertainty is 'substantial' and the result 'may not hold.' Their words. I'm just reading the abstract.",
+    "tell": "A hedging phrase is lifted out of a sentence that goes on to say the opposite, so the author's routine caution is repurposed as their confession.",
+    "debunk": "EVIDENCE means the whole passage, not the excerpted fragment. Read the next clause and the sentence usually resolves — the uncertainty is quantified and bounded, and the paper states what would narrow it. Researchers hedge in writing as a matter of habit, and a hedge is not a retraction. Ask to see the paragraph.",
+    "domain": "physics"
+  },
+  {
+    "id": "mocked_then_vindicated",
+    "technique": "SURVIVORSHIP BIAS",
+    "weakness": "evidence",
+    "claim": "Every big idea in science was mocked before it won. So the theory everyone is laughing at right now is probably the next one.",
+    "tell": "Only the rejected ideas that were later vindicated stay in the story, while the far larger set of rejected ideas that stayed wrong is invisible.",
+    "debunk": "EVIDENCE demands the whole sample, including the cases that never survived to be retold. Count every idea dismissed in a given decade and the vindicated ones are a thin minority. Ridicule is not evidence either way. What distinguished the vindicated cases was that someone eventually produced measurements the critics could check.",
+    "domain": "history-of-science"
+  },
+  {
+    "id": "read_the_comments",
+    "technique": "ANECDOTE AS DATA",
+    "weakness": "evidence",
+    "claim": "Read the comments. Hundreds of people describing the same experience, in their own words. You can't fake that many stories.",
+    "tell": "A self-selected pile of reports is treated as a dataset, when everyone with nothing to report had no reason to post at all.",
+    "debunk": "EVIDENCE asks for the full denominator — how many people had the experience out of how many total, and how many had nothing to describe. Comment threads collect only one kind of outcome. Hundreds of stories can sit comfortably alongside a rate no different from background. Honest reporting shows both columns.",
+    "domain": "medicine"
+  },
+  {
+    "id": "one_study_solved_it",
+    "technique": "SINGLE-STUDY HYPE",
+    "weakness": "impact",
+    "claim": "New study proves the technique works. It's done — the disease is basically solved, we're just waiting on paperwork now.",
+    "tell": "One result in one setting is converted into a finished outcome, skipping every step between a laboratory finding and anything that reaches a person.",
+    "debunk": "IMPACT asks what actually follows, and for whom. From one study what follows is a hypothesis worth repeating in other hands, with more participants and longer follow-up — not a solved disease. Overstating the consequence is its own kind of misinformation, and it costs credibility when the real timeline turns out to be years.",
+    "domain": "genetics"
+  },
+  {
+    "id": "consensus_or_denier",
+    "technique": "FALSE DICHOTOMY",
+    "weakness": "impact",
+    "claim": "You either accept the consensus completely or you're a denier. There's no third option. Pick a side and stop stalling.",
+    "tell": "A wide range of positions is compressed into two, so any specific technical question gets scored as membership in the opposing camp.",
+    "debunk": "IMPACT asks what actually follows from a strong consensus. What follows is that the burden on a challenger is high and the core result is reliable — not that every sub-question is closed, or that asking one makes you an opponent. Treating agreement as a conversation-ender is how a field stops noticing its own errors.",
+    "domain": "climate"
+  },
+  {
+    "id": "imperfect_means_useless",
+    "technique": "NIRVANA FALLACY",
+    "weakness": "impact",
+    "claim": "The prediction model misfires sometimes. If it isn't accurate every single time, it's worthless for making any real decision.",
+    "tell": "An imperfect tool is measured against perfection rather than against the actual alternative, which is usually having no estimate at all.",
+    "debunk": "IMPACT asks what actually follows from the error rate, and for whom. A model that is right most of the time still narrows the range of outcomes, and the fair comparison is with the next-best option — a guess — not with certainty. State the error rate and let people judge what it supports.",
+    "domain": "computing"
+  },
+  {
+    "id": "everyone_agrees_suspiciously",
+    "technique": "CONSPIRACY FRAMING",
+    "weakness": "impact",
+    "claim": "Every survey reports the same missing mass because each team checks its numbers against the last one. That isn't independence, it's agreement.",
+    "tell": "Agreement between separate groups, normally the strongest sign a result is real, is reinterpreted as evidence that the groups colluded.",
+    "debunk": "IMPACT asks what would actually have to follow if this were true: thousands of people across competing institutions and rival countries, all silent, all giving up the career that comes from overturning a result. Scale is the test. Real coordinated deception is small, short-lived, and leaks, because defecting pays.",
+    "domain": "space"
+  },
+  {
+    "id": "not_settled_yet",
+    "technique": "MANUFACTURED DOUBT",
+    "weakness": "doubt",
+    "claim": "The science isn't settled. Serious researchers still have questions. Shouldn't we wait for certainty before disrupting an entire industry?",
+    "tell": "Doubt is invoked in general terms and never attached to a specific quantity, so it can never be resolved and the delay becomes permanent.",
+    "debunk": "DOUBT is the dismantling question because it demands specifics: which quantity is uncertain, how wide is the range, and what measurement would narrow it? Real uncertainty has a size and a way to shrink it. Doubt with no answer to those three isn't caution, it's a stalling device. Certainty was never on offer.",
+    "domain": "chemistry"
+  },
+  {
+    "id": "both_sides_panel",
+    "technique": "FALSE BALANCE",
+    "weakness": "doubt",
+    "claim": "There are two sides here, so put them on the same panel, give them equal time, and let people make up their own minds.",
+    "tell": "Equal airtime is presented as fairness, which quietly implies the two positions carry equal evidential weight when they may not.",
+    "debunk": "DOUBT exposes the asymmetry: ask each side what its uncertainty is and what result would change its mind. One gives you a stated margin of error and an experiment that would settle it; the other has no answer, because no procedure sits behind it. Fairness means weighting by evidence, not by seat count.",
+    "domain": "physics"
+  },
+  {
+    "id": "three_point_swing",
+    "technique": "STATISTICAL ILLITERACY",
+    "weakness": "doubt",
+    "claim": "The number moved three points since the last survey. Three points is a real shift — the chart makes the trend obvious.",
+    "tell": "A movement smaller than the survey's own margin of error is read as a trend, because the uncertainty was never printed next to the number.",
+    "debunk": "DOUBT asks for the uncertainty attached to the number. If each survey carries a margin of several points, a three-point move is indistinguishable from no move at all, and the honest description is unchanged within measurement error. Two dots on a chart are not a trend until the uncertainty is smaller than the gap between them.",
+    "domain": "statistics"
+  },
+  {
+    "id": "nature_already_tested_it",
+    "technique": "APPEAL TO NATURE",
+    "weakness": "doubt",
+    "claim": "The compound occurs in living things, so there's nothing left to test — nature already ran the safety trial over millions of years.",
+    "tell": "Where a substance came from is treated as a finished safety result, which lets the speaker skip the step where anything is actually measured.",
+    "debunk": "DOUBT asks what the uncertainty is and what would change the conclusion, and this claim is built to have neither. Occurring in nature is a fact about origin, not a measurement of effect: plenty of natural compounds are hazardous and plenty of made ones are inert. An honest version says what has been tested and what hasn't.",
+    "domain": "chemistry"
+  }
+]

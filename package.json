@@ -1,0 +1,12 @@
+{
+  "name": "inquiry-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A first-person science interview game. Interview 24 scientists, teach a campus, and dismantle misinformation.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "npm run build && python3 -m http.server 8731 --directory dist"
+  },
+  "engines": { "node": ">=18" }
+}

@@ -1,0 +1,254 @@
+[
+  {
+    "id": "darwin",
+    "name": "Charles Darwin",
+    "lifespan": "1809–1882",
+    "era": "historical",
+    "field": "Evolutionary biology",
+    "origin": "England",
+    "hook": "No foresight required",
+    "intro": "Come through to the study — mind the barnacle jars. I spent eight years on those little creatures before I let myself publish a word about species. Most of this work was waiting.",
+    "answers": {
+      "question": {
+        "text": "The puzzle was not whether species change — others had suggested that, and been laughed at for want of a mechanism. My question was how. Why do the finches and mockingbirds of neighbouring islands differ slightly, and why do fossil armadillos lie in the same ground as living ones? Something had to explain both the fit of a creature to its life and the pattern of its relatives. A cause, not a story.",
+        "concept": "Descent With Modification"
+      },
+      "method": {
+        "text": "Slowly, and mostly at home. I dissected barnacles for eight years until I knew what natural variation inside a single group actually looks like. I kept fancy pigeons, bred them, boiled down their skeletons, and joined the fanciers' clubs to learn what selection can do in a few generations. I floated seeds in salt water for weeks to see whether they would still sprout. And I wrote letters — thousands — asking breeders, gardeners and naturalists abroad for observations I could never make myself.",
+        "concept": "Artificial Selection Analogy"
+      },
+      "evidence": {
+        "text": "Take the pigeons. Fantails, pouters, tumblers — birds so unlike that a naturalist shown only their skeletons would file them as separate genera. Yet every one descends from the common rock pigeon, and crossing two fancy breeds throws back the blue bars and dark tail-band of the wild bird. A few centuries of human choosing did that. Nature has had incomparably longer, and works on every trait at once, not merely the ones that please an eye.",
+        "concept": "Reversion To Type"
+      },
+      "impact": {
+        "text": "Alfred Russel Wallace posted me an essay in 1858 with the same mechanism in it, worked out independently in the Malay Archipelago; our papers were read together that summer, and it forced me to finish the book. What came after is not mine. Bacteria outgrowing antibiotics on a hospital ward, influenza vaccines rebuilt every year against a moving target, crops bred and now edited, family trees of life reconstructed from sequence — every one of those assumes descent with modification, and every one keeps working.",
+        "concept": "Evolution In Action"
+      },
+      "doubt": {
+        "text": "I had no theory of inheritance, and I knew it. Everyone assumed traits blend in the offspring — and if they blend, any new advantage is halved each generation and washed out long before selection can act on it. Fleeming Jenkin pressed that objection hard and I had no answer; I invented gemmules, which were wrong. A monk in Brno had the answer already and almost nobody read him for thirty-four years. Understand also that my books carry the racial and imperial assumptions of my class and century, and those assumptions did real harm.",
+        "concept": "Missing Inheritance Theory"
+      }
+    },
+    "misconception": {
+      "myth": "Darwin saw the Galápagos finches and worked out natural selection on the spot.",
+      "reality": "He did not even record which island most of his finches came from, and it was the ornithologist John Gould who sorted them into distinct species after the voyage ended. The story is appealing because we want discovery to be a single act of seeing, rather than twenty years of dissection, pigeon breeding and correspondence."
+    },
+    "terms": [
+      { "term": "Natural selection", "def": "Differences in survival and reproduction among varying individuals, which make heritable traits that help in a given environment more common over generations." },
+      { "term": "Common descent", "def": "The claim that all living species trace back to shared ancestors, so resemblances between organisms reflect inheritance rather than separate creation." },
+      { "term": "Blending inheritance", "def": "The nineteenth-century assumption that a child's traits are an average of the parents', a view which would dilute any new variation away within a few generations." }
+    ],
+    "recognition": "No Nobel existed in his lifetime; Fellow of the Royal Society from 1839, Copley Medal 1864, buried in Westminster Abbey."
+  },
+  {
+    "id": "franklin",
+    "name": "Rosalind Franklin",
+    "lifespan": "1920–1958",
+    "era": "historical",
+    "field": "X-ray crystallography",
+    "origin": "England",
+    "hook": "A photograph is a measurement",
+    "intro": "The camera is downstairs in the basement lab at King's, and the fibre is the hard part, not the camera. Get the humidity wrong and DNA will not tell you anything true.",
+    "answers": {
+      "question": {
+        "text": "By 1951 the chemists agreed DNA was a long chain of sugar, phosphate and four bases, and the geneticists were coming round to the idea that it carried heredity. Nobody knew its shape. Shape was the whole point: if you want to understand how a molecule copies itself, you need to know where the atoms sit. My job was to make DNA fibres diffract cleanly enough that the answer could be read off the film instead of guessed at.",
+        "concept": "Structure Determines Function"
+      },
+      "method": {
+        "text": "Everything depends on the specimen. I drew fibres of DNA as fine as spider silk, mounted them in a sealed chamber, and controlled the water around them by bubbling hydrogen through salt solutions — dry the fibre and you get one crystalline form, wet it past ninety percent humidity and you get a quite different one. Then a fine-focus tube, a micro-camera, and an exposure running for days rather than minutes. Afterwards, weeks of arithmetic: Patterson maps, which turn intensities into distances between atoms without assuming a model first.",
+        "concept": "Controlled Fibre Diffraction"
+      },
+      "evidence": {
+        "text": "The wet form gave a cross of dark streaks, and that pattern means a helix — the angle of the arms gives you its pitch. The repeat along the fibre came out at thirty-four ångströms, with three point four between stacked bases, so ten units to a turn, in a molecule roughly twenty ångströms across. And the sheer amount of water it held told you the phosphate groups sit on the outside facing the solvent, with the bases tucked inward. That alone killed several published models.",
+        "concept": "Helical Parameters"
+      },
+      "impact": {
+        "text": "Once you know the backbone is outside and the bases pair inward, copying almost suggests itself, and everything downstream follows: the genetic code, sequencing, the tests that identify a virus in a week. My own later work was on viruses. At Birkbeck I showed that tobacco mosaic virus is a hollow helix of protein with its RNA wound inside the protein at a fixed radius, not a core of nucleic acid as people had supposed. Aaron Klug carried those methods forward after me.",
+        "concept": "Virus Architecture"
+      },
+      "doubt": {
+        "text": "Fibre diffraction has a ceiling. A fibre is not a single crystal, so you get a smear of averaged reflections — enough to fix a repeat distance or a diameter, never enough to place every atom. Past that point you must propose a model and check it against the film, and I was slow to propose, because proposing wrongly in public is how a career ends. That caution cost me. I also did not know at the time that my photograph and my unpublished report had been shown across town.",
+        "concept": "Limits Of Diffraction"
+      }
+    },
+    "misconception": {
+      "myth": "Watson and Crick stole Photograph 51 off Rosalind Franklin's desk.",
+      "reality": "Nothing was stolen: Maurice Wilkins showed the photograph to Watson, and her unpublished progress report reached Cambridge through a routine Medical Research Council committee — all of it without her knowledge, permission or credit. A burglary is simply easier to picture than the ordinary way senior colleagues passed a co-worker's unpublished data among themselves, which is why the theft version sticks."
+    },
+    "terms": [
+      { "term": "X-ray fibre diffraction", "def": "A technique that fires X-rays at a bundle of aligned molecules and infers their geometry from the pattern of scattered rays recorded on film." },
+      { "term": "Ångström", "def": "A unit of length equal to one ten-billionth of a metre, which is roughly the spacing between neighbouring atoms in a molecule." },
+      { "term": "Patterson function", "def": "A mathematical transform of diffraction intensities that yields distances between pairs of atoms without requiring you to guess a structure first." }
+    ],
+    "recognition": "No Nobel: she died of ovarian cancer in 1958, four years before the 1962 prize to Watson, Crick and Wilkins, for which she was not eligible. Her virus structure work was internationally respected in her lifetime."
+  },
+  {
+    "id": "mcclintock",
+    "name": "Barbara McClintock",
+    "lifespan": "1902–1992",
+    "era": "historical",
+    "field": "Cytogenetics and maize genetics",
+    "origin": "United States",
+    "hook": "Mobile genes, decades early",
+    "intro": "Cold Spring Harbor, and that field out there is mine — every plant in it is an experiment. I grow the corn, I pollinate it by hand, and in autumn I sit down and read the ears.",
+    "answers": {
+      "question": {
+        "text": "Speckles. A kernel that ought to come out one solid colour arrives flecked instead, and the flecks have a grammar — broad patches when the change happened early in development, pepper-fine spots when it happened late. That is a clock. Something was switching a pigment gene off, and then, in some cells and not others, letting it come back on. Genes were supposed to be fixed points in a fixed order. Mine were not behaving that way.",
+        "concept": "Variegated Kernel Patterns"
+      },
+      "method": {
+        "text": "Two crafts at once. Under the microscope I stained and squashed pollen mother cells until the ten maize chromosomes lay out plainly, each identifiable by its length and its knobs. In the field I made thousands of controlled crosses and scored every kernel on every ear by eye. Then I put the two together: a plant carrying a chromosome broken at a known place, a visible change in its kernels, and that same chromosome checked again under glass. Cytology, then genetics, then back again.",
+        "concept": "Cytology Plus Genetics"
+      },
+      "evidence": {
+        "text": "The breakage point moved. I had a marker on chromosome nine that snapped the arm at one exact position, and after a few generations of crossing, the snapping was happening somewhere else along that chromosome. The element had changed address. It also did nothing at all unless a second element sat elsewhere in the genome. Lodged inside a pigment gene it silenced the gene; leaving during development, it let colour return, and a spot on the kernel is the offspring of the single cell where it left.",
+        "concept": "Elements That Move"
+      },
+      "impact": {
+        "text": "Something close to half of your own genome is made of these elements or their broken remains — you carry more transposon than gene. Bacteria trade drug resistance on them, which is how a resistance gene crosses between species on a hospital ward. The machinery your immune system uses to generate antibody diversity is a domesticated one of them. And laboratories now move them deliberately, to insert or disrupt genes on purpose. None of that was visible from a cornfield in 1948.",
+        "concept": "Mobile DNA Everywhere"
+      },
+      "doubt": {
+        "text": "Two things. I believed these elements were the general system by which an organism controls which genes act during development, and that was too grand a claim — most of them turn out to be passengers, copying themselves for their own sake, with only some put to work by the host. And I was right about the movement for twenty years before anyone accepted it. I have heard that told as a story about stubbornness. It is really a story about how hard maize was to check.",
+        "concept": "Right But Unbelieved"
+      }
+    },
+    "misconception": {
+      "myth": "Nobody took McClintock seriously because she was a woman working alone with corn.",
+      "reality": "The sexism was real — she went years unable to secure a permanent faculty post — which is exactly why the story feels complete, but by 1944 she was in the National Academy of Sciences and the following year led the Genetics Society of America. What was neglected was the specific claim of transposition, which almost nobody else had the maize cytogenetics to test, and the neglect lifted once bacterial transposons and gene cloning made it checkable."
+    },
+    "terms": [
+      { "term": "Transposable element", "def": "A stretch of DNA able to move to a new position in a genome, in many cases copying itself in the process." },
+      { "term": "Cytogenetics", "def": "The study of chromosomes under the microscope, connecting what you can see inside a cell to what you can measure in a breeding experiment." },
+      { "term": "Genetic mosaic", "def": "An organism whose cells are not all genetically identical, because a change occurred partway through development and only its descendants carry it." }
+    ],
+    "recognition": "Nobel Prize in Physiology or Medicine 1983, unshared; National Medal of Science 1970; elected to the National Academy of Sciences in 1944."
+  },
+  {
+    "id": "tu",
+    "name": "Tu Youyou",
+    "lifespan": "b. 1930",
+    "era": "contemporary",
+    "field": "Pharmaceutical chemistry and parasitology",
+    "origin": "China",
+    "hook": "Two thousand recipes, one compound",
+    "intro": "I was assigned to a wartime malaria project in 1969. We began by reading — old medical texts, folk prescriptions, anything written down — and then we carried each candidate into the laboratory and tested it against the parasite.",
+    "answers": {
+      "question": {
+        "text": "Malaria was killing soldiers faster than the fighting was, and chloroquine, the drug everyone relied on, was failing — the parasite had evolved around it. We needed something that worked by another route entirely. The question I was handed was narrow and answerable: among the plant preparations recorded in the Chinese medical literature, is there one that reduces parasite counts in an infected animal? Not whether the tradition is wise. Whether a particular extract does a particular measurable thing.",
+        "concept": "Chloroquine Resistance"
+      },
+      "method": {
+        "text": "We assembled roughly two thousand candidate remedies and cut that down to a few hundred extracts we could actually test in mice infected with a rodent malaria parasite. Qinghao, sweet wormwood, killed parasites in some batches and not others — which usually means your preparation is destroying the active compound. A fourth-century handbook described soaking the herb in cold water and wringing out the juice, not boiling it. So we extracted at low temperature with ether instead. The variability disappeared.",
+        "concept": "Low-Temperature Extraction"
+      },
+      "evidence": {
+        "text": "The ether extract, our one hundred and ninety-first sample, cleared parasites completely in infected mice and then in monkeys. From it we crystallised a single compound. Its structure surprised the chemists: a sesquiterpene lactone carrying a peroxide bridge, and no nitrogen atom anywhere, unlike quinine, chloroquine and the other drugs then in use. In 1972 we treated twenty-one patients on Hainan Island, and their fevers and parasites cleared, faster than chloroquine had been managing.",
+        "concept": "Peroxide Bridge"
+      },
+      "impact": {
+        "text": "Artemisinin combinations are now the standard first treatment for falciparum malaria nearly everywhere it occurs, given hundreds of millions of times a year. Injected artesunate replaced quinine for severe cases once a large trial showed it saves more lives. The compound is still farmed from the plant and also brewed in engineered yeast, one of the first serious industrial products of synthetic biology. The method matters as much as the molecule: read the old texts for hypotheses, then test them properly.",
+        "concept": "Combination Therapy"
+      },
+      "doubt": {
+        "text": "Resistance, again. Parasites in the Mekong region began clearing more slowly in the late 2000s, and mutations of the same kind have since appeared in East Africa. The drug leaves the body quickly, so it must always be given with a partner drug; used alone it simply teaches the parasite. And we still argue about exactly how it kills — something about iron inside the parasite splitting that peroxide bridge into radicals. Efficacy is not the end of a problem. It is the beginning of the next one.",
+        "concept": "Delayed Parasite Clearance"
+      }
+    },
+    "misconception": {
+      "myth": "Artemisinin proves that traditional Chinese medicine works.",
+      "reality": "The story genuinely does begin in a fourth-century handbook, which is why it is so satisfying, but that text supplied one candidate out of roughly two thousand screened, and it became a medicine only after cold extraction, purification to a single compound, structural characterisation and controlled clinical trials. Traditional knowledge was an excellent source of hypotheses here; it was not the evidence, and the great majority of the other candidates did nothing at all."
+    },
+    "terms": [
+      { "term": "Artemisinin", "def": "A compound from sweet wormwood whose peroxide bridge, once activated inside a malaria parasite, kills it faster than older drugs do." },
+      { "term": "Drug resistance", "def": "The spread of parasite or microbe variants that survive a treatment, making that treatment progressively less useful across a population." },
+      { "term": "Combination therapy", "def": "Giving two drugs with different mechanisms together, so a parasite that survives one is still killed by the other, which slows resistance." }
+    ],
+    "recognition": "Nobel Prize in Physiology or Medicine 2015, shared; Lasker–DeBakey Clinical Medical Research Award 2011. She did the work without a doctorate and was never elected to China's national academies."
+  },
+  {
+    "id": "doudna",
+    "name": "Jennifer Doudna",
+    "lifespan": "b. 1964",
+    "era": "contemporary",
+    "field": "Biochemistry and genome editing",
+    "origin": "United States",
+    "hook": "Bacterial defence, made programmable",
+    "intro": "I did not set out to edit anything. I was an RNA structural biologist, and the question in front of me was how bacteria remember the viruses they have already survived. The tool came out of that.",
+    "answers": {
+      "question": {
+        "text": "A colleague across campus, Jillian Banfield, studies microbes living in acid mine drainage, and she kept finding repeated DNA sequences in their genomes with pieces of virus filed in between. Nobody knew what they were for. The hypothesis was that this is an immune memory — a bacterium keeping a cabinet of records of everything that has attacked it. My question was mechanical: how does a stored piece of sequence become a protein that recognises and cuts the matching DNA?",
+        "concept": "Bacterial Immune Memory"
+      },
+      "method": {
+        "text": "Take it apart and rebuild it in a tube. We purified the Cas9 protein and every RNA we thought it might need, mixed them with a piece of target DNA, and ran the products out on a gel to see whether the DNA had been cut and exactly where. Emmanuelle Charpentier's lab had found a second small RNA that turned out to be essential, so the two groups worked together. Disable one domain of the protein and only one strand gets cut. That tells you which part does what.",
+        "concept": "In Vitro Reconstitution"
+      },
+      "evidence": {
+        "text": "Two results mattered. First, Cas9 cuts only where the guide RNA matches and where a short motif sits immediately beside the target — the PAM, a couple of bases, which is how a bacterium avoids shredding its own stored records. Second, we fused the two natural RNAs into one synthetic molecule and it still worked. That meant you could change twenty letters of that RNA and point the enzyme wherever you liked. Programmable, in the ordinary engineering sense of the word.",
+        "concept": "Programmable Guide RNA"
+      },
+      "impact": {
+        "text": "In 2023 regulators approved a CRISPR therapy for sickle cell disease and beta thalassaemia: a patient's own blood stem cells edited outside the body and returned. Nearly every genetics lab now uses this to switch genes off and see what breaks. I want to be clear about the lineage, though. Francisco Mojica proposed the immune function, Rodolphe Barrangou and Philippe Horvath demonstrated it in yoghurt bacteria, Feng Zhang's and George Church's groups got it working in human cells, and the patents were contested for years.",
+        "concept": "Edited Blood Cells"
+      },
+      "doubt": {
+        "text": "Cutting is easy; controlling the repair is not. The cell mends the break its own way, so you get off-target cuts, mixtures of edited and unedited cells, and occasionally large deletions nobody intended. Getting the machinery into the right tissue is still the hard problem. Editing embryos is different in kind, because the change passes to everyone who comes after — I have argued publicly for restraint there, and a researcher went ahead anyway in 2018. Meanwhile a therapy priced in the millions reaches almost nobody who needs it.",
+        "concept": "Uncontrolled Repair Outcomes"
+      }
+    },
+    "misconception": {
+      "myth": "CRISPR lets you edit any gene precisely, like find-and-replace in a document.",
+      "reality": "Cas9 reliably makes a cut at a chosen site, but what happens next is done by the cell's own repair machinery, which is error-prone and not under the experimenter's control. The find-and-replace image is appealing because the targeting really is that precise; the editing that follows is not."
+    },
+    "terms": [
+      { "term": "CRISPR", "def": "Clustered regularly interspaced short palindromic repeats: stretches of bacterial DNA storing fragments of viruses the cell has survived, used as an immune memory." },
+      { "term": "Guide RNA", "def": "A short RNA that base-pairs with a matching DNA sequence and brings a cutting enzyme to that exact site." },
+      { "term": "PAM", "def": "Protospacer adjacent motif: a very short DNA signal that must sit next to a target before Cas9 will cut, which stops a bacterium from cutting its own records." }
+    ],
+    "recognition": "Nobel Prize in Chemistry 2020, shared with Emmanuelle Charpentier — the first science Nobel awarded to two women alone; Breakthrough Prize in Life Sciences 2015."
+  },
+  {
+    "id": "kariko",
+    "name": "Katalin Karikó",
+    "lifespan": "b. 1955",
+    "era": "contemporary",
+    "field": "RNA biochemistry and mRNA therapeutics",
+    "origin": "Hungary / United States",
+    "hook": "The molecule nobody would fund",
+    "intro": "For most of my career mRNA was considered a bad bet — too unstable, too inflammatory. I kept at it because the problem was interesting, and later because I thought the inflammation was a solvable detail.",
+    "answers": {
+      "question": {
+        "text": "Messenger RNA is instructions. Get it into a cell and the cell will build whatever protein you specify, do it for a day or two, then degrade the message — nothing permanent, nothing touching the genome. That much was obvious in the eighties. It also did not work: RNA we made in a test tube provoked a violent inflammatory response. So the real question became a different one. How does a cell tell its own RNA apart from an intruder's?",
+        "concept": "Self Versus Foreign RNA"
+      },
+      "method": {
+        "text": "We compared RNAs. RNA transcribed in a test tube set human immune cells screaming, while transfer RNA, which the cell decorates with dozens of chemical modifications, did almost nothing. So we made the same message over and over, each time swapping one ordinary building block for a modified version, and put every batch onto human dendritic cells to measure the cytokines released and work out which innate sensor was being tripped. Drew Weissman had the immunology and the funding. I had been demoted off the faculty track at Penn in 1995.",
+        "concept": "Nucleoside Substitution Screen"
+      },
+      "evidence": {
+        "text": "Uridine was the culprit. Swap it for pseudouridine — an isomer, the same atoms with the sugar joined to a different position on the ring, and one the cell already puts in its own RNA — and the inflammatory signal collapsed to near background. The innate sensors stopped registering the message as foreign. Better still, the modified RNA survived longer in the cell and was translated more efficiently, so the same dose produced substantially more protein. Rearrange one bond, and the molecule becomes usable.",
+        "concept": "Pseudouridine Silences Inflammation"
+      },
+      "impact": {
+        "text": "Both mRNA vaccines given during the pandemic use a modified nucleoside, a methylated relative of pseudouridine, and billions of doses went into arms. The platform matters more than any single product: once manufacturing is the same regardless of the sequence, you can go from a published viral genome to a candidate in days rather than years. Trials are now running for cancer vaccines tailored to a patient's own tumour mutations, and for supplying proteins to people whose cells cannot make them.",
+        "concept": "Platform Not Product"
+      },
+      "doubt": {
+        "text": "Durability. Protection against infection fades over months, faster than protection against severe illness, and we do not fully understand why the response is not more lasting. Delivery is the other limit: the lipid particle carrying the RNA goes mainly to the injection site and the liver, so most tissues remain out of reach, and repeat dosing for a lifelong protein deficiency is unsolved. And a technology needing cold chains and a handful of factories does not reach everyone who needs it.",
+        "concept": "Waning Protection"
+      }
+    },
+    "misconception": {
+      "myth": "The mRNA COVID vaccines were invented in under a year, which is why they must have been rushed.",
+      "reality": "The sequence really was designed within days of the viral genome being posted, and that does sound impossibly fast, but the platform underneath it took about three decades — including the modified-nucleoside work published in 2005 and the lipid delivery chemistry developed by other groups. What was compressed was funding, manufacturing and trial recruitment run in parallel rather than in sequence; the trials themselves were full size."
+    },
+    "terms": [
+      { "term": "Messenger RNA", "def": "A temporary working copy of a gene that a cell reads in order to build a protein, and then breaks down within hours or days." },
+      { "term": "Pseudouridine", "def": "A naturally occurring isomer of uridine in which the sugar attaches to a different atom of the base; RNA containing it is far less likely to trigger inflammation." },
+      { "term": "Innate immunity", "def": "The fast, non-specific arm of the immune system, which reacts to general signatures of infection such as foreign-looking RNA rather than to a specific pathogen." }
+    ],
+    "recognition": "Nobel Prize in Physiology or Medicine 2023, shared with Drew Weissman; Lasker Award 2021. Her grant applications were repeatedly rejected and she was demoted from the faculty track at the University of Pennsylvania in 1995."
+  }
+]
