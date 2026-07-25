@@ -4,7 +4,7 @@ An FPS-shaped exploration game where the weapon is a question. You walk a 3D sta
 interview 24 historical and contemporary scientists; the goal is to reconstruct how they knew
 what they knew, not to memorise what they found.
 
-**▶ Play it: _(link appears here once Pages is live)_**
+**▶ Play it: https://taaltree.github.io/inquiry/**
 
 Built as a single self-contained HTML file. No dependencies, no network calls, no build-time
 assets — the renderer, the world, the figures and every piece of text are generated in code.
