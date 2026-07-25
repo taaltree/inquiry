@@ -32,6 +32,13 @@ const LOOKS = {
   turing:        { h: 1.73, build: 0.48, hair: 'short', garment: 'jacket',   prop: 'tape' },
   cajal:         { h: 1.70, build: 0.50, hair: 'bald',  garment: 'suit',     prop: 'beard' },
   li:            { h: 1.64, build: 0.42, hair: 'long',  garment: 'modern',   prop: 'screen' },
+  // level 2 — the summit conference
+  thompson:      { h: 1.76, build: 0.52, hair: 'short', garment: 'jacket',   prop: 'globe' },
+  hayhoe:        { h: 1.66, build: 0.42, hair: 'long',  garment: 'modern',   prop: 'screen' },
+  simard:        { h: 1.65, build: 0.42, hair: 'bob',   garment: 'jacket',   prop: 'cob' },
+  bertozzi:      { h: 1.68, build: 0.44, hair: 'short', garment: 'labcoat',  prop: 'flask' },
+  yamanaka:      { h: 1.70, build: 0.46, hair: 'short', garment: 'labcoat',  prop: 'model' },
+  charpentier:   { h: 1.64, build: 0.42, hair: 'long',  garment: 'labcoat',  prop: 'helix' },
 };
 
 const DEFAULT_LOOK = { h: 1.70, build: 0.46, hair: 'short', garment: 'jacket', prop: 'none' };
@@ -316,6 +323,26 @@ function buildDevice(gl) {
   return b.upload(gl);
 }
 
+/* The player's own board, seen from above as you ride. Built with +Z toward
+   the viewer so it matches the viewmodel basis, same as the Inquiry Device. */
+function buildRideModel(gl) {
+  const b = new Builder();
+  const deck = hex2rgb('#1b2740'), edge = hex2rgb('#8fd0ff'), base = hex2rgb('#26354f');
+  const boot = hex2rgb('#2e2620'), trouser = hex2rgb('#39485f');
+  b.add(pCyl(4, true, true, 0.5, 0.44), xform([0, 0, 0], [0, Math.PI / 4, 0], [0.36, 0.055, 1.72]), deck, 0.05);
+  b.add(BOX, xform([0, -0.030, 0], [0, 0, 0], [0.32, 0.030, 1.58]), base, 0.08);
+  b.add(BOX, xform([0, 0.030, -0.80], [-0.36, 0, 0], [0.28, 0.045, 0.26]), deck, 0.05);
+  b.add(BOX, xform([0, 0.030, 0.80], [0.36, 0, 0], [0.28, 0.045, 0.26]), deck, 0.05);
+  b.add(BOX, xform([0, 0.058, 0], [0, 0, 0], [0.062, 0.018, 1.36]), edge, 0.75);
+  b.add(BOX, xform([0, 0.050, -0.52], [0, 0, 0], [0.30, 0.014, 0.16]), edge, 0.5);
+  for (const [dz, ang] of [[-0.30, 0.30], [0.30, 0.16]]) {
+    b.add(BOX, xform([0, 0.075, dz], [0, ang, 0], [0.24, 0.055, 0.30]), hex2rgb('#4a3a2e'), 0.05);
+    b.add(BOX, xform([0, 0.145, dz], [0, ang, 0], [0.22, 0.115, 0.30]), boot, 0.04);
+    b.add(BOX, xform([0, 0.240, dz], [0, ang, 0], [0.20, 0.085, 0.26]), trouser, 0.03);
+  }
+  return b.upload(gl);
+}
+
 /* five slot pips across the reader panel, lit individually */
 function buildDevicePips(gl) {
   const out = [];
@@ -350,4 +377,90 @@ function buildCompleteMark(gl) {
   b.add(pPrism(4, 0.02), xform([0, -0.22, 0], [Math.PI, 0, 0], [0.66, 0.44, 0.66]), [1, 1, 1], 2.4);
   b.add(pTorus(0.06, 24, 6), xform([0, 0, 0], [0, 0, 0], [1.05, 1, 1.05]), [1, 1, 1], 2.0);
   return b.upload(gl);
+}
+
+
+/* ============================================================
+   Student status plates. Persistent and legible at range — a
+   1.5 s toast is not enough to tell you what a student needs.
+   Cached by (tier, wants) so there are at most 20 textures.
+   ============================================================ */
+const SPLATE_W = 640, SPLATE_H = 300;
+const SPLATE_CACHE = {};
+
+function studentPlate(gl, tier, wants, tierName, qName, qHex) {
+  const key = `${tier}|${wants}`;
+  if (SPLATE_CACHE[key]) return SPLATE_CACHE[key];
+
+  const cv = document.createElement('canvas');
+  cv.width = SPLATE_W; cv.height = SPLATE_H;
+  const c = cv.getContext('2d');
+  const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+  const MONO = 'ui-monospace, Menlo, monospace';
+  const tierHex = ['#9fb0c6', '#8fd0ff', '#7df0ae', '#ffd98a'][tier];
+  const done = tier >= 3;
+
+  c.textAlign = 'center';
+
+  // tier name
+  c.font = `600 46px ${SANS}`;
+  c.fillStyle = tierHex;
+  c.shadowColor = tierHex; c.shadowBlur = 22;
+  c.fillText(tierName.toUpperCase(), SPLATE_W / 2, 52);
+  c.shadowBlur = 0;
+
+  // progress pips: 4 steps from Unaware to Graduate
+  const pipW = 76, gap = 12, total = 4 * pipW + 3 * gap;
+  for (let i = 0; i < 4; i++) {
+    const x = SPLATE_W / 2 - total / 2 + i * (pipW + gap);
+    c.fillStyle = i < tier + 1 ? tierHex : 'rgba(255,255,255,0.16)';
+    if (i < tier + 1) { c.shadowColor = tierHex; c.shadowBlur = 14; }
+    c.fillRect(x, 78, pipW, 13);
+    c.shadowBlur = 0;
+  }
+
+  if (done) {
+    c.font = `600 34px ${SANS}`;
+    c.fillStyle = '#ffd98a';
+    c.shadowColor = '#ffd98a'; c.shadowBlur = 18;
+    c.fillText('FULLY EDUCATED', SPLATE_W / 2, 148);
+    c.shadowBlur = 0;
+  } else {
+    c.font = `500 27px ${MONO}`;
+    c.fillStyle = 'rgba(233,242,255,0.80)';
+    c.fillText('NEEDS', SPLATE_W / 2, 142);
+
+    // the wanted question type, big and in its own colour
+    c.font = `700 62px ${SANS}`;
+    c.fillStyle = qHex;
+    c.shadowColor = qHex; c.shadowBlur = 26;
+    c.fillText(qName, SPLATE_W / 2, 208);
+    c.shadowBlur = 0;
+
+    c.font = `500 26px ${MONO}`;
+    c.fillStyle = 'rgba(233,242,255,0.62)';
+    c.fillText(`PRESS ${wants + 1}  ·  THEN FIRE`, SPLATE_W / 2, 252);
+
+    // a key-cap around the number
+    c.strokeStyle = qHex; c.lineWidth = 3; c.globalAlpha = 0.75;
+    const kx = SPLATE_W / 2 - 100;
+    c.strokeRect(kx, 228, 34, 32);
+    c.globalAlpha = 1;
+  }
+
+  const tex = texFromCanvas(gl, cv);
+  SPLATE_CACHE[key] = tex;
+  return tex;
+}
+
+/* rising "+N" mote when an insight lands on a student */
+function buildGainPlate(gl, text, hex) {
+  const cv = document.createElement('canvas');
+  cv.width = 420; cv.height = 160;
+  const c = cv.getContext('2d');
+  c.textAlign = 'center';
+  c.font = `700 96px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+  c.fillStyle = hex; c.shadowColor = hex; c.shadowBlur = 30;
+  c.fillText(text, 210, 108);
+  return texFromCanvas(gl, cv);
 }

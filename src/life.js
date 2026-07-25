@@ -10,6 +10,7 @@
    ============================================================ */
 
 const STUDENT_COUNT = 22;
+const SUMMIT_STUDENTS = 14;
 const DRONE_MAX = 4;
 
 /* Education is the win condition, so it has to be legible at a glance.
@@ -22,6 +23,7 @@ const TIERS = [
 ];
 const tierOf = (taught) => (taught >= 4 ? 3 : taught >= 2 ? 2 : taught >= 1 ? 1 : 0);
 const DRONES_PER_DISTRICT = 3;
+const SUMMIT_DRONES = 5;
 
 /* ---------- meshes ---------- */
 
@@ -130,6 +132,20 @@ function buildStudentMarks(gl) {
   };
 }
 
+function buildSnowboard(gl) {
+  const b = new Builder();
+  const deck = hex2rgb('#1d2a44'), edge = hex2rgb('#8fd0ff'), base = hex2rgb('#2b3a56');
+  b.add(pCyl(4, true, true, 0.5, 0.42), xform([0, 0.055, 0], [0, Math.PI / 4, 0], [0.34, 0.07, 1.62]), deck, 0.06);
+  b.add(BOX, xform([0, 0.020, 0], [0, 0, 0], [0.30, 0.035, 1.50]), base, 0.10);
+  b.add(BOX, xform([0, 0.058, 0.74], [0.34, 0, 0], [0.26, 0.05, 0.24]), deck, 0.06);
+  b.add(BOX, xform([0, 0.058, -0.74], [-0.34, 0, 0], [0.26, 0.05, 0.24]), deck, 0.06);
+  b.add(BOX, xform([0, 0.088, 0], [0, 0, 0], [0.055, 0.02, 1.30]), edge, 0.85);
+  for (const s of [-1, 1]) {
+    b.add(BOX, xform([s * 0.10, 0.13, s * 0.16], [0, s * 0.35, 0], [0.20, 0.10, 0.28]), hex2rgb('#3a2f28'), 0.05);
+  }
+  return b.upload(gl);
+}
+
 /* the "learned it" mote that pops over a taught student */
 function buildSpark(gl) {
   const b = new Builder();
@@ -172,15 +188,17 @@ function buildBoltMesh(gl, colour, glow) {
 /* ============================================================ */
 
 class Life {
-  constructor(gl, game) {
+  constructor(gl, game, mode) {
     this.game = game;
     this.gl = gl;
-    this.rnd = mulberry(4242);
+    this.mode = mode || 'walk';         // 'walk' = station, 'ride' = mountain
+    this.rnd = mulberry(mode === 'ride' ? 5150 : 4242);
 
     this.studentMeshes = [];
     for (let i = 0; i < 8; i++) this.studentMeshes.push(buildStudentMesh(gl, 900 + i * 137));
     this.sparkMesh = buildSpark(gl);
     this.marks = buildStudentMarks(gl);
+    this.boardMesh = buildSnowboard(gl);
     this.droneMesh = buildDroneMesh(gl);
     this.insightBolt = buildBoltMesh(gl, hex2rgb('#8ff0ff'), 2.2);
     this.misinfoBolt = buildBoltMesh(gl, hex2rgb('#ff45a6'), 2.0);
@@ -189,13 +207,20 @@ class Life {
     // Every student has a home district so "educate this district" is countable.
     // Four per district, the remainder loitering in the atrium.
     this.students = [];
-    for (let i = 0; i < STUDENT_COUNT; i++) {
-      const home = i < DISTRICTS.length * 4 ? DISTRICTS[i % DISTRICTS.length] : null;
-      this.students.push(this.spawnStudent(i, home));
+    if (this.mode === 'ride') {
+      // grad students strung down the run, each looping their own stretch of it
+      for (let i = 0; i < SUMMIT_STUDENTS; i++) this.students.push(this.spawnRider(i));
+    } else {
+      for (let i = 0; i < STUDENT_COUNT; i++) {
+        const home = i < DISTRICTS.length * 4 ? DISTRICTS[i % DISTRICTS.length] : null;
+        this.students.push(this.spawnStudent(i, home));
+      }
     }
 
+    this.gainPlates = {};        // "+1" / "+2" motes, built lazily
     this.drones = [];
     this.bolts = [];
+    this.motes = [];
     this.spawnTimer = 8;
     this.model = M4.create();
   }
@@ -213,6 +238,24 @@ class Life {
       state: 'idle', timer: this.rnd() * 4,
       taught: 0, confused: 0, sparkT: 0, sparkCol: [1, 1, 1],
       phase: this.rnd() * TAU, bob: 0, fireCd: 3 + this.rnd() * 5,
+      wants: (this.rnd() * 5) | 0,          // the question type that helps them most
+      line: '', lineT: 0,
+    };
+  }
+
+  spawnRider(i) {
+    const band = (i + 0.5) / SUMMIT_STUDENTS;
+    const z = -band * MTN.LEN * 0.92 - 20;
+    const x = (this.rnd() - 0.5) * 46;
+    return {
+      id: i, home: 'summit', hx: x, hz: z, roam: 0,
+      x, z, y: mtnHeight(x, z), yaw: 0,
+      mesh: this.studentMeshes[i % this.studentMeshes.length],
+      speed: 9 + this.rnd() * 6, drift: this.rnd() * TAU, band,
+      state: 'ride', timer: 0,
+      taught: 0, confused: 0, sparkT: 0, sparkCol: [1, 1, 1],
+      phase: this.rnd() * TAU, bob: 0, fireCd: 3 + this.rnd() * 5,
+      wants: (this.rnd() * 5) | 0,
       line: '', lineT: 0,
     };
   }
@@ -246,10 +289,11 @@ class Life {
     return { x: 0, z: 18 };
   }
 
-  teach(s, conceptCol, line) {
+  teach(s, conceptCol, line, matched) {
     const wasConfused = s.confused > 0;
     s.confused = 0;
-    s.taught++;
+    s.taught += matched ? 2 : 1;
+    if (matched) s.wants = (s.wants + 1 + ((this.rnd() * 4) | 0)) % 5;
     s.sparkT = 1.6;
     s.sparkCol = conceptCol;
     s.state = 'idle';
@@ -274,9 +318,27 @@ class Life {
 
   spawnDrone(forceDistrict) {
     if (this.drones.length >= DRONE_MAX) return null;
+    const G = this.game;
+
+    if (this.mode === 'ride') {
+      if ((G.feedCleared.summit || 0) >= SUMMIT_DRONES) return null;
+      const live = this.drones.filter((x) => !x.dead).length;
+      if (live + (G.feedCleared.summit || 0) >= SUMMIT_DRONES) return null;
+      const px = G.ride.x + (this.rnd() - 0.5) * 60;
+      const pz = G.ride.z - 55 - this.rnd() * 70;         // ahead, down the run
+      const card = MISINFO[(this.rnd() * MISINFO.length) | 0];
+      const drone = {
+        x: px, y: mtnHeight(px, pz) + 7 + this.rnd() * 5, z: pz,
+        district: 'summit', card, cooldown: 3 + this.rnd() * 3,
+        integrity: 1, yaw: 0, phase: this.rnd() * TAU,
+        dying: 0, dead: false, scanned: false, born: 0, stagger: 0, hover: true,
+      };
+      this.drones.push(drone);
+      return drone;
+    }
+
     const d = forceDistrict || this.currentDistrict();
     if (!d) return null;
-    const G = this.game;
     if ((G.feedCleared[d.id] || 0) >= DRONES_PER_DISTRICT) return null;
     const live = this.drones.filter((x) => x.district === d.id && !x.dead).length;
     if (live + (G.feedCleared[d.id] || 0) >= DRONES_PER_DISTRICT) return null;
@@ -324,15 +386,72 @@ class Life {
   }
 
   /* ---------- per-frame ---------- */
+  gainPlate(text, hex) {
+    const key = text + hex;
+    if (!this.gainPlates[key]) this.gainPlates[key] = buildGainPlate(this.gl, text, hex);
+    return this.gainPlates[key];
+  }
+
+  addMote(x, y, z, text, hex) {
+    this.motes.push({ x, y, z, tex: this.gainPlate(text, hex), t: 0 });
+  }
+
   update(dt, t) {
     const G = this.game;
     const cam = G.cam;
+    for (const m of this.motes) { m.t += dt; m.y += dt * 0.85; }
+    this.motes = this.motes.filter((m) => m.t < 2.4);
 
     /* students */
     for (const s of this.students) {
       s.timer -= dt;
       if (s.lineT > 0) s.lineT -= dt;
       if (s.sparkT > 0) s.sparkT -= dt;
+
+      if (this.mode === 'ride') {
+        s.drift += dt * 0.55;
+        const targetX = Math.sin(s.drift) * 34;
+        s.x += (targetX - s.x) * dt * 0.55;
+        s.z -= s.speed * dt * (s.confused > 0 ? 0.55 : 1);
+        s.y = mtnHeight(s.x, s.z);
+        s.yaw = Math.cos(s.drift) * 0.55;
+        s.bob += dt * 6;
+        // loop back to the top of their stretch so the run always feels populated
+        if (s.z < -MTN.LEN * 0.97) {
+          s.z = -Math.max(0, s.band - 0.12) * MTN.LEN - 12;
+          s.x = (this.rnd() - 0.5) * 40;
+        }
+        if (s.lineT > 0) s.lineT -= dt;
+        if (s.sparkT > 0) s.sparkT -= dt;
+        if (s.confused > 0) s.confused -= dt;
+        const tierR = TIERS[this.tier(s)];
+        if (tierR.fire > 0 && s.confused <= 0) {
+          s.fireCd -= dt;
+          if (s.fireCd <= 0) {
+            let best = null, bd = 42;
+            for (const d of this.drones) {
+              if (d.dead) continue;
+              const dd = Math.hypot(d.x - s.x, d.z - s.z);
+              if (dd < bd) { bd = dd; best = d; }
+            }
+            if (best) {
+              s.fireCd = tierR.fire * (0.7 + this.rnd() * 0.6);
+              const dx = best.x - s.x, dy = best.y - (s.y + 1.4), dz = best.z - s.z;
+              const L = Math.hypot(dx, dy, dz) || 1;
+              const spread = this.tier(s) === 3 ? 0.02 : 0.075;
+              this.bolts.push({
+                kind: 'student', chip: tierR.chip, byTier: this.tier(s),
+                x: s.x, y: s.y + 1.4, z: s.z,
+                vx: (dx / L + (this.rnd() - 0.5) * spread) * 34,
+                vy: (dy / L + (this.rnd() - 0.5) * spread) * 34,
+                vz: (dz / L + (this.rnd() - 0.5) * spread) * 34,
+                life: 1.8, col: hex2rgb('#9fe8c0'),
+              });
+            } else s.fireCd = 2.5;
+          }
+        }
+        continue;
+      }
 
       if (s.state === 'idle' && s.timer <= 0) {
         const p = this.randomPoint(s.hx, s.hz, s.roam);
@@ -424,7 +543,10 @@ class Life {
       d.x += Math.sin(t * 0.7 + d.phase) * 0.6 * dt;
       d.z += Math.cos(t * 0.55 + d.phase) * 0.6 * dt;
       d.y += Math.sin(t * 1.3 + d.phase) * 0.32 * dt;
-      d.y = clamp(d.y, 2.3, 5.2);
+      if (d.hover) {
+        const g = mtnHeight(d.x, d.z) + 8.5;
+        d.y += (g - d.y) * (1 - Math.exp(-2.4 * dt));
+      } else d.y = clamp(d.y, 2.3, 5.2);
       d.yaw = Math.atan2(dx, dz);
 
       d.cooldown -= dt;
@@ -515,9 +637,14 @@ class Life {
       if (dx * dx + dz * dz > 130 * 130) continue;
       const walkBob = s.state === 'walk' ? Math.abs(Math.sin(s.bob)) * 0.045 : 0;
       const idleBob = Math.sin(time * 1.1 + s.phase) * 0.012;
-      const y = walkBob + idleBob;
+      const y = this.mode === 'ride'
+        ? s.y + Math.abs(Math.sin(s.bob)) * 0.06
+        : walkBob + idleBob;
       const t = this.tier(s);
       M4.trs(this.model, s.x, y, s.z, s.yaw, 1, 1, 1);
+      if (this.mode === 'ride') {
+        R.drawMesh(this.boardMesh, this.model, { tint: [1, 1, 1] });
+      }
       const tint = s.confused > 0
         ? [1.40, 0.60, 1.05]
         : [1 + t * 0.10, 1 + t * 0.13, 1 + t * 0.16];
@@ -548,6 +675,29 @@ class Life {
       M4.trs(this.model, d.x, d.y, d.z, d.yaw + spin, k, k, k);
       const flick = 0.9 + 0.35 * Math.sin(time * 21 + d.phase) * Math.sin(time * 7.3);
       R.drawMesh(this.droneMesh, this.model, { tint: [flick, flick * 0.9, flick] });
+    }
+  }
+
+  /* Status plates: which tier a student is at and what they still need.
+     Persistent, not a toast — you should be able to plan a route by reading them. */
+  drawPlates(R, cam, basis) {
+    for (const s of this.students) {
+      const dist = Math.hypot(s.x - cam.x, s.z - cam.z);
+      if (dist > 62 || dist < 1.2) continue;
+      const t = this.tier(s);
+      const q = QTYPES[s.wants];
+      const tex = studentPlate(this.gl, t, s.wants, TIERS[t].name, q.name, QHEX[s.wants]);
+      const fade = clamp((62 - dist) / 16, 0, 1) * clamp((dist - 1.4) / 1.6, 0, 1);
+      if (fade < 0.02) continue;
+      const sc = 1 + Math.min(dist / 26, 1.5);        // keep it readable far away
+      const baseY = (this.mode === 'ride' ? s.y : 0) + 2.34;
+      R.drawBillboard(tex, [s.x, baseY, s.z], 2.15 * sc, 1.01 * sc,
+        [1, 1, 1, fade * (s.confused > 0 ? 0.65 : 1)], 0.28, basis);
+    }
+    for (const m of this.motes) {
+      const k = clamp(1 - m.t / 2.4, 0, 1);
+      R.drawBillboard(m.tex, [m.x, m.y, m.z], 1.5 * (1 + (1 - k) * 0.5), 0.57 * (1 + (1 - k) * 0.5),
+        [1, 1, 1, Math.min(1, k * 2.2)], 0.5, basis);
     }
   }
 

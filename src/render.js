@@ -383,7 +383,7 @@ class Renderer {
   beginScene(cam, env, time) {
     const gl = this.gl;
     M4.perspective(this.proj, cam.fov, this.W / this.H, 0.08, 900);
-    M4.view(this.viewM, cam.x, cam.y, cam.z, cam.yaw, cam.pitch);
+    M4.view(this.viewM, cam.x, cam.y, cam.z, cam.yaw, cam.pitch, cam.roll || 0);
     M4.mul(this.vp, this.proj, this.viewM);
     this.cam = cam; this.env = env; this.time = time;
 

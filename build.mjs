@@ -12,6 +12,7 @@ const src = (p) => readFileSync(join(here, 'src', p), 'utf8');
 const data = (p) => JSON.parse(readFileSync(join(here, 'src/data', p), 'utf8'));
 
 /* ---------- data ---------- */
+// The five station districts have vaults; the summit is level 2 and does not.
 const DISTRICT_FILES = [
   ['foundry', 'foundry.json'],
   ['observatory', 'observatory.json'],
@@ -23,6 +24,24 @@ const DISTRICT_FILES = [
 const roster = [];
 for (const [district, file] of DISTRICT_FILES) {
   for (const p of data(file)) roster.push({ ...p, district });
+}
+let SUMMIT_STUBBED = false;
+try {
+  for (const p of data('summit.json')) roster.push({ ...p, district: 'summit' });
+} catch (e) {
+  SUMMIT_STUBBED = true;
+  for (let i = 0; i < 6; i++) {
+    roster.push({
+      id: `stubprof${i}`, name: `Stub Professor ${i + 1}`, lifespan: 'b. 1960',
+      era: 'contemporary', field: 'Placeholder', origin: '—', hook: 'Placeholder.',
+      intro: 'Placeholder while the summit content is generated for level two of this game.',
+      answers: Object.fromEntries(['question', 'method', 'evidence', 'impact', 'doubt']
+        .map((k) => [k, { text: 'Placeholder answer.', concept: 'Placeholder' }])),
+      misconception: { myth: 'Placeholder.', reality: 'Placeholder.' },
+      terms: [{ term: 'Placeholder', def: 'Placeholder.' }],
+      recognition: 'Placeholder.', district: 'summit',
+    });
+  }
 }
 /* connections/vaults may still be in flight during development — stub them so the
    engine is testable, but shout loudly so a stub never ships by accident. */
@@ -126,7 +145,7 @@ if (problems.length) {
 }
 
 /* ---------- assemble ---------- */
-const SCRIPTS = ['core.js', 'geom.js', 'render.js', 'world.js', 'actors.js', 'portrait.js', 'campus.js', 'life.js', 'hud.js', 'game.js'];
+const SCRIPTS = ['core.js', 'geom.js', 'render.js', 'world.js', 'actors.js', 'portrait.js', 'campus.js', 'mountain.js', 'life.js', 'hud.js', 'game.js'];
 
 const dataBlock = `/* content data — see the on-screen notice: all dialogue is written for this game */
 const ROSTER = ${JSON.stringify(roster)};
@@ -164,6 +183,9 @@ writeFileSync(join(here, 'dist/.nojekyll'), '');
 
 if (STUBBED) {
   console.warn('\n  ⚠  connections.json / vaults.json missing — built with STUBS. Do not ship.\n');
+}
+if (SUMMIT_STUBBED) {
+  console.warn('\n  ⚠  summit.json missing — level 2 professors are STUBS. Do not ship.\n');
 }
 const kb = (s) => (Buffer.byteLength(s) / 1024).toFixed(0) + ' KB';
 console.log(`  built  dist/index.html     ${kb(standalone)}   (GitHub Pages entry)`);

@@ -62,7 +62,7 @@ const HUD = {
     this.mapCtx = $('#mapc').getContext('2d');
 
     $$('[data-close]').forEach((b) => b.addEventListener('click', () => game.closeScreen(b.dataset.close)));
-    $('#btn-start').addEventListener('click', () => game.start());
+    $('#btn-start').addEventListener('click', () => this.openLevels());
 
     // look settings, persisted
     const sens = $('#sens'), sensOut = $('#sens-out'), inv = $('#invert');
@@ -137,7 +137,35 @@ const HUD = {
   },
 
   /* per-district checklist — the actual win condition, always on screen */
+  setLevel(g) {
+    const L = LEVELS.find((x) => x.id === g.level);
+    document.documentElement.style.setProperty('--acc', g.level === 'summit' ? '#8fd0ff' : '#ffd98a');
+    this._acc = null;
+    document.getElementById('hud').classList.toggle('summit', g.level === 'summit');
+    const station = g.level !== 'summit';
+    for (const id of ['st-con-row', 'st-vau-row']) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = station ? '' : 'none';
+    }
+    $('#compass').style.display = station ? '' : 'none';
+    $('#map').style.display = station ? '' : 'none';
+    this.log(`<b>LEVEL ${L.n}</b> — ${esc(L.name)}. ${esc(L.sub)}.`);
+  },
+
   objectivePanel(g) {
+    if (g.level === 'summit') {
+      const st = g.summitStatus();
+      $('#obj-title').textContent = 'Work the conference';
+      $('#obj-where').textContent = g.summitWon()
+        ? 'Poster session open — ride to the marquee'
+        : `${(Math.max(0, -g.ride.z) / MTN.LEN * 100) | 0}% down the run`;
+      $('#tasks').innerHTML = st.tasks.map((t) => {
+        const done = t.n >= t.of;
+        return `<div class="task ${done ? 'done' : ''}"><i>${done ? '✓' : '▢'}</i>
+          <span>${esc(t.label)}</span><b>${t.n}/${t.of}</b></div>`;
+      }).join('');
+      return;
+    }
     const d = g.focusDistrict();
     const box = $('#tasks');
     if (!d) {
@@ -177,6 +205,19 @@ const HUD = {
     const t = $('#st-taught'), db = $('#st-deb');
     if (t) t.textContent = String(s.taught || 0);
     if (db) db.textContent = String(s.debunked || 0);
+  },
+
+  /* Big, centred, holds long enough to actually read. Toasts were too small
+     and too brief for the one piece of feedback the player most needs. */
+  banner(title, sub, hex) {
+    const el = document.createElement('div');
+    el.className = 'tbanner';
+    el.style.setProperty('--bc', hex || '#7fe8ff');
+    el.innerHTML = `<div class="tb-t">${esc(title)}</div>${sub ? `<div class="tb-s">${esc(sub)}</div>` : ''}`;
+    const box = $('#toasts');
+    box.appendChild(el);
+    while (box.children.length > 3) box.firstChild.remove();
+    setTimeout(() => el.remove(), 3600);
   },
 
   toast(text, sub) {
@@ -525,6 +566,63 @@ const HUD = {
 
   /* ---------- screens ---------- */
   screen(id, on) { $('#' + id).classList.toggle('on', on); },
+
+  /* ---------- level select ---------- */
+  openLevels() {
+    const g = this.game;
+    $('#level-cards').innerHTML = LEVELS.map((L) => {
+      const done = L.id === 'summit'
+        ? (g.secured.summit ? 'COMPLETE' : null)
+        : (g.allSecured() ? 'COMPLETE' : `${g.securedCount()}/5 districts secured`);
+      return `<button class="lcard ${L.id}" data-level="${L.id}">
+        <div class="lc-art ${L.id}"></div>
+        <div class="lc-body">
+          <div class="lc-n">LEVEL ${L.n}</div>
+          <div class="lc-name">${esc(L.name)}</div>
+          <div class="lc-sub">${esc(L.sub)}</div>
+          <p class="lc-blurb">${esc(L.blurb)}</p>
+          <div class="lc-state">${done ? esc(done) : 'Not started'}</div>
+        </div></button>`;
+    }).join('');
+    $$('#level-cards [data-level]').forEach((el) =>
+      el.addEventListener('click', () => { this.screen('levels', false); g.start(el.dataset.level); }));
+    this.screen('title', false);
+    this.screen('levels', true);
+  },
+
+  /* ---------- poster session ---------- */
+  openPoster() {
+    const g = this.game, L = g.lives.summit;
+    const grads = L.students.filter((s) => L.tier(s) >= 3).length;
+    const informed = L.students.filter((s) => L.tier(s) >= 2).length;
+    const profs = g.roster.filter((p) => p.district === 'summit');
+    const done = profs.filter((p) => (g.progress[p.id] || []).length >= 5).length;
+    $('#poster-body').innerHTML = `
+      <div class="beer" aria-hidden="true">
+        <div class="glass"><div class="foam"></div><div class="brew"></div>
+          <div class="bub b1"></div><div class="bub b2"></div><div class="bub b3"></div></div>
+      </div>
+      <p class="prose center" style="margin:22px auto 0;font-size:17px;color:var(--ink)">
+        You rode the whole run, sat in on every session, and got the grad students talking.
+        Somebody hands you a beer. The posters are up, the boards are still wet, and three
+        people are already arguing about your error bars.
+      </p>
+      <div class="cols" style="margin-top:28px">
+        <div class="card"><h3>Sessions attended</h3><p><b style="font-size:26px;color:var(--acc)">${done}</b>
+          / ${profs.length} professors interviewed to the last question.</p></div>
+        <div class="card"><h3>The cohort</h3><p><b style="font-size:26px;color:var(--acc)">${grads}</b>
+          graduates and ${informed} informed riders — they were clearing drones without you by the end.</p></div>
+        <div class="card"><h3>The feed</h3><p><b style="font-size:26px;color:var(--acc)">${g.feedCleared.summit || 0}</b>
+          claims taken apart on the way down.</p></div>
+        <div class="card"><h3>Descent</h3><p>Top station to the marquee, one run, no lift back.</p></div>
+      </div>
+      <h2 class="sec">Poster-session etiquette <span>the real lesson</span></h2>
+      <p class="prose">The best question at a poster is never "isn't that wrong?" It is
+      <em>"how did you measure that?"</em> — the same instrument you have been carrying all
+      the way down the mountain. A good poster session is an interview where both people
+      are holding a drink.</p>`;
+    this.screen('poster', true);
+  },
 
   /* ---------- codex ---------- */
   CODEX_TABS: ['ROSTER', 'CONNECTIONS', 'GLOSSARY', 'PROGRESS'],

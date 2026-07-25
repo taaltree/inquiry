@@ -1,0 +1,254 @@
+[
+  {
+    "id": "thompson",
+    "name": "Lonnie Thompson",
+    "lifespan": "b. 1948",
+    "era": "contemporary",
+    "field": "Paleoclimatology",
+    "origin": "United States",
+    "hook": "Ice from the wrong latitudes",
+    "intro": "Sorry — I have gear drying by the fire. Twenty years ago the standard view was that tropical mountains held no usable ice record. Most of my career has been an argument with that, conducted with a drill.",
+    "answers": {
+      "question": {
+        "text": "Polar ice cores were already rewriting climate history, and the assumption was that the poles were the only place with an archive. The tropics are where most of the sun's energy arrives and where the atmosphere's water engine runs, and we had almost no direct record of them. There is ice up there, on Andean and Tibetan summits. Nobody believed it held a readable signal — too warm, too thin, too much melting. I wanted to know whether that was true or just assumed.",
+        "concept": "Tropics Without Records"
+      },
+      "method": {
+        "text": "Above six thousand metres you cannot haul a generator, so we built drills light enough to break into porter loads and run on solar panels. You camp on the ice for weeks and drill to bedrock. Then the hard part: cut the core into sections, seal them, and get frozen ice down a mountain on the backs of people and pack animals, to whatever freezer we could reach, and onward to Ohio still frozen. Everything after that — isotopes, dust, chemistry — is comfortable indoor work.",
+        "concept": "Solar-Powered Drilling"
+      },
+      "evidence": {
+        "text": "Quelccaya in Peru settled the first question. Wet-season snow alternates with a dry-season dust layer, so the years are visible and countable, like tree rings, back roughly fifteen centuries. Then Huascarán gave us ice from the last glacial period, and its oxygen isotopes were far lighter than the reconstructions of the day allowed. That pointed to a tropical atmosphere much colder during the ice age than the accepted sea-surface estimates implied — a real disagreement, and the ice was on one side of it.",
+        "concept": "Colder Glacial Tropics"
+      },
+      "impact": {
+        "text": "Hundreds of millions of people in the Andes and across Asia depend on mountains that store winter and monsoon precipitation and release it in the dry season. Our cores tell them how variable that supply has been over centuries, which is what you need before you plan around it. The ice also holds other things: pollen, microbes, and metal pollution that appears in Andean layers with colonial-era silver smelting. And the retreat itself, photographed at the same margins since the seventies, is data.",
+        "concept": "Mountain Water Supply"
+      },
+      "doubt": {
+        "text": "Dating. Near the surface the annual layers are countable; deep down the ice is squeezed thin and the layers merge, so we fall back on flow models and on matching features to other records. Some of my age assignments for the oldest Tibetan ice are disputed by other groups, and that argument is not settled. Worse, I cannot rerun the measurement. Several glaciers I sampled have lost their upper layers or vanished outright, so for those sites the cores in our freezers are the only copy.",
+        "concept": "Chronology Without Layers"
+      }
+    },
+    "misconception": {
+      "myth": "Ice cores are essentially thermometers — the isotopes hand you past temperature directly.",
+      "reality": "In polar ice the oxygen isotope ratio tracks temperature reasonably well, but in the tropics it also responds strongly to how much rain fell and where the moisture came from, so dust, chemistry and borehole temperatures have to be read together before an interpretation will hold. The thermometer image is appealing because a plotted isotope curve looks so much like a temperature graph."
+    },
+    "terms": [
+      { "term": "Ice core", "def": "A cylinder of ice drilled out of a glacier, in which each layer preserves the snow, dust and trapped air of the year it fell." },
+      { "term": "Oxygen isotope ratio", "def": "The proportion of heavy to light oxygen atoms in ice, which depends on the temperature and the travel history of the water vapour that formed the snow." },
+      { "term": "Ablation", "def": "The loss of glacier mass by melting, sublimation or wind removal, as opposed to accumulation from new snowfall." }
+    ],
+    "recognition": "National Medal of Science 2007; member of the U.S. National Academy of Sciences; Distinguished University Professor at Ohio State, whose Byrd Polar and Climate Research Center archives the recovered cores."
+  },
+  {
+    "id": "hayhoe",
+    "name": "Katharine Hayhoe",
+    "lifespan": "b. 1972",
+    "era": "contemporary",
+    "field": "Atmospheric Science",
+    "origin": "Canada / United States",
+    "hook": "Global models, local decisions",
+    "intro": "Twelve minutes before I'm on, so ask fast. My work is the unglamorous middle of this field: taking output from a global model and turning it into something a city engineer can actually build against.",
+    "answers": {
+      "question": {
+        "text": "A global climate model divides the atmosphere into boxes maybe a hundred kilometres on a side. That is fine for a planetary energy balance and useless to someone sizing a storm drain, choosing a crop variety, or deciding how much cooling a hospital will need in 2060. They need numbers for a county, and they need extremes rather than averages. So: can you get from the coarse grid to the local scale in a way that is defensible, and how do you know when you cannot?",
+        "concept": "Grid Box Problem"
+      },
+      "method": {
+        "text": "Two routes. Dynamical downscaling nests a fine-resolution regional model inside the global one, which is physically consistent and expensive. I mostly work statistically: learn how the coarse-scale variables map onto local weather-station records over a long historical period, then apply that relationship to the model's future output. The version my group built fits the mapping piecewise across the distribution, so the hot tail is not forced to behave like the middle. Then you train on one period and test on a withheld one.",
+        "concept": "Statistical Downscaling"
+      },
+      "evidence": {
+        "text": "Run it across many models and both a high and a low emissions pathway, and a pattern shows up that matters more than any single number. Through mid-century the projections for a given city barely separate — that warming is already committed. After that they diverge sharply, and the gap between pathways becomes larger than the disagreement among models. Extreme heat days multiply several times over under the high pathway. The choice, not the uncertainty, dominates the second half of the century.",
+        "concept": "Scenario Dominates Uncertainty"
+      },
+      "impact": {
+        "text": "These projections feed national assessments and sit under real plans — water utilities, transport agencies, city climate strategies. But handing someone a number does not move them, and that sent me into a second line of research. Dan Kahan's group found that greater scientific literacy predicts sharper polarisation on this topic, not more agreement. What changes a conversation is starting from something already shared — a place, a livelihood, a community's water — rather than from more data.",
+        "concept": "Values Before Data"
+      },
+      "doubt": {
+        "text": "Downscaling cannot add information the global model does not have. If the parent model puts the jet stream or the monsoon in the wrong place, I will hand you that error at a few kilometres' resolution, looking far more authoritative than it deserves. Statistical methods also assume the historical link between large and local scales holds in a climate we have not observed, which is unverifiable by construction. Rainfall is much shakier than temperature. And one neighbourhood in 2035 is the least constrained thing anyone asks me for.",
+        "concept": "Resolution Isn't Accuracy"
+      }
+    },
+    "misconception": {
+      "myth": "Forecasters cannot get next weekend right, so a projection for 2080 is worthless.",
+      "reality": "A forecast and a projection are different problems: weather depends on today's precise conditions and that memory washes out within about two weeks, while climate is the statistics of weather under fixed boundary conditions such as how much carbon dioxide is in the air. The confusion is understandable because both come out of similar models, but nobody can name the date of the next blizzard, and the number of blizzards in an average decade is a separate and far more tractable question."
+    },
+    "terms": [
+      { "term": "Downscaling", "def": "Any method for converting coarse output from a global climate model into projections at the scale of a city, a watershed or a farm." },
+      { "term": "Emissions scenario", "def": "A specified future pathway of greenhouse gas emissions fed into models as an input assumption, so results can be compared on equal terms; it is not a prediction of what people will choose." },
+      { "term": "Stationarity", "def": "The assumption that a statistical relationship measured in the past still holds in the future, which a changing climate makes unsafe." }
+    ],
+    "recognition": "United Nations Champions of the Earth award 2019; lead author on multiple U.S. National Climate Assessments; endowed professor at Texas Tech University and chief scientist at The Nature Conservancy."
+  },
+  {
+    "id": "simard",
+    "name": "Suzanne Simard",
+    "lifespan": "b. 1960",
+    "era": "contemporary",
+    "field": "Forest Ecology",
+    "origin": "Canada",
+    "hook": "Roots wired by fungi",
+    "intro": "Give me a second, I'm still getting my breath back. I study what is happening under all this snow — tree roots joined by fungi, and how much actually moves between them. That last part is where the argument is.",
+    "answers": {
+      "question": {
+        "text": "British Columbia's forestry practice ran on one idea: trees compete, so remove the birch and the plantation firs will grow. Meanwhile, laboratory work in pots had shown carbon moving between plants whose roots shared a fungus. Nobody had tested it outdoors, in real soil, with wild fungi and a full-sized forest around it. My question was narrow and answerable — does carbon actually move between neighbouring trees in the field, and does it move in a direction that means anything?",
+        "concept": "Competition Or Facilitation"
+      },
+      "method": {
+        "text": "Triplets of seedlings in the field: paper birch, Douglas-fir, and western redcedar. Bag each of the first two and feed them carbon dioxide carrying a different carbon isotope, one heavy and stable, one radioactive, so I can measure the flux each way and take the difference. The cedar is the control — it forms a different kind of mycorrhiza and cannot join the same fungal network, so label arriving in cedar means an ordinary soil route. Then shade the fir at three levels to vary its demand.",
+        "concept": "Dual Isotope Labelling"
+      },
+      "evidence": {
+        "text": "Label moved in both directions, which surprised nobody, but the two-way flows did not cancel. Net movement ran from birch to fir, and it amounted to a few percent of the fir's own photosynthetic carbon — small, not nothing. The informative part was the shading: the deeper the shade on the fir, the larger the net flow toward it. Cedar picked up far less label than the fir did. That contrast is what made a fungal route the better explanation.",
+        "concept": "Carbon Follows Shade"
+      },
+      "impact": {
+        "text": "The applied consequence came first and is the least disputed. Blanket removal of birch from conifer plantations turned out to carry costs — among them more root disease in the firs — and British Columbia's practice changed. I now run a long-term experiment across the province testing how much of an old stand you should leave standing when you harvest, measured by what regenerates. More broadly, ecologists began taking facilitation as seriously as competition when modelling how a forest works.",
+        "concept": "Retention Forestry"
+      },
+      "doubt": {
+        "text": "A 2023 review concluded that the field evidence here is thinner than the popular version suggests: networks have been mapped in very few forests, isotope transfer does not prove carbon travelled through hyphae rather than soil, much of it may stay in fungal tissue and never reach the tree, and no field study supports preferential feeding of kin. One author was a co-author on my 1997 paper. I still think the shading result is real; what it means is genuinely open.",
+        "concept": "Contested Interpretation"
+      }
+    },
+    "misconception": {
+      "myth": "Trees talk to each other and deliberately send food to their young through an underground internet.",
+      "reality": "Field experiments show that carbon moves between neighbouring trees and that shading the receiver increases the net flow toward it, but movement down a gradient is not evidence of intent, of benefit to the donor, or even of a fungal route rather than an ordinary soil one. The story is appealing because it makes a forest legible as a society, and the phrase everyone repeats came from magazine coverage rather than from the paper."
+    },
+    "terms": [
+      { "term": "Mycorrhiza", "def": "A partnership between a fungus and a plant root in which the fungus supplies water and mineral nutrients and receives sugars in return." },
+      { "term": "Common mycorrhizal network", "def": "A proposed arrangement in which one fungal individual colonises the roots of two or more plants at once, potentially linking them below ground." },
+      { "term": "Isotope labelling", "def": "Feeding an organism a form of an element with an unusual atomic mass, so those atoms can be traced afterwards wherever they end up." }
+    ],
+    "recognition": "Professor of forest ecology at the University of British Columbia; the 1997 field experiment is among the most cited in the discipline and contributed to changing provincial policy on removing broadleaf trees from plantations. She leads a long-running retention-forestry experiment, and the interpretation of network transfer remains actively contested."
+  },
+  {
+    "id": "bertozzi",
+    "name": "Carolyn Bertozzi",
+    "lifespan": "b. 1966",
+    "era": "contemporary",
+    "field": "Chemical Biology",
+    "origin": "United States",
+    "hook": "A reaction cells ignore",
+    "intro": "I came in on the last chair with two students arguing about click chemistry, so you are in reasonable company. My work starts from a constraint that sounds dull: I need a reaction a living cell will completely ignore.",
+    "answers": {
+      "question": {
+        "text": "Every cell is coated in sugars — long branched chains on the outside of proteins and lipids — and that coat changes in cancer, in inflammation, in infection. Genetics gave us no handle on it. Glycans are not copied from a template, so you cannot sequence them the way you sequence a gene, and you cannot fuse a fluorescent protein onto a sugar. The question was practical: how do you watch a class of molecule the entire genetic toolkit is blind to?",
+        "concept": "Sugars Without Templates"
+      },
+      "method": {
+        "text": "Two steps. Feed cells a sugar carrying a small foreign group — an azide — and let their own enzymes install it into surface glycans; Reutter's group had already shown that pathway tolerates modified side chains. Then react the azide with a probe delivered from outside. That reaction has to be bioorthogonal: both partners absent from and unreactive toward everything already in a cell, at body temperature, in water, at low concentration, fast, and with no toxic catalyst. We used a modified Staudinger ligation first, then a strained cyclooctyne.",
+        "concept": "Metabolic Sugar Labelling"
+      },
+      "evidence": {
+        "text": "The copper-catalysed version of this coupling was already known and was fatal to cells, so the test of the strained-alkyne design was whether an animal would tolerate it. We fed azide sugars to zebrafish embryos, injected a fluorescent cyclooctyne, and imaged the glycans as the embryo developed — the labelling was specific, and the fish went on developing normally. That is the real result: the chemistry ran to completion inside a living animal and the animal did not notice.",
+        "concept": "Labelled Living Embryos"
+      },
+      "impact": {
+        "text": "The reactions became general laboratory plumbing — tagging proteins, lipids and nucleic acids, and attaching drugs to antibodies at defined positions instead of wherever they happen to stick. The glycobiology it opened turned into drug targets. Tumours pile sialic acid on their surface, and immune cells carry receptors that read that sugar as a signal to stand down, so enzymes aimed at stripping it are now being tested. Related work routes unwanted surface proteins into the cell's disposal machinery.",
+        "concept": "Sugars As Targets"
+      },
+      "doubt": {
+        "text": "Bioorthogonal is an ideal, not a property anything fully achieves. Strained alkynes react slowly with free thiols, probes stick where they should not, and in a whole animal delivery and clearance blur everything. The metabolic labelling has a subtler limit: you see only the sugars a cell's enzymes will accept in unnatural form, and the analogue can perturb the very pathway you are measuring. And glycobiology still has no equivalent of sequencing — we can light a glycan up long before we can read its structure.",
+        "concept": "Orthogonality Is Approximate"
+      }
+    },
+    "misconception": {
+      "myth": "DNA to RNA to protein is where the information is; sugars are just fuel and decoration.",
+      "reality": "Roughly half of human proteins carry sugar chains, and the glycocalyx is the first structure anything touching a cell encounters, so that coat is doing signalling work rather than sitting there inertly. Sugars got skipped because they are assembled combinatorially by competing enzymes rather than copied from a template, which meant no sequencer and no cloning trick — an accident of the available tools, not a verdict on their importance."
+    },
+    "terms": [
+      { "term": "Bioorthogonal reaction", "def": "A chemical reaction that proceeds inside a living system without reacting with, or being blocked by, any of the molecules already present." },
+      { "term": "Glycocalyx", "def": "The dense layer of sugar chains covering the outside of a cell, and the first thing another cell, an antibody or a pathogen makes contact with." },
+      { "term": "Azide", "def": "A compact group of three nitrogen atoms that does not occur in ordinary biochemistry, which makes it a nearly invisible handle to attach to a biomolecule." }
+    ],
+    "recognition": "Nobel Prize in Chemistry 2022, shared with Morten Meldal and K. Barry Sharpless; MacArthur Fellowship 1999; Wolf Prize in Chemistry 2022; professor at Stanford and a Howard Hughes Medical Institute investigator."
+  },
+  {
+    "id": "yamanaka",
+    "name": "Shinya Yamanaka",
+    "lifespan": "b. 1962",
+    "era": "contemporary",
+    "field": "Stem Cell Biology",
+    "origin": "Japan / United States",
+    "hook": "Development can run backwards",
+    "intro": "I trained as an orthopaedic surgeon before I ended up in a laboratory. There is a session on organoids after this one, so if you have one question, ask about the screen. That is the part worth teaching.",
+    "answers": {
+      "question": {
+        "text": "Gurdon had shown in frogs that a nucleus taken from a specialised cell can still direct a whole animal, and Dolly extended that to mammals. So a differentiated cell keeps its full genome; something in the egg resets it. But nobody knew what that something was, and every experiment needed an egg. My question was whether the resetting activity could be reduced to a list — a small number of defined factors you could simply add to an ordinary skin cell.",
+        "concept": "What Eggs Do"
+      },
+      "method": {
+        "text": "We listed twenty-four genes active in embryonic stem cells, then built a readout: mouse skin cells engineered so that switching on an embryonic-stem-cell gene also switches on drug resistance. Survive the drug and you have reprogrammed. Kazutoshi Takahashi put all twenty-four in at once, and colonies appeared. Then the elegant part, which was subtraction rather than addition: twenty-four pools, each missing one factor. If removing a gene killed the colonies, it was required. Iterate. No single factor does anything alone, so testing them one at a time would have found nothing.",
+        "concept": "Subtractive Factor Screen"
+      },
+      "evidence": {
+        "text": "Four genes were enough: Oct3/4, Sox2, Klf4 and c-Myc. Cells carrying that combination formed tumours containing tissues from all three embryonic layers, and when injected into mouse embryos they contributed to the developing animal. A year later the same four worked on human skin fibroblasts. Thomson's group reached human cells independently using a partly different set, which told us the recipe is not unique. The efficiency, though, was dreadful — a fraction of one percent of treated cells.",
+        "concept": "Four Factors Suffice"
+      },
+      "impact": {
+        "text": "The change most people notice is ethical — patient-specific pluripotent cells without an embryo. The change researchers notice is that you can take skin from someone with an inherited disease, turn it into the cell type that actually fails in that disease, and watch the defect in a dish. Screens on such cells have sent existing drugs into trials for rare conditions. Transplantation is moving too: retinal cells for macular degeneration, and dopamine neurons for Parkinson's disease.",
+        "concept": "Patient Cells Cultured"
+      },
+      "doubt": {
+        "text": "Almost no treated cell reprograms, and we still cannot say why the rare one does. My first mouse lines were selected on the wrong marker and came out incompletely reset; we fixed that by selecting on a different gene. Then the risks: one of the four factors is an oncogene, the early delivery method inserted into the genome, and a single leftover pluripotent cell can seed a tumour after transplant. And the timescale is humbling. Two decades on, the transplant work is still small early-phase trials, not treatment.",
+        "concept": "Rare Successful Cells"
+      }
+    },
+    "misconception": {
+      "myth": "iPS cells made embryonic stem cells unnecessary and ended that whole debate.",
+      "reality": "Every iPS line is still judged against embryonic stem cells, which remain the reference standard, and lines differ in how completely they reset and in what they will reliably become. The myth is appealing because it turns a hard ethical argument into a solved problem, when what actually happened is that a second and imperfect source became available alongside the first."
+    },
+    "terms": [
+      { "term": "Pluripotency", "def": "The capacity of a cell to give rise to any of the body's cell types, which ordinary adult cells lose as they specialise." },
+      { "term": "Transcription factor", "def": "A protein that binds DNA and switches sets of genes on or off, which is how a cell holds on to its identity." },
+      { "term": "Teratoma assay", "def": "A test of pluripotency in which cells are injected into a mouse and the resulting tumour is examined for tissues from all three embryonic germ layers." }
+    ],
+    "recognition": "Nobel Prize in Physiology or Medicine 2012, shared with John Gurdon; Albert Lasker Basic Medical Research Award 2009; founding director of the Center for iPS Cell Research and Application at Kyoto University and a senior investigator at the Gladstone Institutes."
+  },
+  {
+    "id": "charpentier",
+    "name": "Emmanuelle Charpentier",
+    "lifespan": "b. 1968",
+    "era": "contemporary",
+    "field": "Microbiology & RNA Biology",
+    "origin": "France / Sweden / Germany",
+    "hook": "An RNA nobody expected",
+    "intro": "This began at a meeting rather like this one — a conversation between sessions with Jennifer Doudna, in Puerto Rico. I should say plainly that I was not looking for a gene-editing tool. I was studying a nasty streptococcus.",
+    "answers": {
+      "question": {
+        "text": "Streptococcus pyogenes causes everything from strep throat to fatal soft-tissue infection, and I wanted to know how it controls its own genes — which small RNAs it makes, and which of them govern virulence. Bacteria also live under constant attack by viruses. The repeat arrays called CRISPR had been proposed as a kind of immune memory, and a dairy laboratory had shown that the memory works, but how the guide RNA was made and processed was unknown.",
+        "concept": "How Bacteria Defend"
+      },
+      "method": {
+        "text": "We sequenced the whole small-RNA population of the bacterium and found an abundant transcript sitting beside the CRISPR array that nobody had accounted for. Krzysztof Chylinski checked whether it recurred beside similar systems in other species; it did. Then knockouts, one at a time: delete that RNA, delete the host's RNase III, delete the Cas9 gene, and look on a blot at whether the guide RNA still matures. Later we rebuilt the whole system in a tube from purified protein, synthetic RNAs and target DNA.",
+        "concept": "Small RNA Sequencing"
+      },
+      "evidence": {
+        "text": "The mystery transcript pairs with the repeat sections of the CRISPR transcript, and without it no mature guide RNA appears. Neither does it appear without the cell's own RNase III, or without Cas9 — so the cutting protein is needed even for the RNA processing step. In the tube, Cas9 loaded with both RNAs cut the matching DNA cleanly, each of its two nuclease domains taking one strand, and only beside a short adjacent motif. Fusing the two RNAs into one still worked.",
+        "concept": "Dual RNA Guidance"
+      },
+      "impact": {
+        "text": "Twenty letters of RNA now aim a cutting enzyme at almost any sequence, which is why the method spread through biology within a couple of years, and why a CRISPR therapy for sickle cell disease reached approval in 2023. The lineage matters, though. Mojica proposed the immune function from sequence databases, Barrangou and Horvath demonstrated it in yoghurt bacteria, Šikšnys reached the reprogramming result independently, and none of that was funded as gene-editing research.",
+        "concept": "Repurposed Bacterial Immunity"
+      },
+      "doubt": {
+        "text": "What we did was chemistry in a tube on naked DNA. A chromosome is packaged, and a cell repairs a break in its own way, so the hard problems — delivery, and controlling the outcome — are not ones we solved. And the bacterial side is less settled than the tool's success suggests. Cas9 systems are a minority among CRISPR types, plenty of bacteria carry none at all, and the recent discovery of many other anti-phage defences makes calling this the bacterial immune system an overstatement.",
+        "concept": "Tube Versus Cell"
+      }
+    },
+    "misconception": {
+      "myth": "CRISPR was invented as a gene-editing technology.",
+      "reality": "It was found by people cataloguing strange repeats in microbial genomes and then by people asking how bacteria survive their viruses, and the editing tool is a repurposing of that defence system. Tools tend to look as though they were designed backwards from their use, which makes it easy to forget that nobody in this chain, including us, set out to build one."
+    },
+    "terms": [
+      { "term": "tracrRNA", "def": "A small bacterial RNA that pairs with the repeated sections of a CRISPR transcript and is required before that transcript can be cut down into working guides." },
+      { "term": "Bacteriophage", "def": "A virus that infects bacteria; the pressure these viruses exert is what CRISPR systems evolved under." },
+      { "term": "Endonuclease", "def": "An enzyme that cuts a DNA or RNA strand somewhere along its length rather than trimming it from an end." }
+    ],
+    "recognition": "Nobel Prize in Chemistry 2020, shared with Jennifer Doudna; Kavli Prize in Nanoscience 2018 with Doudna and Virginijus Šikšnys; Breakthrough Prize in Life Sciences 2015; founding director of the Max Planck Unit for the Science of Pathogens in Berlin."
+  }
+]

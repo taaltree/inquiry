@@ -6,6 +6,7 @@ const SAVE_KEY = 'inquiry.save.v1';
 const PREF_KEY = 'inquiry.prefs.v1';
 
 /* one colour per question type — bolts, slot chrome and taught-student sparks */
+const QHEX = ['#7fd4ff', '#8affc8', '#ffe37a', '#ffab6a', '#c9a6ff'];
 const QCOLOURS = [
   hex2rgb('#7fd4ff'),   // PROBE
   hex2rgb('#8affc8'),   // METHOD
@@ -14,6 +15,12 @@ const QCOLOURS = [
   hex2rgb('#c9a6ff'),   // DOUBT
 ];
 const EYE = 1.68;
+const LEVELS = [
+  { id: 'colloquium', n: 1, name: 'THE COLLOQUIUM', sub: 'A research station, on foot',
+    blurb: 'Twenty-four scientists across five discipline districts. Walk, interview, teach, and secure all five.' },
+  { id: 'summit', n: 2, name: 'THE SUMMIT', sub: 'A mountain conference, on a snowboard',
+    blurb: 'A residential meeting at altitude. Six professors hold sessions down the run, grad students ride it with you, and the feed is airborne. Ends at the poster session.' },
+];
 const PLAYER_R = 0.42;
 
 const ENV = {
@@ -25,6 +32,17 @@ const ENV = {
   fogDensity: 0.0034,
   skyTop: hex2rgb('#010206'),
   skyHorizon: hex2rgb('#060911'),
+};
+
+const ENV_SUMMIT = {
+  sunDir: (() => { const v = [-0.42, 0.44, 0.79]; const L = Math.hypot(...v); return v.map((x) => x / L); })(),
+  sunCol: hex2rgb('#ffd7a8').map((c) => c * 0.72),
+  ambSky: hex2rgb('#7fa6d8').map((c) => c * 0.72),
+  ambGround: hex2rgb('#9fb8d8').map((c) => c * 0.62),   // light bouncing off snow
+  fog: hex2rgb('#8ba6c8'),
+  fogDensity: 0.0021,
+  skyTop: hex2rgb('#132747'),
+  skyHorizon: hex2rgb('#c98f6b'),
 };
 
 /* --- tiny UI synth: short tones, no music, no external assets --- */
@@ -78,11 +96,21 @@ class Game {
     this.vaultAnswers = {};          // district -> { qIndex: optionIndex }
     this.load();
 
-    /* ---- world ---- */
+    /* ---- worlds (level 2 is built the first time it is entered) ---- */
+    this.level = 'colloquium';
     this.world = buildWorld(gl, this.roster);
     this.colliders = buildColliders(this.world);
+    this.worlds = { colloquium: { world: this.world, colliders: this.colliders } };
     this.districtById = {};
     for (const d of DISTRICTS) this.districtById[d.id] = d;
+    // level 2 is one venue rather than five districts, but the station drawing
+    // code looks its colours up the same way
+    this.districtById.summit = {
+      id: 'summit', name: 'THE SUMMIT', sub: 'Mountain conference',
+      accent: '#8fd0ff', accent2: '#d8ecff',
+      rgb: hex2rgb('#8fd0ff'), rgb2: hex2rgb('#d8ecff'),
+      cx: 0, cz: -MTN.LEN / 2, angle: 0,
+    };
 
     /* ---- actors ---- */
     for (const s of this.world.stations) {
@@ -112,9 +140,11 @@ class Game {
       { text: 'CONNECT TWO MINDS', size: 24, color: '#ffd98a', weight: 400 },
     ], { top: 72, h: 180 });
 
-    this.life = new Life(gl, this);
+    this.life = new Life(gl, this, 'walk');
+    this.lives = { colloquium: this.life };
 
     this.device = buildDevice(gl);
+    this.rideModel = buildRideModel(gl);
     this.pips = buildDevicePips(gl);
     this.pulseMesh = buildPulseRing(gl);
     this.beaconMesh = buildBeacon(gl);
@@ -156,6 +186,47 @@ class Game {
     window.addEventListener('resize', () => this.R.resize());
     this.last = performance.now();
     requestAnimationFrame((t) => this.frame(t));
+  }
+
+  /* ---------- level switching ---------- */
+  buildSummit() {
+    if (this.worlds.summit) return this.worlds.summit;
+    const gl = this.gl;
+    const w = buildMountain(gl, this.roster);
+    for (const s of w.stations) {
+      const p = this.byId[s.id];
+      s.person = p;
+      s.mesh = buildFigure(gl, p, hex2rgb('#7fd4ff'), hex2rgb('#bfe6ff'));
+      s.plate = makeNameplate(gl, p, '#7fd4ff', '#cfe9ff');
+      s.model = M4.create();
+      s.phase = Math.random() * TAU;
+    }
+    const entry = { world: w, colliders: [] };
+    this.worlds.summit = entry;
+    this.lives.summit = new Life(gl, this, 'ride');
+    return entry;
+  }
+
+  enterLevel(id) {
+    this.level = id;
+    if (id === 'summit') {
+      const e = this.buildSummit();
+      this.world = e.world; this.colliders = e.colliders;
+      this.life = this.lives.summit;
+      this.ride = { x: 0, y: mtnHeight(0, 8) + 0.1, z: 8, yaw: 0, speed: 0,
+                    vy: 0, air: false, lean: 0, jumpCd: 0, landT: 0 };
+      this.cam.fov = 1.34;
+      this.summitReached = this.summitReached || false;
+    } else {
+      const e = this.worlds.colloquium;
+      this.world = e.world; this.colliders = e.colliders;
+      this.life = this.lives.colloquium;
+      this.cam.x = 12.5; this.cam.z = 12.5; this.cam.y = EYE;
+      this.cam.yaw = Math.PI / 4; this.cam.pitch = 0.10; this.cam.fov = 1.31;
+      this.cam.roll = 0; this.rideRoll = 0;
+    }
+    this.noise = 0; this.target = null; this.talking = null; this.camAnim = null;
+    HUD.setLevel(this);
   }
 
   fail(msg) {
@@ -291,7 +362,7 @@ class Game {
         else if (this.mode === 'talk') this.endInterview();
         return;
       }
-      if (this.mode === 'title') { if (k === 'enter') this.start(); return; }
+      if (this.mode === 'title') { if (k === 'enter') HUD.openLevels(); return; }
       if (this.anyScreenOpen()) return;
 
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) e.preventDefault();
@@ -363,11 +434,11 @@ class Game {
   cycleSlot(dir) { this.selectSlot((this.selSlot + dir + 5) % 5); }
 
   anyScreenOpen() {
-    return ['codex', 'quiz', 'synth', 'endgame', 'win'].some((id) => document.getElementById(id).classList.contains('on'));
+    return ['codex', 'quiz', 'synth', 'endgame', 'win', 'poster', 'levels'].some((id) => document.getElementById(id).classList.contains('on'));
   }
 
   closeAllScreens() {
-    ['codex', 'quiz', 'synth', 'endgame', 'win'].forEach((id) => this.closeScreen(id));
+    ['codex', 'quiz', 'synth', 'endgame', 'win', 'poster'].forEach((id) => this.closeScreen(id));
   }
 
   closeScreen(id) {
@@ -388,9 +459,11 @@ class Game {
   }
 
   /* ================= lifecycle ================= */
-  start() {
+  start(levelId) {
     Sfx.init();
     HUD.screen('title', false);
+    HUD.screen('levels', false);
+    this.enterLevel(levelId || 'colloquium');
     document.getElementById('hud').classList.add('on');
     this.mode = 'play';
     this.fx.fade = 0;
@@ -408,7 +481,9 @@ class Game {
   findTarget() {
     const c = this.cam;
     const fx = -Math.sin(c.yaw), fz = -Math.cos(c.yaw);
-    let best = null, bestScore = -1;
+    // -Infinity, not -1: the gates below already decide what is eligible, and a
+    // -1 floor was silently rejecting anything you were not squarely facing
+    let best = null, bestScore = -Infinity;
 
     const consider = (obj, x, z, maxDist, minDot) => {
       const dx = x - c.x, dz = z - c.z;
@@ -420,7 +495,12 @@ class Game {
       if (score > bestScore) { bestScore = score; best = { ...obj, dist }; }
     };
 
-    for (const s of this.world.stations) consider({ kind: 'person', s }, s.x, s.z, 7.0, 0.80);
+    for (const s of this.world.stations) consider({ kind: 'person', s }, s.x, s.z, 9.5, 0.62);
+    if (this.level === 'summit' && this.world.finish) {
+      const f = this.world.finish;
+      // the marquee is a place you stand in, not something you aim at
+      consider({ kind: 'poster' }, f.x, f.z, 42, -1.01);   // works whichever way you face
+    }
     for (const v of this.world.vaults) {
       if (!this.districtDone(v.district)) continue;
       consider({ kind: 'vault', v }, v.x, v.z, 8.0, 0.72);
@@ -432,6 +512,17 @@ class Game {
   interact() {
     const t = this.target;
     if (!t) return;
+    if (t.kind === 'poster') {
+      if (!this.summitWon()) {
+        Sfx.deny();
+        const left = this.summitStatus().tasks.filter((x) => x.n < x.of).map((x) => x.label);
+        HUD.banner('NOT YET', `Still to do: ${left.join(' · ')}`, '#ffab6a');
+        return;
+      }
+      document.getElementById('hud').classList.add('dimmed');
+      HUD.openPoster(); Sfx.complete();
+      return;
+    }
     if (t.kind === 'person') this.beginInterview(t.s);
     else if (t.kind === 'vault') {
       document.exitPointerLock();
@@ -464,11 +555,12 @@ class Game {
     const L = Math.hypot(dx, dz) || 1;
     const D = 4.9;
     const tx = station.x + (dx / L) * D, tz = station.z + (dz / L) * D;
+    const groundY = this.level === 'summit' ? mtnHeight(tx, tz) : 0;
     const yaw = Math.atan2(-(station.x - tx), -(station.z - tz));
     this.camAnim = {
       t: 0, dur: 0.75,
       from: { x: this.cam.x, y: this.cam.y, z: this.cam.z, yaw: this.cam.yaw, pitch: this.cam.pitch, fov: this.cam.fov },
-      to: { x: tx, y: 2.05, z: tz, yaw: this.shortestYaw(this.cam.yaw, yaw), pitch: -0.055, fov: 1.16 },
+      to: { x: tx, y: groundY + 2.05, z: tz, yaw: this.shortestYaw(this.cam.yaw, yaw), pitch: -0.055, fov: 1.16 },
     };
     if (!this.visited.has(station.id)) {
       this.visited.add(station.id);
@@ -489,11 +581,18 @@ class Game {
     document.getElementById('hud').classList.remove('talking');
     HUD.closeDialogue();
     HUD.showSlots(false, [], -1);
-    this.camAnim = {
-      t: 0, dur: 0.45,
-      from: { ...this.cam },
-      to: { x: this.cam.x, y: EYE, z: this.cam.z, yaw: this.cam.yaw, pitch: this.cam.pitch, fov: 1.31 },
-    };
+    if (this.level === 'summit') {
+      const P = this.ride;
+      P.x = this.cam.x; P.z = this.cam.z; P.y = mtnHeight(P.x, P.z);
+      P.speed = 0; P.air = false; P.vy = 0; P.yaw = this.cam.yaw;
+      this.camAnim = null;
+    } else {
+      this.camAnim = {
+        t: 0, dur: 0.45,
+        from: { ...this.cam },
+        to: { x: this.cam.x, y: EYE, z: this.cam.z, yaw: this.cam.yaw, pitch: this.cam.pitch, fov: 1.31 },
+      };
+    }
     this.talking = null;
     HUD.showSlots(true, [], this.selSlot, this.ammo());
   }
@@ -632,18 +731,31 @@ class Game {
     }
     if (!pool.length) return;
     const concept = pool[(Math.random() * pool.length) | 0];
-    const col = QCOLOURS[QTYPES.findIndex((q) => q.key === qtype)];
+    const qi = QTYPES.findIndex((q) => q.key === qtype);
+    const col = QCOLOURS[qi];
     const line = pick(STUDENT_LINES.taught);
     const before = this.life.tier(s);
-    const rescued = this.life.teach(s, col, line);
+    const matched = s.wants === qi;
+    const rescued = this.life.teach(s, col, line, matched);
+    this.life.addMote(s.x, 2.0, s.z, matched ? '+2' : '+1', QHEX[qi]);
     this.taught = (this.taught || 0) + 1;
     if (rescued) this.rescued = (this.rescued || 0) + 1;
     const t = this.life.tier(s);
-    if (t > before) {
-      HUD.toast(`STUDENT → ${TIERS[t].name.toUpperCase()}`, concept);
+    if (t >= 3 && before < 3) {
+      HUD.banner('GRADUATE', `${concept} — they can teach this one themselves now`, '#ffd98a');
+      Sfx.complete();
+    } else if (t > before) {
+      HUD.banner(TIERS[t].name.toUpperCase(),
+        `${concept}${t >= 2 ? ' — they will start answering drones' : ''}`,
+        t >= 2 ? '#7df0ae' : '#8fd0ff');
       if (t >= 2) Sfx.complete(); else Sfx.insight();
+    } else if (rescued) {
+      HUD.banner('MIND CLEARED', concept, '#7df0ae');
+      Sfx.insight();
     } else {
-      HUD.toast(rescued ? 'MIND CLEARED' : '+ TAUGHT', concept);
+      HUD.banner(matched ? 'EXACTLY WHAT THEY NEEDED' : 'PARTLY USEFUL',
+        matched ? concept : `${concept} — they wanted ${QTYPES[s.wants].name}`,
+        matched ? QHEX[qi] : '#a9b9cd');
       Sfx.insight();
     }
     this.refreshStats();
@@ -800,6 +912,24 @@ class Game {
   /* ================= objectives =================
      A district is SECURED when all four of its tasks are done. Securing all five
      opens the Convocation at the atrium terminal, which is the win. */
+  summitStatus() {
+    const people = this.roster.filter((p) => p.district === 'summit');
+    const interviewed = people.filter((p) => (this.progress[p.id] || []).length >= 5).length;
+    const L = this.lives.summit;
+    const ed = L ? L.students.filter((s) => L.tier(s) >= 2).length : 0;
+    const edTotal = L ? L.students.length : SUMMIT_STUDENTS;
+    const feed = this.feedCleared.summit || 0;
+    const tasks = [
+      { key: 'profs',   label: 'Interview the professors', n: interviewed, of: people.length },
+      { key: 'grads',   label: 'Educate the grad students', n: ed, of: edTotal },
+      { key: 'feed',    label: 'Clear the feed', n: feed, of: SUMMIT_DRONES },
+      { key: 'finish',  label: 'Reach the poster session', n: this.summitReached ? 1 : 0, of: 1 },
+    ];
+    return { tasks, complete: tasks.every((t) => t.n >= t.of) };
+  }
+
+  summitWon() { return this.summitStatus().complete; }
+
   districtStatus(d) {
     const people = this.roster.filter((p) => p.district === d.id);
     const interviewed = people.filter((p) => (this.progress[p.id] || []).length >= 5).length;
@@ -820,6 +950,16 @@ class Game {
   }
 
   refreshSecured() {
+    if (this.level === 'summit') {
+      if (this.summitWon() && !this.summitCelebrated) {
+        this.summitCelebrated = true;
+        this.secured.summit = true;
+        Sfx.complete();
+        HUD.banner('THE SUMMIT IS YOURS', 'Head into the marquee — E at the poster session', '#ffb84d');
+        this.save();
+      }
+      return null;
+    }
     let newly = null;
     for (const d of DISTRICTS) {
       if (this.secured[d.id]) continue;
@@ -941,6 +1081,37 @@ class Game {
     else if (this.canStand(preX, preZ)) { c.x = preX; c.z = preZ; }
   }
 
+  updateRider(dt) {
+    const K = this.keys, P = this.ride, c = this.cam;
+    rideStep(P, {
+      left: !!(K['a'] || K['arrowleft']),
+      right: !!(K['d'] || K['arrowright']),
+      brake: !!(K['s'] || K['arrowdown']),
+      tuck: !!(K['w'] || K['arrowup'] || K['shift']),
+      jump: !!K[' '],
+    }, dt);
+
+    // camera rides just above the board, leaning into the carve
+    c.x = P.x; c.z = P.z; c.y = P.y + 1.55;
+    c.yaw = P.yaw;
+    this.rideRoll = (this.rideRoll || 0);
+    this.rideRoll += (P.lean * 0.42 - this.rideRoll) * (1 - Math.exp(-8 * dt));
+    c.roll = this.rideRoll;
+    const targetFov = 1.30 + Math.min(0.26, P.speed / 40 * 0.28);
+    c.fov += (targetFov - c.fov) * (1 - Math.exp(-4 * dt));
+    this.bobAmt = Math.min(1, P.speed / 22);
+    this.bob += dt * P.speed * 0.55;
+
+    // reaching the poster session is the last objective
+    const f = this.world.finish;
+    if (f && !this.summitReached && Math.hypot(P.x - f.x, P.z - f.z) < 26) {
+      this.summitReached = true;
+      HUD.banner('POSTER SESSION', 'You made it down. The bar is open.', '#ffb84d');
+      this.refreshSecured();
+      this.save();
+    }
+  }
+
   updatePlayer(dt) {
     const c = this.cam;
     const K = this.keys;
@@ -1019,7 +1190,9 @@ class Game {
     }
 
     const paused = this.mode === 'intercept';
-    if (this.mode === 'play' && !this.anyScreenOpen() && !this.camAnim && !paused) this.updatePlayer(dt);
+    if (this.mode === 'play' && !this.anyScreenOpen() && !this.camAnim && !paused) {
+      if (this.level === 'summit') this.updateRider(dt); else this.updatePlayer(dt);
+    }
     this.applyCamAnim(dt);
 
     // targeting
@@ -1049,8 +1222,10 @@ class Game {
       HUD.objectivePanel(this);
       if (this.mode === 'play') HUD.showSlots(true, [], this.selSlot, this.ammo());
       const done = new Set(DISTRICTS.filter((d) => this.districtDone(d.id)).map((d) => d.id));
-      HUD.updateCompass(this.cam.yaw, this.cam.x, this.cam.z, done);
-      HUD.drawMap(this);
+      if (this.level === 'colloquium') {
+        HUD.updateCompass(this.cam.yaw, this.cam.x, this.cam.z, done);
+        HUD.drawMap(this);
+      }
     }
 
     // living world + combat
@@ -1089,6 +1264,22 @@ class Game {
     return best;
   }
 
+  aimStudent() {
+    const c = this.cam;
+    const fx = -Math.sin(c.yaw) * Math.cos(c.pitch);
+    const fy = Math.sin(c.pitch);
+    const fz = -Math.cos(c.yaw) * Math.cos(c.pitch);
+    let best = null, bestDot = 0.965;
+    for (const s of this.life.students) {
+      const dx = s.x - c.x, dy = 1.2 - c.y, dz = s.z - c.z;
+      const L = Math.hypot(dx, dy, dz);
+      if (L > 45) continue;
+      const dot = (dx * fx + dy * fy + dz * fz) / (L || 1);
+      if (dot > bestDot) { bestDot = dot; best = s; }
+    }
+    return best;
+  }
+
   updateTargetHud() {
     const drone = this.aimDrone();
     if (drone && (!this.target || this.target.dist > 6)) {
@@ -1099,8 +1290,27 @@ class Game {
       HUD.prompt(`<kbd>Click</kbd> fire ${QTYPES[this.selSlot].name}`);
       return;
     }
+    // a student under the crosshair spells out exactly what they still need
+    const st = this.aimStudent();
+    if (st && (!this.target || this.target.dist > 6)) {
+      const tier = this.life.tier(st);
+      const q = QTYPES[st.wants];
+      HUD.setReticle('lock', (tier + 1) / 4, `STUDENT · ${TIERS[tier].name.toUpperCase()}`,
+        tier >= 3 ? 'FULLY EDUCATED — NOTHING MORE NEEDED'
+                  : `NEEDS ${q.name}  ·  PRESS ${st.wants + 1} THEN FIRE`);
+      HUD.prompt(tier >= 3 ? '' : `<kbd>${st.wants + 1}</kbd> ${q.name} &nbsp;→&nbsp; <kbd>Click</kbd>`);
+      return;
+    }
     const t = this.target;
     if (!t) { HUD.setReticle('idle', 0, null, null); HUD.prompt(''); return; }
+    if (t.kind === 'poster') {
+      const st = this.summitStatus();
+      const n = st.tasks.filter((x) => x.n >= x.of).length;
+      HUD.setReticle('lock', n / st.tasks.length, 'POSTER SESSION',
+        st.complete ? 'OPEN — THE BAR IS THAT WAY' : `${n}/${st.tasks.length} TASKS DONE`);
+      HUD.prompt(st.complete ? '<kbd>E</kbd> join the poster session' : '<kbd>E</kbd> check what is left');
+      return;
+    }
     if (t.kind === 'person') {
       const asked = this.progress[t.s.id] || [];
       HUD.setReticle(t.dist < 4.5 ? 'lock' : 'near', asked.length / 5, t.s.person.name,
@@ -1137,12 +1347,12 @@ class Game {
     if (this.talking) {
       const t = this.talking;
       lightSet = lightSet.concat([{
-        pos: [t.x + (this.cam.x - t.x) * 0.42, 2.5, t.z + (this.cam.z - t.z) * 0.42],
+        pos: [t.x + (this.cam.x - t.x) * 0.42, (t.y || 0) + 2.5, t.z + (this.cam.z - t.z) * 0.42],
         col: [1.0, 0.96, 0.90], range: 8.5, intensity: 1.6,
       }]);
     }
     R.setLights(lightSet, this.cam.x, this.cam.y, this.cam.z);
-    R.beginScene(this.cam, ENV, this.time);
+    R.beginScene(this.cam, this.level === 'summit' ? ENV_SUMMIT : ENV, this.time);
 
     // camera basis, reused for billboards and the viewmodel
     const c = this.cam;
@@ -1150,6 +1360,7 @@ class Game {
     const { right, up, back } = this.basis;
 
     /* --- static world --- */
+    if (this.world.terrain) R.drawMesh(this.world.terrain, IDENT);
     R.drawMesh(this.world.mesh, IDENT);
 
     /* --- spinners --- */
@@ -1173,7 +1384,7 @@ class Game {
       const turn = Math.sin(this.time * 0.32 + s.phase) * 0.10;
       const isTarget = this.target && this.target.kind === 'person' && this.target.s === s;
       const talking = this.talking === s;
-      M4.trs(s.model, s.x, 0.38 + bobY, s.z, s.yaw + turn, 1, 1, 1);
+      M4.trs(s.model, s.x, (s.y || 0) + 0.38 + bobY, s.z, s.yaw + turn, 1, 1, 1);
       const glowUp = talking ? 1.55 : isTarget ? 1.28 : 1;
       R.drawMesh(s.mesh, s.model, { holo: true, emissive: 0.26 * glowUp, tint: [glowUp, glowUp, glowUp] });
     }
@@ -1196,12 +1407,12 @@ class Game {
       if (asked < 5) {
         const fade = clamp((dist - 5) / 10, 0, 1) * (1 - asked / 6.5);
         if (fade > 0.01) {
-          M4.trs(this.tmpM, s.x, 0, s.z, 0, 1, 1, 1);
+          M4.trs(this.tmpM, s.x, (s.y || 0), s.z, 0, 1, 1, 1);
           R.drawMesh(this.beaconMesh, this.tmpM,
             { alpha: 0.055 * fade * (0.8 + 0.2 * Math.sin(this.time * 2 + s.phase)), tint: d.rgb });
         }
       } else {
-        M4.trs(this.tmpM, s.x, 2.9 + Math.sin(this.time * 1.1 + s.phase) * 0.10, s.z, this.time * 0.5, 1, 1, 1);
+        M4.trs(this.tmpM, s.x, (s.y || 0) + 2.9 + Math.sin(this.time * 1.1 + s.phase) * 0.10, s.z, this.time * 0.5, 1, 1, 1);
         R.drawMesh(this.markMesh, this.tmpM, { alpha: 0.85, tint: d.rgb2 });
       }
     }
@@ -1216,6 +1427,7 @@ class Game {
     }
 
     /* --- billboards --- */
+    this.life.drawPlates(R, c, this.basis);
     for (const s of this.world.stations) {
       const dist = Math.hypot(s.x - c.x, s.z - c.z);
       if (dist > 62) continue;
@@ -1223,10 +1435,10 @@ class Game {
       if (a < 0.02) continue;
       const d = this.districtById[s.district];
       const sc = 1 + Math.min(dist / 42, 0.55);
-      R.drawBillboard(s.plate, [s.x, 2.62, s.z], 3.0 * sc, 0.875 * sc, [1, 1, 1, a], 0.3, this.basis);
+      R.drawBillboard(s.plate, [s.x, (s.y || 0) + 2.62, s.z], 3.0 * sc, 0.875 * sc, [1, 1, 1, a], 0.3, this.basis);
       void d;
     }
-    for (const d of DISTRICTS) {
+    for (const d of (this.level === 'colloquium' ? DISTRICTS : [])) {
       const dist = Math.hypot(d.cx - c.x, d.cz - c.z);
       if (dist > 190) continue;
       const gx = d.cx - Math.cos(d.angle) * (R_PLATFORM - 4);
@@ -1243,7 +1455,7 @@ class Game {
       const a = clamp((80 - dist) / 22, 0, 1) * (ready ? 1 : 0.4);
       R.drawBillboard(v.tex, [v.x, 10.4, v.z], 13, 3.05, [1, 1, 1, a], ready ? 0.4 : 0, this.basis);
     }
-    {
+    if (this.level === 'colloquium') {
       const dist = Math.hypot(c.x, c.z);
       if (dist < 70 && dist > 6) {
         const a = clamp((70 - dist) / 26, 0, 1);
@@ -1280,6 +1492,21 @@ class Game {
     basisM[8] = back[0];  basisM[9] = back[1];  basisM[10] = back[2]; basisM[11] = 0;
     basisM[12] = px;      basisM[13] = py;      basisM[14] = pz;      basisM[15] = 1;
     // angle the instrument inward and up a touch so it reads as held, not floating
+    if (this.level === 'summit') {
+      const P = this.ride;
+      const bob = Math.sin(this.bob) * 0.012 * this.bobAmt + (P.landT || 0) * 0.09;
+      const bvm = M4.mul(this.tmpM, basisM,
+        xform([0, 0, 0], [0.02, P.lean * 0.30, -P.lean * 0.55], [1, 1, 1]));
+      // sit the board below the eye, nose away
+      // far enough forward that it sits inside the frustum, low in frame
+      const bd = 2.95, bh = -1.34 - bob;
+      bvm[12] = c.x + up[0] * bh + fw[0] * bd;
+      bvm[13] = c.y + up[1] * bh + fw[1] * bd;
+      bvm[14] = c.z + up[2] * bh + fw[2] * bd;
+      R.drawMesh(this.rideModel, bvm);
+      R.post(this.fx);
+      return;
+    }
     const vm = M4.mul(this.tmpM, basisM, xform([0, 0, 0], [0.13, 0.42, -0.11], [1, 1, 1]));
     R.drawMesh(this.device, vm);
     for (let i = 0; i < 5; i++) {

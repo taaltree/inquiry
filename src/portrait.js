@@ -36,6 +36,12 @@ const FACES = {
   turing:        { f: 0.46, j: 0.40, hair: 'side-sweep', beard: 'none',    eyes: 'plain',   collar: 'soft' },
   cajal:         { f: 0.49, j: 0.44, hair: 'bald-high',  beard: 'full-short', eyes: 'heavy', collar: 'suit' },
   li:            { f: 0.43, j: 0.33, hair: 'long-straight', beard: 'none', eyes: 'plain',   collar: 'modern' },
+  thompson:      { f: 0.49, j: 0.43, hair: 'side-part',  beard: 'none',    eyes: 'square',  collar: 'soft' },
+  hayhoe:        { f: 0.44, j: 0.34, hair: 'long-layer', beard: 'none',    eyes: 'plain',   collar: 'modern' },
+  simard:        { f: 0.44, j: 0.35, hair: 'bob-set',    beard: 'none',    eyes: 'plain',   collar: 'soft' },
+  bertozzi:      { f: 0.45, j: 0.36, hair: 'crop-short', beard: 'none',    eyes: 'round',   collar: 'lab' },
+  yamanaka:      { f: 0.46, j: 0.38, hair: 'side-sweep', beard: 'none',    eyes: 'plain',   collar: 'lab' },
+  charpentier:   { f: 0.44, j: 0.34, hair: 'long-straight', beard: 'none', eyes: 'plain',   collar: 'lab' },
 };
 
 const PW = 420, PH = 520;

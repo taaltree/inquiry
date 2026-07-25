@@ -38,8 +38,8 @@
         <div class="label">Field Record</div>
         <div class="stat hot"><span>Insights</span><span id="st-ins">0/0</span></div>
         <div class="stat"><span>Interviews</span><span id="st-int">0/0</span></div>
-        <div class="stat"><span>Connections</span><span id="st-con">0/0</span></div>
-        <div class="stat"><span>Vaults</span><span id="st-vau">0/5</span></div>
+        <div class="stat" id="st-con-row"><span>Connections</span><span id="st-con">0/0</span></div>
+        <div class="stat" id="st-vau-row"><span>Vaults</span><span id="st-vau">0/5</span></div>
         <div class="stat"><span>Students taught</span><span id="st-taught">0</span></div>
         <div class="stat"><span>Claims dismantled</span><span id="st-deb">0</span></div>
       </div>
@@ -121,7 +121,7 @@
           misinformation hunting them.
         </p>
         <div class="center hero-cta">
-          <button class="btn" id="btn-start">Enter the Colloquium</button>
+          <button class="btn" id="btn-start">Begin</button>
         </div>
       </div>
 
@@ -196,6 +196,30 @@
         </div>
       </details>
 
+    </div>
+  </div>
+
+  <!-- ============ LEVEL SELECT ============ -->
+  <div class="screen" id="levels">
+    <div class="screen-inner">
+      <div class="subtitle">CHOOSE YOUR MEETING</div>
+      <h1 class="title" style="font-size:clamp(26px,4vw,44px)">TWO VENUES</h1>
+      <div id="level-cards" class="levelgrid"></div>
+      <p class="prose center" style="margin:28px auto 0;opacity:.72;font-size:13.5px">
+        Both use the same five questions. Progress is shared and saved.
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ POSTER SESSION (level 2 win) ============ -->
+  <div class="screen" id="poster">
+    <div class="screen-inner">
+      <div class="subtitle">THE SUMMIT · SESSION CLOSED</div>
+      <h1 class="title" style="font-size:clamp(28px,5vw,58px)">POSTER SESSION</h1>
+      <div id="poster-body" style="margin-top:26px"></div>
+      <div class="center" style="margin-top:38px">
+        <button class="btn ghost" data-close="poster">Back to the slope</button>
+      </div>
     </div>
   </div>
 

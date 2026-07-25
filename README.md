@@ -33,6 +33,22 @@ To add a scientist, edit the relevant `src/data/<district>.json` (the schema is 
 `src/data/SCHEMA.md`), give them an entry in `LOOKS` in `src/actors.js` and `FACES` in
 `src/portrait.js`, and push.
 
+## Two levels
+
+**Level 1 — THE COLLOQUIUM.** A research station, on foot. Twenty-four scientists across five
+discipline districts, each secured by interviewing its researchers, sealing its vault, educating
+its students and clearing its feed. All five opens the Convocation.
+
+**Level 2 — THE SUMMIT.** A residential conference at altitude where everyone gets between
+sessions on a snowboard, so the level is one continuous descent. Six professors hold sessions
+down the fall line, fourteen grad students ride it with you, and the feed is airborne. Same five
+questions, same teaching, same inoculation — different verbs. It ends at the poster session,
+where somebody hands you a beer.
+
+The mountain is a deterministic heightfield: a broad valley with a groomed piste down the middle
+and rougher snow either side. Riding is arcade, not simulation — gravity pulls you down the fall
+line, carving across it scrubs speed, and the camera banks into the turn.
+
 ## The design
 
 **The five questions are the whole mechanic.** Instead of weapon slots 1–5 the player carries
@@ -78,6 +94,11 @@ Graduate — with an unmistakable silhouette at each: a floating book, then an a
 gown and mortarboard with a halo. From Informed they return fire on drones; Graduates aim better and
 hit harder. A drone worn down by students is credited to them. That is the thesis of the whole game
 made mechanical: education is herd immunity.
+
+**You can always see what a student needs.** Every student carries a persistent status plate —
+tier, progress, and the one question type that will help them most, with the key to press. A
+matching insight is worth double. Feedback is a centred banner that holds long enough to read,
+not a flicker.
 
 **Teaching is the only repair.** Fire an insight at a student and they take it. Students hit by
 the feed wander confused until someone teaches them out of it — scored separately, because the
@@ -135,13 +156,14 @@ src/
   actors.js    scientist figures, nameplates, the Inquiry Device viewmodel
   portrait.js  procedural duotone portrait plates
   campus.js    the title-screen collegiate court, drawn procedurally
+  mountain.js  level 2: heightfield terrain, lodge, lift, snowboard physics
   life.js      student crowd + education tiers, Feed Drones, projectiles
   hud.js       reticle, compass, minimap, dialogue, codex, quizzes, synthesis
   game.js      player, input, interaction, main loop, save/load
   style.css    HUD styling
   body.html    markup
-  data/        one JSON file per district, plus connections / vaults /
-               misinfo (20 technique cards) / students (reaction lines)
+  data/        one JSON file per district, plus summit.json (level 2 professors),
+               connections / vaults / misinfo (20 technique cards) / students
 build.mjs      validates the content, then fuses everything into dist/
 ```
 

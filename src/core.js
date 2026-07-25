@@ -50,12 +50,18 @@ const M4 = {
   },
 
   /* first-person view matrix from position + yaw/pitch */
-  view(o, px, py, pz, yaw, pitch) {
+  view(o, px, py, pz, yaw, pitch, roll) {
     const cy=Math.cos(yaw), sy=Math.sin(yaw), cp=Math.cos(pitch), sp=Math.sin(pitch);
     // camera basis: right, up, back(-forward)
-    const rx=cy,  ry=0,  rz=-sy;
-    const ux=sy*sp, uy=cp, uz=cy*sp;
+    let rx=cy,  ry=0,  rz=-sy;
+    let ux=sy*sp, uy=cp, uz=cy*sp;
     const bx=sy*cp, by=-sp, bz=cy*cp;
+    if (roll) {                       // bank the view around the look axis
+      const cr=Math.cos(roll), sr=Math.sin(roll);
+      const nrx=rx*cr+ux*sr, nry=ry*cr+uy*sr, nrz=rz*cr+uz*sr;
+      const nux=ux*cr-rx*sr, nuy=uy*cr-ry*sr, nuz=uz*cr-rz*sr;
+      rx=nrx; ry=nry; rz=nrz; ux=nux; uy=nuy; uz=nuz;
+    }
     o[0]=rx; o[1]=ux; o[2]=bx; o[3]=0;
     o[4]=ry; o[5]=uy; o[6]=by; o[7]=0;
     o[8]=rz; o[9]=uz; o[10]=bz; o[11]=0;
