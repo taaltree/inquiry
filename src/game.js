@@ -668,7 +668,10 @@ class Game {
     const q = QTYPES[this.selSlot];
     if (!this.unlockedTypes().includes(q.key)) {
       Sfx.deny();
-      HUD.toast('LOCKED', `Ask a scientist "${q.ask}" to charge this`);
+      // This is the one message a brand-new player needs, so it gets the banner
+      // rather than the small toast.
+      HUD.banner(`${q.name} NOT CHARGED`,
+        `Ask a scientist "${q.ask}" and this question becomes ammunition.`, '#ffab6a');
       return;
     }
     this.fireCd = 0.26;
