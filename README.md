@@ -73,6 +73,11 @@ explains itself once chosen, so the distractors are the teaching.
 **Synthesis is the interdisciplinary layer.** 14 real links between researchers, 12 of them
 crossing districts, opened by pairing two completed interviews at the atrium terminal.
 
+**The feed reaches everywhere.** Drones spawn near the player wherever they are — atrium,
+causeway, ring walkway or district — and are credited to whichever of the five wedges the player
+is standing in. They stay gated behind asking your first question, because a drone you have no
+ammunition for is just a nuisance, and the first one announces itself.
+
 **The feed fights back.** Drifting Feed Drones fire manipulative claims at the player and at the
 student crowd. Each of the 20 cards is destroyed by exactly one question type — the one that
 structurally dismantles its technique (cherry-picking falls to EVIDENCE; fake expertise to METHOD;

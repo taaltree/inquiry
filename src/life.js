@@ -221,7 +221,7 @@ class Life {
     this.drones = [];
     this.bolts = [];
     this.motes = [];
-    this.spawnTimer = 8;
+    this.spawnTimer = 5;
     this.model = M4.create();
   }
 
@@ -313,7 +313,16 @@ class Life {
       const dist = Math.hypot(cam.x - d.cx, cam.z - d.cz);
       if (dist < bd) { bd = dist; best = d; }
     }
-    return bd < R_PLATFORM + 34 ? best : null;
+    if (bd < R_PLATFORM + 34) return best;
+    // Off-platform — atrium, causeway, ring — you are still inside one of the
+    // station's five wedges, so the feed still has a district to answer to.
+    const a = Math.atan2(cam.z, cam.x);
+    let wedge = null, wd = 1e9;
+    for (const d of DISTRICTS) {
+      const diff = Math.abs(((a - d.angle + Math.PI * 3) % TAU) - Math.PI);
+      if (diff < wd) { wd = diff; wedge = d; }
+    }
+    return wedge;
   }
 
   spawnDrone(forceDistrict) {
@@ -343,7 +352,10 @@ class Life {
     const live = this.drones.filter((x) => x.district === d.id && !x.dead).length;
     if (live + (G.feedCleared[d.id] || 0) >= DRONES_PER_DISTRICT) return null;
 
-    const p = this.randomPoint(d.cx, d.cz, 30);
+    // near the player, not near the district centre — otherwise a drone
+    // credited to the Foundry spawns 110 m away while you stand in the atrium
+    const cam = G.cam;
+    const p = this.randomPoint(cam.x, cam.z, 34);
     const card = MISINFO[(this.rnd() * MISINFO.length) | 0];
     const drone = {
       x: p.x, y: 3.0 + this.rnd() * 1.4, z: p.z,
@@ -517,8 +529,14 @@ class Life {
     if (G.unlockedTypes().length > 0) {
       this.spawnTimer -= dt;
       if (this.spawnTimer <= 0) {
-        this.spawnTimer = 11 + this.rnd() * 12;
-        this.spawnDrone();
+        this.spawnTimer = 9 + this.rnd() * 9;
+        const born = this.spawnDrone();
+        if (born && !G.feedIntroduced) {
+          G.feedIntroduced = true;
+          HUD.banner('THE FEED HAS FOUND YOU',
+            'A drone is circling. Aim at it to read its technique.', '#ff3fa8');
+          Sfx.deny();
+        }
       }
     }
 
