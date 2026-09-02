@@ -55,16 +55,16 @@ function box(b, pos, size, color, glow = 0, rot = [0, 0, 0]) {
 }
 
 /* railing along a straight run */
-function railing(b, x0, z0, x1, z1, color, glow) {
+function railing(b, x0, z0, x1, z1, color, glow, y0 = 0) {
   const dx = x1 - x0, dz = z1 - z0, len = Math.hypot(dx, dz);
   const n = Math.max(2, Math.round(len / 3.5));
   for (let i = 0; i <= n; i++) {
     const t = i / n;
-    b.add(BOX, xform([x0 + dx * t, 0.52, z0 + dz * t], [0, 0, 0], [0.14, 1.04, 0.14]), GREY, 0);
+    b.add(BOX, xform([x0 + dx * t, y0 + 0.52, z0 + dz * t], [0, 0, 0], [0.14, 1.04, 0.14]), GREY, 0, 0.4, 0.7);
   }
   const yaw = Math.atan2(dx, dz);
-  b.add(BOX, xform([(x0 + x1) / 2, 1.0, (z0 + z1) / 2], [0, yaw, 0], [0.09, 0.09, len]), color, glow * 0.9);
-  b.add(BOX, xform([(x0 + x1) / 2, 0.62, (z0 + z1) / 2], [0, yaw, 0], [0.05, 0.05, len]), color, glow * 0.4);
+  b.add(BOX, xform([(x0 + x1) / 2, y0 + 1.0, (z0 + z1) / 2], [0, yaw, 0], [0.09, 0.09, len]), color, glow * 0.9, 0.35, 0.7);
+  b.add(BOX, xform([(x0 + x1) / 2, y0 + 0.62, (z0 + z1) / 2], [0, yaw, 0], [0.05, 0.05, len]), color, glow * 0.4, 0.35, 0.7);
 }
 
 /* railing following a circular arc */
@@ -112,7 +112,7 @@ function buildWorld(gl, roster) {
   for (let i = 0; i < 48; i++) {
     const a = (i / 48) * TAU;
     const long = i % 6 === 0;
-    b.add(BOX, xform([Math.cos(a) * 11.8, 0.31, Math.sin(a) * 11.8], [0, -a, 0],
+    b.add(BOX, xform([Math.cos(a) * 11.8, 0.31, Math.sin(a) * 11.8], [0, Math.PI / 2 - a, 0],
       [0.10, 0.02, long ? 2.6 : 1.3]), long ? GOLD : GREY_L, long ? 0.9 : 0.35);
   }
 
@@ -157,7 +157,7 @@ function buildWorld(gl, roster) {
   // five gate arches, one aimed at each district
   DISTRICTS.forEach((d) => {
     const gx = Math.cos(d.angle) * (R_ATRIUM - 3.2), gz = Math.sin(d.angle) * (R_ATRIUM - 3.2);
-    const yaw = -d.angle;
+    const yaw = Math.PI / 2 - d.angle;          // local x tangential, local z radial
     for (const side of [-1, 1]) {
       const ox = Math.cos(d.angle + Math.PI / 2) * 4.6 * side;
       const oz = Math.sin(d.angle + Math.PI / 2) * 4.6 * side;
@@ -175,7 +175,7 @@ function buildWorld(gl, roster) {
   DISTRICTS.forEach((d) => {
     const dirx = Math.cos(d.angle), dirz = Math.sin(d.angle);
     const midR = (CAUSE_IN + CAUSE_OUT) / 2, len = CAUSE_OUT - CAUSE_IN;
-    const yaw = -d.angle;
+    const yaw = Math.PI / 2 - d.angle;          // long axis radial
     b.add(BOX, xform([dirx * midR, -0.3, dirz * midR], [0, yaw, 0], [W_CAUSEWAY, 0.6, len]), hex2rgb('#222735'), 0.02);
     b.add(BOX, xform([dirx * midR, -1.6, dirz * midR], [0, yaw, 0], [W_CAUSEWAY - 1.6, 2.2, len - 1]), GREY_D, 0);
     // glowing centre strip + edge lines
@@ -210,9 +210,12 @@ function buildWorld(gl, roster) {
   ringFlat(b, 0, 0, R_RING - W_RING / 2 + 0.3, R_RING - W_RING / 2, 0.02, hex2rgb('#7f8bb0'), 0.8, 128);
   // ring railings on the outer edge only, skipping where districts meet it
   for (let k = 0; k < 5; k++) {
-    const a0 = DISTRICTS[k].angle + 0.30, a1 = DISTRICTS[(k + 1) % 5].angle - 0.30;
-    arcRailing(b, 0, 0, R_RING + W_RING / 2 - 0.4, a0, a1 < a0 ? a1 + TAU : a1, hex2rgb('#6f7ba0'), 0.7);
-    arcRailing(b, 0, 0, R_RING - W_RING / 2 + 0.4, a0, a1 < a0 ? a1 + TAU : a1, hex2rgb('#6f7ba0'), 0.7);
+    const a0 = DISTRICTS[k].angle + 0.30, a1r = DISTRICTS[(k + 1) % 5].angle - 0.30;
+    const a1 = a1r < a0 ? a1r + TAU : a1r;
+    const g = DISTRICTS[k].angle + TAU / 10;            // obelisk + balcony gap
+    arcRailing(b, 0, 0, R_RING + W_RING / 2 - 0.4, a0, g - 0.05, hex2rgb('#6f7ba0'), 0.7);
+    arcRailing(b, 0, 0, R_RING + W_RING / 2 - 0.4, g + 0.05, a1, hex2rgb('#6f7ba0'), 0.7);
+    arcRailing(b, 0, 0, R_RING - W_RING / 2 + 0.4, a0, a1, hex2rgb('#6f7ba0'), 0.7);
   }
   // marker obelisks between districts
   for (let k = 0; k < 5; k++) {
@@ -272,6 +275,10 @@ function buildWorld(gl, roster) {
     vaults.push({ district: d.id, x: vx, z: vz, yaw: vyaw, need: n });
   });
 
+  /* ================= TRAVERSAL LAYER ================= */
+  const T = { slabs: [], pads: [], zips: [], spots: [], pillars: [] };
+  buildTraversal(b, lights, T);
+
   /* ================= DISTANT SCENERY ================= */
   for (let i = 0; i < 90; i++) {
     const a = rnd() * TAU;
@@ -289,7 +296,221 @@ function buildWorld(gl, roster) {
       mixc(hex2rgb('#6fd6ff'), hex2rgb('#ffb680'), rnd()), 1.5);
   }
 
-  return { mesh: b.upload(gl), spinners, lights, stations, vaults, districts: DISTRICTS };
+  return { mesh: b.upload(gl), spinners, lights, stations, vaults, districts: DISTRICTS,
+    slabs: T.slabs, pads: T.pads, zips: T.zips, spots: T.spots, pillars: T.pillars };
+}
+
+/* ============================================================
+   TRAVERSAL LAYER — the atrium mezzanine, district lofts, jump-pad
+   islands, ring balconies and the ziplines between them. Slabs are
+   walkable rectangles the player physics reads; pillars are colliders;
+   spots are where marginalia are hidden.
+   Conventions (matching xform): local +z of a yawed box points along
+   (sin yaw, cos yaw); radialYaw(theta) points local +z outward along theta.
+   ============================================================ */
+const radialYaw = (theta) => Math.PI / 2 - theta;
+function rot2(lx, lz, ry) {
+  const c = Math.cos(ry), s = Math.sin(ry);
+  return [lx * c + lz * s, -lx * s + lz * c];
+}
+
+/* an elevated deck: walkable slab, skirt, accent edge lines, optional rails.
+   rails: local ±x sides (they run along z); endRails: local ±z ends (run along x) */
+function deckSlab(b, T, x, z, w, d, y, ry, col, accent, opts = {}) {
+  const th = opts.th || 0.5;
+  b.add(BOX, xform([x, y - th / 2, z], [0, ry, 0], [w, th, d]), col, 0.02, 0.85, 0.05);
+  b.add(BOX, xform([x, y - th - 0.2, z], [0, ry, 0], [w - 0.8, 0.4, d - 0.8]), GREY_D, 0, 0.7, 0.3);
+  for (const s of (opts.edges || [-1, 1])) {
+    const [ox, oz] = rot2((w / 2 - 0.2) * s, 0, ry);
+    b.add(BOX, xform([x + ox, y + 0.012, z + oz], [0, ry, 0], [0.14, 0.024, d - 0.2]), accent, 0.85);
+  }
+  for (const s of (opts.rails || [])) {
+    const [ax, az] = rot2((w / 2 - 0.3) * s, -d / 2 + 0.2, ry);
+    const [bx2, bz2] = rot2((w / 2 - 0.3) * s, d / 2 - 0.2, ry);
+    railing(b, x + ax, z + az, x + bx2, z + bz2, accent, 0.8, y);
+  }
+  for (const s of (opts.endRails || [])) {
+    const [ax, az] = rot2(-w / 2 + 0.3, (d / 2 - 0.3) * s, ry);
+    const [bx2, bz2] = rot2(w / 2 - 0.3, (d / 2 - 0.3) * s, ry);
+    railing(b, x + ax, z + az, x + bx2, z + bz2, accent, 0.8, y);
+  }
+  T.slabs.push({ x, z, w, d, y, ry, h: th });
+}
+
+function pylons(b, T, x, z, w, d, y, ry, floorY = 0, inset = 1.0) {
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const [ox, oz] = rot2((w / 2 - inset) * sx, (d / 2 - inset) * sz, ry);
+    const h = y - floorY - 0.4;
+    b.add(pCyl(8), xform([x + ox, floorY + h / 2, z + oz], [0, 0, 0], [0.55, h, 0.55]), hex2rgb('#2a2f3b'), 0, 0.5, 0.6);
+    T.pillars.push({ x: x + ox, z: z + oz, r: 0.5 });
+  }
+}
+
+/* a flight of solid steps starting at (x0,z0) on floor y0, climbing along yaw */
+function stairs(b, T, x0, z0, yaw, width, n, rise, run, y0, col, accent) {
+  for (let i = 0; i < n; i++) {
+    const [ox, oz] = rot2(0, run * (i + 0.5), yaw);
+    const y = y0 + rise * (i + 1), h = y - y0 + 0.5;
+    b.add(BOX, xform([x0 + ox, y - h / 2, z0 + oz], [0, yaw, 0], [width, h, run]), col, 0.02, 0.85, 0.05);
+    const [nx, nz] = rot2(0, run * i + 0.09, yaw);
+    b.add(BOX, xform([x0 + nx, y + 0.008, z0 + nz], [0, yaw, 0], [width - 0.5, 0.016, 0.12]), accent, 0.7);
+    T.slabs.push({ x: x0 + ox, z: z0 + oz, w: width, d: run, y, ry: yaw, h });
+  }
+  const L = run * n;
+  for (const s of [-1, 1]) {
+    const [ax, az] = rot2((width / 2 - 0.1) * s, 0, yaw);
+    const [bx2, bz2] = rot2((width / 2 - 0.1) * s, L, yaw);
+    strut(b, [x0 + ax, y0 + 1.0, z0 + az], [x0 + bx2, y0 + rise * n + 1.0, z0 + bz2], 0.08, accent, 0.6, 0.35, 0.7);
+    b.add(BOX, xform([x0 + ax, y0 + 0.5, z0 + az], [0, 0, 0], [0.14, 1.0, 0.14]), GREY, 0, 0.4, 0.7);
+    b.add(BOX, xform([x0 + bx2, y0 + rise * n + 0.5, z0 + bz2], [0, 0, 0], [0.14, 1.0, 0.14]), GREY, 0, 0.4, 0.7);
+  }
+}
+
+/* a launch ring: step on it and it throws you along dir */
+function jumpPad(b, T, lights, x, z, y, dirx, dirz, accent, power, push) {
+  disc(b, x, z, 2.0, y + 0.08, 0.16, hex2rgb('#1a1f2b'), 0.02, 28);
+  ringFlat(b, x, z, 1.85, 1.55, y + 0.17, accent, 1.5, 36);
+  ringFlat(b, x, z, 0.7, 0.45, y + 0.17, accent, 1.2, 24);
+  const yaw = Math.atan2(dirx, dirz);
+  for (let i = 0; i < 3; i++) for (const s of [-1, 1]) {
+    const [ox, oz] = rot2(0.40 * s, -0.55 + i * 0.55, yaw);
+    b.add(BOX, xform([x + ox, y + 0.18, z + oz], [0, yaw + s * 0.8, 0], [0.10, 0.02, 0.9]), accent, 1.3);
+  }
+  lights.push({ pos: [x, y + 1.6, z], col: accent, range: 10, intensity: 0.55 });
+  T.pads.push({ x, z, y, r: 1.7, power, dir: [dirx, dirz], push });
+}
+
+/* a cable between two posts; A and B are {x,y,z,floor} with y = cable height */
+function zipline(b, T, lights, A, B, accent) {
+  for (const P of [A, B]) {
+    const h = P.y + 0.4 - P.floor;
+    b.add(pCyl(8), xform([P.x, P.floor + h / 2, P.z], [0, 0, 0], [0.36, h, 0.36]), hex2rgb('#2a2f3b'), 0, 0.5, 0.7);
+    b.add(BOX, xform([P.x, P.y + 0.4, P.z], [0, 0, 0], [0.8, 0.18, 0.8]), accent, 1.0);
+    b.add(pTorus(0.12, 16, 6), xform([P.x, P.y - 0.55, P.z], [0, 0, 0], [0.55, 0.55, 0.55]), accent, 1.6);
+    T.pillars.push({ x: P.x, z: P.z, r: 0.36 });
+    lights.push({ pos: [P.x, P.y, P.z], col: accent, range: 7, intensity: 0.4 });
+  }
+  const L = Math.hypot(B.x - A.x, B.y - A.y, B.z - A.z), sag = Math.min(1.2, L / 40);
+  let prev = [A.x, A.y, A.z];
+  for (let i = 1; i <= 14; i++) {
+    const u = i / 14;
+    const p = [lerp(A.x, B.x, u), lerp(A.y, B.y, u) - Math.sin(u * Math.PI) * sag, lerp(A.z, B.z, u)];
+    strut(b, prev, p, 0.06, accent, 0.8, 0.3, 0.8);
+    prev = p;
+  }
+  T.zips.push({ a: [A.x, A.y, A.z], b: [B.x, B.y, B.z] });
+}
+
+/* a lectern where a marginal note waits */
+function spot(b, T, district, kind, x, y, z, accent) {
+  b.add(pPrism(6), xform([x, y + 0.45, z], [0, 0, 0], [0.7, 0.9, 0.7]), hex2rgb('#2a3040'), 0.03, 0.5, 0.4);
+  b.add(pPrism(6), xform([x, y + 0.92, z], [0, 0, 0], [0.8, 0.06, 0.8]), accent, 0.9);
+  T.spots.push({ district, kind, x, y: y + 1.45, z });
+}
+
+function buildTraversal(b, lights, T) {
+  /* ---- atrium mezzanine: a ring deck at 4.6 m around the spire ---- */
+  const MZ_Y = 4.6, MZ_R = 17.0, MZ_W = 5.0, MZ_N = 14;
+  for (let i = 0; i < MZ_N; i++) {
+    const th = ((i + 0.5) / MZ_N) * TAU;
+    const chord = (TAU / MZ_N) * MZ_R * 1.14;
+    deckSlab(b, T, Math.cos(th) * MZ_R, Math.sin(th) * MZ_R, chord, MZ_W, MZ_Y, radialYaw(th), hex2rgb('#232836'), GOLD, { edges: [] });
+  }
+  ringFlat(b, 0, 0, MZ_R + MZ_W / 2 - 0.05, MZ_R + MZ_W / 2 - 0.35, MZ_Y + 0.012, GOLD, 0.8, 96);
+  ringFlat(b, 0, 0, MZ_R - MZ_W / 2 + 0.35, MZ_R - MZ_W / 2 + 0.05, MZ_Y + 0.012, hex2rgb('#8fd8ff'), 0.8, 96);
+  arcRailing(b, 0, 0, MZ_R - MZ_W / 2 + 0.3, 0, TAU, hex2rgb('#8fd8ff'), 0.7, MZ_Y);
+  // support columns under the deck
+  for (let i = 0; i < 14; i++) {
+    const th = (i / 14) * TAU + 0.1;
+    const px = Math.cos(th) * (MZ_R + 1.2), pz = Math.sin(th) * (MZ_R + 1.2);
+    b.add(pCyl(8), xform([px, MZ_Y / 2 - 0.3, pz], [0, 0, 0], [0.5, MZ_Y - 0.6, 0.5]), hex2rgb('#2a2f3b'), 0, 0.5, 0.6);
+    T.pillars.push({ x: px, z: pz, r: 0.45 });
+  }
+  // warm fill under the deck so the atrium floor beneath it is not a cave
+  for (let i = 0; i < 7; i++) {
+    const th = (i / 7) * TAU + 0.3;
+    lights.push({ pos: [Math.cos(th) * 17.0, 3.3, Math.sin(th) * 17.0], col: scalec(GOLD, 0.9), range: 14, intensity: 0.42 });
+  }
+  // two tangential staircases up, between gates
+  const STAIR_AT = [-0.3 * Math.PI, 0.9 * Math.PI];
+  for (const phi of STAIR_AT) {
+    const L = 0.95 * 9;
+    const x0 = Math.cos(phi) * 21.0 + Math.sin(phi) * (L / 2), z0 = Math.sin(phi) * 21.0 - Math.cos(phi) * (L / 2);
+    stairs(b, T, x0, z0, -phi, 4.4, 9, MZ_Y / 9, 0.95, 0, hex2rgb('#232836'), GOLD);
+  }
+  // outer rail, with gaps where the stairs arrive and where the ziplines leave
+  const gaps = [...STAIR_AT.map((a) => [a, 0.26]), ...DISTRICTS.map((d) => [d.angle, 0.09])]
+    .map(([a, hw]) => [((a % TAU) + TAU) % TAU, hw]).sort((p, q) => p[0] - q[0]);
+  for (let i = 0; i < gaps.length; i++) {
+    const [a, hw] = gaps[i], [na, nhw] = gaps[(i + 1) % gaps.length];
+    const from = a + hw, to = (i === gaps.length - 1 ? na + TAU : na) - nhw;
+    if (to > from) arcRailing(b, 0, 0, MZ_R + MZ_W / 2 - 0.3, from, to, GOLD, 0.7, MZ_Y);
+  }
+
+  const cand = [];       // candidate note sites, budgeted per district below
+  DISTRICTS.forEach((d) => {
+    const A = d.angle, F = A + Math.PI;
+    const at = (th, r) => [d.cx + Math.cos(th) * r, d.cz + Math.sin(th) * r];
+    const floor = scalec(d.floorRGB, 1.35);
+
+    // mezzanine: a note per district, and a zipline out to that district's causeway
+    const ma = A + 0.36;
+    cand.push({ id: d.id, pri: 6, kind: 'mezzanine', x: Math.cos(ma) * 17.0, y: MZ_Y, z: Math.sin(ma) * 17.0, accent: d.rgb });
+    zipline(b, T, lights,
+      { x: Math.cos(A) * 19.2, y: MZ_Y + 2.3, z: Math.sin(A) * 19.2, floor: MZ_Y },
+      { x: Math.cos(A) * 73.0, y: 2.9, z: Math.sin(A) * 73.0, floor: 0 }, d.rgb);
+
+    // causeway kiosk: a single step up, mid-span
+    const [kx, kz] = [Math.cos(A) * 49, Math.sin(A) * 49];
+    deckSlab(b, T, kx, kz, 4.6, 4.6, 0.55, radialYaw(A), hex2rgb('#262b38'), d.rgb2, { edges: [-1, 1] });
+    cand.push({ id: d.id, pri: 5, kind: 'kiosk', x: kx, y: 0.55, z: kz, accent: d.rgb2 });
+
+    // the loft: an elevated reading deck up a flight of stairs, front-left of the plaza
+    const LTH = F - 0.72, LR = 26.0, LY = 5.2, LW = 12, LD = 6;
+    const [lx, lz] = at(LTH, LR);
+    const lyaw = radialYaw(LTH);
+    deckSlab(b, T, lx, lz, LW, LD, LY, lyaw, floor, d.rgb, { rails: [1, -1], endRails: [1] });
+    pylons(b, T, lx, lz, LW, LD, LY, lyaw, 0, 1.2);
+    const tx = -Math.sin(LTH), tz = Math.cos(LTH);                 // tangent at the loft
+    const [sx0, sz0] = at(LTH, 21.6);
+    stairs(b, T, sx0 + tx * 8.5, sz0 + tz * 8.5, Math.atan2(-tx, -tz), 3.2, 10, LY / 10, 0.95, 0, floor, d.rgb);
+    for (const s of [-1, 1]) cand.push({ id: d.id, pri: s < 0 ? 1 : 2, kind: 'loft', x: lx + tx * 3.6 * s, y: LY, z: lz + tz * 3.6 * s, accent: d.rgb });
+    lights.push({ pos: [lx, LY + 3.2, lz], col: mixc(d.rgb, [1, 1, 1], 0.4), range: 16, intensity: 0.6 });
+
+    // ring balcony beside the obelisk, and the loft's zipline down to it
+    const pa = A + TAU / 10, PR = R_RING + W_RING / 2 + 3.0;
+    const [px, pz] = [Math.cos(pa) * PR, Math.sin(pa) * PR];
+    deckSlab(b, T, px, pz, 7.5, 7.0, 0, radialYaw(pa), hex2rgb('#20252f'), hex2rgb('#7f8bb0'), { rails: [1, -1], endRails: [1] });
+    b.add(pCyl(24, false, false), xform([px, -1.4, pz], [0, 0, 0], [6.0, 2.4, 6.0]), GREY_D, 0);
+    cand.push({ id: d.id, pri: 4, kind: 'balcony', x: px + Math.cos(pa) * 1.8, y: 0, z: pz + Math.sin(pa) * 1.8, accent: hex2rgb('#9fb4e8') });
+    const side = Math.sign((px - lx) * tx + (pz - lz) * tz) || 1;
+    zipline(b, T, lights,
+      { x: lx + tx * 4.8 * side, y: LY + 2.4, z: lz + tz * 4.8 * side, floor: LY },
+      { x: px - Math.cos(pa) * 1.6, y: 2.9, z: pz - Math.sin(pa) * 1.6, floor: 0 }, d.rgb);
+
+    // jump pad on the front-right, throwing you out to a floating island over the void
+    const PTH = F + 0.72;
+    const [jx, jz] = at(PTH, 29.0);
+    jumpPad(b, T, lights, jx, jz, 0, Math.cos(PTH), Math.sin(PTH), d.rgb2, 15.5, 7.0);
+    const [ix, iz] = at(PTH, 38.5), IY = 5.0;
+    deckSlab(b, T, ix, iz, 11, 11, IY, radialYaw(PTH), floor, d.rgb2, { th: 0.7, rails: [1, -1], endRails: [1] });
+    b.add(pCyl(28, true, false), xform([ix, IY - 2.6, iz], [0, 0, 0], [9.0, 3.8, 9.0]), GREY_D, 0);
+    ringFlat(b, ix, iz, 5.3, 4.9, IY - 0.72, d.rgb2, 0.9, 48);
+    b.add(pCyl(16, true, false), xform([ix, IY - 9, iz], [0, 0, 0], [1.2, 10, 1.2]), scalec(d.rgb2, 0.35), 0.5);  // beam
+    cand.push({ id: d.id, pri: 3, kind: 'island', x: ix + Math.cos(PTH) * 2.2, y: IY, z: iz + Math.sin(PTH) * 2.2, accent: d.rgb2 });
+    lights.push({ pos: [ix, IY + 3, iz], col: d.rgb2, range: 16, intensity: 0.6 });
+  });
+
+  /* one lectern per note the district actually has, best sites first */
+  const count = {};
+  for (const m of (typeof MARGINALIA !== 'undefined' ? MARGINALIA : [])) count[m.district] = (count[m.district] || 0) + 1;
+  cand.sort((p, q) => p.pri - q.pri);
+  const used = {};
+  for (const c of cand) {
+    if ((used[c.id] || 0) >= (count[c.id] || 0)) continue;
+    used[c.id] = (used[c.id] || 0) + 1;
+    spot(b, T, c.id, c.kind, c.x, c.y, c.z, c.accent);
+  }
 }
 
 /* ---------- a scientist's station: dais, backdrop, plinth ---------- */
@@ -360,7 +581,7 @@ function buildLandmark(b, spinners, lights, gl, d, rnd) {
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * TAU;
       const px = cx + Math.cos(a) * 11, pz = cz + Math.sin(a) * 11;
-      b.add(pPrism(4), xform([px, 5.5, pz], [0, a, 0], [1.5, 11, 1.5]), hex2rgb('#3a2b26'), 0);
+      b.add(pPrism(4), xform([px, 5.5, pz], [0, -a, 0], [1.5, 11, 1.5]), hex2rgb('#3a2b26'), 0, 0.55, 0.5);
       strut(b, [px, 11, pz], [cx, 15.5, cz], 0.28, hex2rgb('#4a382f'), 0);
       lights.push({ pos: [px, 10, pz], col: d.rgb, range: 18, intensity: 0.4 });
     }
@@ -378,7 +599,7 @@ function buildLandmark(b, spinners, lights, gl, d, rnd) {
       for (let k = 0; k < 16; k++) {
         const a = (k / 16) * TAU;
         sb.add(BOX, xform([Math.cos(a) * rad / 2, Math.sin(a) * rad / 2 * Math.sin(tilt), Math.sin(a) * rad / 2 * Math.cos(tilt)],
-          [0, -a, 0], [0.5, 0.22, 0.22]), d.rgb2, 1.2);
+          [0, Math.PI / 2 - a, 0], [0.5, 0.22, 0.22]), d.rgb2, 1.2);
       }
       spinners.push({ mesh: sb.upload(gl), pivot: [cx, 14, cz], speed: spd });
     }
@@ -482,13 +703,13 @@ function buildLandmark(b, spinners, lights, gl, d, rnd) {
       const rr = 15 + (i % 2) * 3;
       const px = cx + Math.cos(a) * rr, pz = cz + Math.sin(a) * rr;
       const h = 9 + (i % 4) * 3.2;
-      b.add(BOX, xform([px, h / 2, pz], [0, -a, 0], [3.6, h, 1.1]), hex2rgb('#1e2231'), 0.02);
+      b.add(BOX, xform([px, h / 2, pz], [0, Math.PI / 2 - a, 0], [3.6, h, 1.1]), hex2rgb('#1e2231'), 0.02, 0.5, 0.35);
       for (let r = 0; r < 5; r++) for (let c2 = 0; c2 < 3; c2++) {
         if (((i * 7 + r * 3 + c2 * 5) % 4) === 0) continue;
         b.add(BOX, xform([px + Math.cos(a + Math.PI / 2) * (c2 - 1) * 1.0 + Math.cos(a) * 0.58,
                           1.6 + r * (h - 2.6) / 4.4,
                           pz + Math.sin(a + Math.PI / 2) * (c2 - 1) * 1.0 + Math.sin(a) * 0.58],
-          [0, -a, 0], [0.62, 0.34, 0.06]), (r + c2) % 3 ? d.rgb : d.rgb2, 1.05);
+          [0, Math.PI / 2 - a, 0], [0.62, 0.34, 0.06]), (r + c2) % 3 ? d.rgb : d.rgb2, 1.05);
       }
       if (i % 3 === 0) lights.push({ pos: [px, h * 0.7, pz], col: d.rgb, range: 20, intensity: 0.5 });
     }
@@ -542,5 +763,10 @@ function buildColliders(world) {
   }
   for (const v of world.vaults) c.push({ x: v.x, z: v.z, r: 5.2 });
   for (const s of world.stations) c.push({ x: s.x, z: s.z, r: 1.15 });  // the figure itself
+  for (const p of (world.pillars || [])) c.push(p);
+  for (let k = 0; k < 5; k++) {                                          // ring obelisks
+    const a = DISTRICTS[k].angle + TAU / 10;
+    c.push({ x: Math.cos(a) * R_RING, z: Math.sin(a) * R_RING, r: 1.1 });
+  }
   return c;
 }

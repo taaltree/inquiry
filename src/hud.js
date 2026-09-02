@@ -202,9 +202,129 @@ const HUD = {
     $('#st-int').textContent = `${s.interviews}/${s.interviewsMax}`;
     $('#st-con').textContent = `${s.connections}/${s.connectionsMax}`;
     $('#st-vau').textContent = `${s.vaults}/5`;
-    const t = $('#st-taught'), db = $('#st-deb');
+    const t = $('#st-taught'), db = $('#st-deb'), mg = $('#st-marg');
     if (t) t.textContent = String(s.taught || 0);
     if (db) db.textContent = String(s.debunked || 0);
+    if (mg) mg.textContent = `${s.marginalia || 0}/${s.marginaliaMax || 0}`;
+    const en = $('#st-end');
+    if (en) en.textContent = `${s.endorsements || 0}/${s.endorsementsMax || 0}`;
+  },
+
+  dialogueHint(text) { $('#dlg-hint').textContent = text; },
+
+  /* ---------- 3D waypoints ---------- */
+  waypoints(list) {
+    const layer = $('#waypoints');
+    if (!layer) return;
+    const pool = this._wpPool || (this._wpPool = new Map());
+    const seen = new Set();
+    const W = layer.clientWidth, H = layer.clientHeight, M = 34;
+    for (const w of list) {
+      seen.add(w.key);
+      let el = pool.get(w.key);
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'wp';
+        el.innerHTML = '<i></i><b></b><span></span>';
+        layer.appendChild(el);
+        pool.set(w.key, el);
+      }
+      const sx = Math.max(M, Math.min(W - M, w.sx)), sy = Math.max(M + 40, Math.min(H - 150, w.sy));
+      el.style.transform = `translate(${sx.toFixed(0)}px, ${sy.toFixed(0)}px) translate(-50%, -100%)`;
+      el.style.setProperty('--c', w.color);
+      el.classList.toggle('off', !w.on);
+      el.classList.toggle('faint', !!w.faint);
+      el.children[1].textContent = w.label;
+      el.children[2].textContent = w.sub;
+    }
+    for (const [k, el] of pool) if (!seen.has(k)) { el.remove(); pool.delete(k); }
+  },
+
+  /* the Peer Review bar: which layers remain, and which question comes next */
+  bossBar(d) {
+    const el = $('#bossbar');
+    if (!el) return;
+    if (!d) { if (el.classList.contains('on')) { el.classList.remove('on'); this._bbKey = ''; } return; }
+    const key = d.shields.join(',');
+    if (key !== this._bbKey) {
+      this._bbKey = key;
+      $('#bb-pips').innerHTML = QTYPES.map((q, i) =>
+        `<i class="${d.shields.includes(q.key) ? '' : 'gone'}" style="--c:${QHEX[i]}" title="${q.name}"></i>`).join('');
+      const next = QTYPES.find((q) => q.key === d.shields[0]);
+      $('#bb-next').textContent = next ? `NEXT · ${next.name}` : '';
+      el.classList.add('on');
+    }
+  },
+
+  /* a red arc toward whoever just hit you; rel is radians clockwise from ahead */
+  hitFrom(rel) {
+    const el = $('#hitdir');
+    if (!el) return;
+    el.style.transform = `translate(-50%, -50%) rotate(${rel.toFixed(3)}rad)`;
+    this._hitT = performance.now();
+    el.style.opacity = '1';
+  },
+
+  /* called every frame: fades the hit arc out over 1.3 s (JS, not CSS, so it cannot stall) */
+  tickHit() {
+    if (!this._hitT) return;
+    const el = $('#hitdir');
+    const k = 1 - (performance.now() - this._hitT) / 1300;
+    if (k <= 0) { el.style.opacity = '0'; this._hitT = 0; }
+    else el.style.opacity = k.toFixed(3);
+  },
+
+  /* ---------- the role reversal: after all five questions, they ask you one ---------- */
+  openChallenge(person, ch) {
+    $('#dlg-qname').textContent = 'THEIR QUESTION';
+    $('#dlg-qask').textContent = '“Now let me ask you something.”';
+    $('#dlg-concept').classList.remove('on');
+    this.stopType();
+    $('#dlg-text').innerHTML = `
+      <div class="ch-lead">${esc(ch.lead)}</div>
+      <div class="ch-prompt">${esc(ch.prompt)}</div>
+      <div class="ch-opts">${ch.options.map((o, i) => `
+        <button class="ch-opt" data-i="${i}"><span class="ch-key">${i + 1}</span><span>${esc(o)}</span></button>`).join('')}</div>`;
+    $$('#dlg-text .ch-opt').forEach((b) => b.addEventListener('click', (e) => {
+      e.stopPropagation(); this.game.answerChallenge(+b.dataset.i);
+    }));
+    this.dialogueHint('Answer with 1–4. Nothing is lost if you are wrong; an endorsement is earned if you are right.');
+  },
+
+  resolveChallenge(ch, pick) {
+    const right = pick === ch.correct;
+    $$('#dlg-text .ch-opt').forEach((b) => {
+      const i = +b.dataset.i;
+      b.disabled = true;
+      if (i === ch.correct) b.classList.add('right');
+      else if (i === pick) b.classList.add('wrong');
+      else b.classList.add('dim');
+    });
+    const why = (ch.why && ch.why[pick]) || '';
+    const whyRight = (!right && ch.why && ch.why[ch.correct]) || '';
+    const verdict = right ? (ch.praise || 'Yes.') : (ch.console || 'Not quite.');
+    $('#dlg-text').insertAdjacentHTML('beforeend', `
+      <div class="ch-verdict ${right ? 'ok' : 'no'}">${esc(verdict)}</div>
+      <div class="ch-why">${esc(why)}</div>
+      ${whyRight ? `<div class="ch-why"><b>The answer they wanted.</b> ${esc(whyRight)}</div>` : ''}`);
+    this.dialogueHint(right ? 'ENDORSED — they will vouch for your reasoning. Any question key to continue.'
+                            : 'Noted. The interview still counts. Any question key to continue.');
+    const t = $('#dlg-text'); t.scrollTop = t.scrollHeight;
+  },
+
+  /* a found note: parchment card, dismissed by click or after a long read */
+  marginaliaCard(item, owner) {
+    const el = $('#marginalia');
+    el.innerHTML = `
+      <div class="mg-head"><span class="mg-tag">MARGINALIA · ${esc(item.object.toUpperCase())}</span>
+        <span class="mg-owner">${owner ? esc(owner.name) : ''}</span></div>
+      <div class="mg-title">${esc(item.title)}</div>
+      <div class="mg-text">${esc(item.text)}</div>
+      <div class="mg-foot">Kept in your Codex under Marginalia · click to close</div>`;
+    el.classList.add('on');
+    el.onclick = () => el.classList.remove('on');
+    clearTimeout(this._mgT);
+    this._mgT = setTimeout(() => el.classList.remove('on'), 24000);
   },
 
   /* Big, centred, holds long enough to actually read. Toasts were too small
@@ -508,6 +628,7 @@ const HUD = {
     $('#dlg-meta').innerHTML =
       `${esc(person.lifespan)} &nbsp;·&nbsp; <b>${esc(person.field)}</b> &nbsp;·&nbsp; ${esc(person.origin || '')}`;
     $('#dialogue').classList.add('on');
+    this.dialogueHint('All five questions logged unlocks the codex entry');
     this.setDialogueText(person.intro, null, null, true);
     this.updatePips(person);
   },
@@ -625,7 +746,7 @@ const HUD = {
   },
 
   /* ---------- codex ---------- */
-  CODEX_TABS: ['ROSTER', 'CONNECTIONS', 'GLOSSARY', 'PROGRESS'],
+  CODEX_TABS: ['ROSTER', 'CONNECTIONS', 'GLOSSARY', 'MARGINALIA', 'PROGRESS'],
 
   openCodex(tab) {
     this._codexTab = tab || this._codexTab || 'ROSTER';
@@ -683,6 +804,20 @@ const HUD = {
               <div class="ct">? ? ?</div>
               <div class="cb">Interview both researchers, then pair them at the Synthesis Terminal.</div>
             </div>`).join('')}</div>`;
+
+    } else if (T === 'MARGINALIA') {
+      const found = MARGINALIA.filter((m) => g.found[m.id]);
+      const where = (m) => (DISTRICTS.find((d) => d.id === m.district) || { name: 'THE SUMMIT' }).name;
+      body.innerHTML = `
+        <p class="prose" style="margin-bottom:16px">Objects, papers and specimens hidden in the margins
+        of the station — on the lofts, the islands, the balconies, the mezzanine — and beside the
+        session tents on the mountain. <em>${found.length} of ${MARGINALIA.length}</em> found.</p>
+        <div class="cols">${MARGINALIA.map((m) => g.found[m.id] ? `
+          <div class="card"><h3>${esc(m.title)}</h3><p>${esc(m.text)}</p>
+          <p style="font-size:10px;color:var(--dim);margin-top:8px;font-family:var(--mono);letter-spacing:.1em">
+            ${esc(((g.roster.find((p) => p.id === m.owner) || {}).name || '').toUpperCase())} · ${esc(where(m))}</p></div>` : `
+          <div class="card" style="opacity:.42"><h3>? ? ?</h3>
+          <p>Somewhere in ${esc(where(m))}: ${esc(m.look)}.</p></div>`).join('')}</div>`;
 
     } else if (T === 'GLOSSARY') {
       const seen = g.roster.filter((p) => (g.progress[p.id] || []).length > 0);

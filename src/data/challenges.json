@@ -1,0 +1,572 @@
+{
+  "newton": {
+    "lead": "I stated how much gravity pulls and refused to say why. Consider a case of my own kind: a rule that fits every measurement and explains nothing.",
+    "prompt": "A researcher finds that the rate of a chemical process follows a simple power law across five orders of magnitude. No mechanism is proposed, and no candidate mechanism is in sight. What is the scientific standing of the result?",
+    "options": [
+      "It is not yet a scientific result: with no mechanism, there is nothing to test.",
+      "It is strong as it stands, and the missing mechanism is a philosophical worry rather than a scientific one.",
+      "It is a legitimate and useful result: a precisely stated law makes quantitative predictions that can fail, and the absent cause is a real open problem rather than a defect in the measurement.",
+      "It is provisional at best, since a power law holding over five decades is the kind of pattern that usually turns out to be a coincidence of scaling."
+    ],
+    "correct": 2,
+    "why": [
+      "Testability comes from the law's predictions, not from a mechanism. A fixed power law can be falsified by a single point that falls off it, mechanism or no mechanism.",
+      "Half right and half complacent. The predictions do stand on their own, but the missing cause is a genuine scientific problem — exactly the sort that later theories get built to solve.",
+      "Correct. Newton gave the inverse-square dependence and openly declined to say how one body reaches across empty space to move another. Huygens and Leibniz were right that the gap was real, and it stayed open until curved spacetime filled it two centuries later. A law can be trustworthy and unexplained at the same time.",
+      "Scaling coincidences do happen, but the objection here concerns mechanism, not whether the fit is real. Ruling out coincidence is a job for more data, and it is a separate job."
+    ],
+    "praise": "That is the position I took, and I took it knowing what my critics would say about it.",
+    "console": "You went looking for the cause, which is the right instinct — but notice that the law can earn its keep while the cause stays missing."
+  },
+  "curie": {
+    "lead": "Every mineral I could beg or buy went under the electrometer. Suppose someone handed you a sample giving off heat with no chemical reaction to account for it.",
+    "prompt": "A mineral releases measurable heat with no reaction underway. Which programme of measurements would best establish that the heat is a property of the atoms of one particular element in the sample, rather than of the compound or the sample's physical state?",
+    "options": [
+      "Prepare several different chemical compounds of the suspect element, vary temperature, hydration and illumination, and check whether the heat output tracks only the mass of that element.",
+      "Measure the heat output very precisely and compare it against the value predicted from the compound's known bonds.",
+      "Purify the mineral until a single compound remains, then confirm that the output is reproducible from batch to batch.",
+      "Heat the sample across a range of temperatures and show the output rises smoothly, as it would for a process driven from inside the material."
+    ],
+    "correct": 0,
+    "why": [
+      "Correct. Curie's electrometer readings tracked the amount of uranium present and nothing else — not the compound, not wet or dry, not hot or cold, not lit or dark. Making the chemistry and the physical state vary while the signal refuses to change is what moves the source out of the molecule and into the atom.",
+      "There is no predicted value to compare against if no reaction is running. Precision on a single number does not tell you which part of the sample the number belongs to.",
+      "Reproducibility is necessary and nowhere near sufficient. A perfectly reproducible signal from one pure compound leaves the compound and the element as equally good explanations.",
+      "A smooth rise with temperature would point the other way, toward an ordinary thermal process. The striking thing about radioactivity was its indifference to temperature."
+    ],
+    "praise": "Vary everything you can reach and watch what refuses to change. That is nearly the whole of my method.",
+    "console": "Not quite, but hold on to the instinct to measure. The trick is to make the chemistry change while the signal stays put."
+  },
+  "wu": {
+    "lead": "My counters disagreed when I reversed the field. A number like that is worth nothing until you can show the apparatus did not invent it.",
+    "prompt": "A group reports that a detector count differs between two settings of an applied magnetic field and attributes the difference to a genuine physical asymmetry. A referee suspects the field itself is disturbing the detector electronics. Which additional evidence answers that objection most directly?",
+    "options": [
+      "Repeat the measurement many times at both settings and show the difference is far larger than the run-to-run scatter.",
+      "Swap in a second detector of a completely different design and reproduce the same difference.",
+      "Shield the electronics heavily, remeasure, and show the difference survives the shielding unchanged.",
+      "Show that the effect rises and falls in step with an independently measured quantity supposed to cause it, and disappears when that quantity does."
+    ],
+    "correct": 3,
+    "why": [
+      "Statistical significance is not the issue here. A systematic disturbance from the field would be perfectly repeatable and would clear any significance threshold you cared to set.",
+      "A real and useful check, but a second detector sits in the same field, so a field-induced artifact could show up in both. The alternative explanation survives.",
+      "The best of the wrong answers, since it attacks one specific route by which the field could interfere. It cannot cover the routes nobody has thought of yet.",
+      "Correct. Wu's cobalt nuclei lost their alignment as the salt crystal warmed over a few minutes, and the electron asymmetry faded exactly in step with the gamma-ray signal that measured that alignment. Tying an effect to the physical variable meant to control it is harder to fake than blocking any single artifact, because an artifact has no reason to keep that schedule."
+    ],
+    "praise": "Yes. The effect had to keep the schedule of the thing supposed to be causing it.",
+    "console": "A fair answer, but ask what an artifact would have to do to imitate it. Tying the signal to its supposed cause is the test that is hardest to pass by accident."
+  },
+  "strickland": {
+    "lead": "The amplifier did not care how much energy we sent through it. It cared how much arrived at once. Here is that same constraint in a different machine.",
+    "prompt": "An engineer must deliver a large pulse of energy through a component that fails whenever the instantaneous power crossing it exceeds a fixed threshold. The total energy the application needs is not negotiable. Which approach follows the logic of chirped pulse amplification?",
+    "options": [
+      "Find or develop a component with a higher damage threshold, so the pulse can pass through intact.",
+      "Spread the energy over a much longer interval before it reaches the component, then recompress it into a short pulse afterwards.",
+      "Split the pulse across many identical components in parallel, so each one carries only a fraction of the power.",
+      "Lower the peak by reducing the total energy per pulse, and compensate by firing many pulses in quick succession."
+    ],
+    "correct": 1,
+    "why": [
+      "This is what the field tried for roughly a decade, and it is why peak laser power sat on a plateau. Chasing better glass treats the threshold as the thing to beat rather than the thing to route around.",
+      "Correct. Stretching in time lowers instantaneous power without touching total energy, because power is energy divided by duration. Strickland and Mourou sent the pulse through 1.4 kilometres of fibre to smear its colours out in time, amplified it while it was harmless, then used a pair of diffraction gratings to stack it back together. The fragile stage never saw a damaging intensity.",
+      "A genuine engineering strategy that does reduce the load on each part. But it multiplies hardware instead of exploiting the time axis, and it leaves you having to recombine beams that must arrive in step.",
+      "Many small pulses is a different application, not a solution to this one. The requirement was a large pulse, and you have quietly changed the specification."
+    ],
+    "praise": "That is it. The threshold is on intensity, and intensity has a denominator you are allowed to move.",
+    "console": "Reasonable, but look again at the units the threshold is written in. Energy per unit time gives you two things to change, not one."
+  },
+  "einstein": {
+    "lead": "Mercury's extra precession and the bending of starlight both agreed with my equations. Historians treat the second as the more telling test, and I think they are right.",
+    "prompt": "Both Mercury's perihelion precession and the 1919 measurement of starlight deflection matched general relativity. Why is the deflection usually treated as the stronger test of the theory?",
+    "options": [
+      "Because it was measured by an independent team, rather than being computed from tables the theorist already had.",
+      "Because an eclipse measurement is far more precise than nineteenth-century observations of Mercury.",
+      "Because the deflection was an unmeasured quantity for which the theory named a specific number in advance, with a rival value already on the table — so there was a definite way for the theory to fail.",
+      "Because the precession could in principle be explained by an undiscovered planet, whereas nothing but curved spacetime could bend starlight."
+    ],
+    "correct": 2,
+    "why": [
+      "Independence matters, but it is not the difference here. Mercury's precession was also measured by astronomers with no stake in general relativity, decades before the theory existed.",
+      "The 1919 plates were difficult, the uncertainties were substantial, and one problematic set was set aside during the analysis. Precision is not what carried the result.",
+      "Correct. Mercury's forty-three arcseconds per century was known in advance, so agreement with it — however impressive, and nothing was tuned to get it — could not rule out a theory built to reproduce it. The 1.75 arcseconds of deflection was a novel prediction competing against the Newtonian half-value, and the observation had a clear way to come out against Einstein.",
+      "The extra planet, Vulcan, was genuinely proposed and searched for. But the existence of an alternative does not by itself weaken the precession result — what weakens it as a test is that the number was already in hand when the theory was built."
+    ],
+    "praise": "The value of a prediction lies in how easily it could have embarrassed me.",
+    "console": "Close. Ask which of the two results could have gone against me, and you will find what separates them."
+  },
+  "payne": {
+    "lead": "A dark line on a plate tells you that atoms absorbed light. It does not tell you how many atoms were there. That distinction is my whole thesis.",
+    "prompt": "Two interstellar gas clouds are observed. One shows strong sodium absorption lines; the other shows very weak ones. What does that comparison, on its own, license you to conclude about their sodium content?",
+    "options": [
+      "Very little, because line strength depends on how many atoms sit in the right state to absorb at that wavelength, and that fraction varies enormously with temperature and pressure.",
+      "That the first cloud contains substantially more sodium than the second.",
+      "That the clouds differ in either sodium content or temperature, and no spectroscopic method can separate the two.",
+      "That the first cloud is denser, since line strength scales with the number of absorbers along the line of sight."
+    ],
+    "correct": 0,
+    "why": [
+      "Correct. Payne used Saha's ionisation theory to work backwards from line strength to abundance, and the stellar spectral sequence turned out to be a temperature ladder rather than a chemistry ladder. The same element produces wildly different lines from atmospheres at different temperatures.",
+      "This is the inference the field made before ionisation theory was trusted, and it is why stars were thought to resemble the Earth's crust. It reads line strength as a headcount and skips the physics in between.",
+      "The first half is right; the second is too pessimistic. Spectroscopy can separate them — you use lines from several elements and ionisation states, plus the physics of excitation, to solve for temperature and abundance together.",
+      "Column density is one factor among several. Two clouds with identical sodium columns can show very different sodium lines if their temperatures differ, because the population of the absorbing state differs."
+    ],
+    "praise": "The physics between the atom and the plate is where the answer lives.",
+    "console": "That is the reading almost everyone starts from. Put the ionisation state in between the atoms and the line, and the conclusion changes."
+  },
+  "chandrasekhar": {
+    "lead": "I read my calculation to the Royal Astronomical Society, and Eddington rose afterwards and called the relativistic treatment absurd. Look closely at the shape of his objection.",
+    "prompt": "Eddington rejected the relativistic treatment of degenerate matter on the grounds that a star could not possibly behave the way it implied, without identifying an error in the derivation. What is the specific logical problem with that response?",
+    "options": [
+      "It appealed to authority, and authority is never a legitimate consideration in scientific judgement.",
+      "It ran backwards from an unwelcome conclusion to a faulty premise without saying which premise was faulty — a move that only works if you can point at the flaw.",
+      "It rejected a mathematical result on physical grounds, and mathematics cannot be overturned by physical argument.",
+      "It relied on intuition about how stars behave, and intuition has no place in physics."
+    ],
+    "correct": 1,
+    "why": [
+      "Eddington's standing is why the objection stuck, but it is not what made the objection bad. He did offer reasons; the trouble is that his reasons never located a mistake.",
+      "Correct. Rejecting a conclusion is legitimate, but it creates an obligation — to find the bad step. Chandrasekhar's calculation was short and fully checkable, physicists agreed with him privately, and for years almost none said so in print.",
+      "Physical argument can and should overturn a physical model, since the model's assumptions are physical claims about the world. The problem is that Eddington never said which assumption he was rejecting.",
+      "Intuition is indispensable for deciding what to work on and what to distrust. It is simply not a substitute for finding the error, which is what was owed here."
+    ],
+    "praise": "A conclusion you dislike is a reason to hunt for the mistake, not a substitute for finding it.",
+    "console": "Not quite. His instinct was permitted; what he owed me was a line number."
+  },
+  "rubin": {
+    "lead": "Every velocity I ever measured was only the part of the motion pointed at me. That sounds like a technicality until someone hands you a galaxy seen face-on.",
+    "prompt": "A student measures a spiral galaxy lying almost face-on to us, records only small Doppler shifts across its disc, and concludes that this galaxy rotates far more slowly than the ones in published rotation curves. Where does the reasoning fail?",
+    "options": [
+      "Face-on galaxies genuinely do rotate more slowly, because their angular momentum is distributed differently.",
+      "Emission lines from a face-on disc are too faint to measure, so the small shifts are just noise.",
+      "The student should have used absorption lines from stars rather than emission lines from ionised gas.",
+      "A Doppler shift records only motion along the line of sight, so a face-on disc hides nearly all of its rotation and every curve must be corrected for the galaxy's inclination."
+    ],
+    "correct": 3,
+    "why": [
+      "No such relationship exists. Orientation is an accident of where we happen to sit and cannot affect how a galaxy actually turns.",
+      "Brightness is not the problem. Even with excellent signal, a disc turning in the plane of the sky produces almost no shift along our line of sight.",
+      "Both tracers are used and both are subject to the same geometry. Changing which spectral line you measure does not change the projection.",
+      "Correct. Rubin laid the spectrograph slit along the major axis and corrected every curve for inclination before plotting velocity against radius. The measured shift is the true orbital velocity multiplied by a geometric factor, and for a nearly face-on disc that factor approaches zero."
+    ],
+    "praise": "Geometry first. You cannot read a velocity off a plate without knowing how the galaxy is tilted.",
+    "console": "Have another look at what a Doppler shift can and cannot see. Motion across your field of view leaves no trace in the wavelength."
+  },
+  "bouman": {
+    "lead": "People say we built a telescope the size of the Earth. That is true of exactly one property of the array, and badly false of the others.",
+    "prompt": "The Event Horizon Telescope combined eight radio telescopes at six sites. In what sense does that array behave like a single Earth-sized dish, and in what sense does it not?",
+    "options": [
+      "Its angular resolution is set by the longest separation between stations, so it resolves like a dish that wide — but its collecting area and its coverage of spatial scales are those of eight small dishes, so most of what a real Earth-sized dish would gather is simply missing.",
+      "It matches an Earth-sized dish in both resolution and sensitivity, and falls short only in how quickly it can survey the sky.",
+      "It behaves like an Earth-sized dish in every respect, which is why the reconstructed ring can be treated as a direct image.",
+      "It has the collecting area of an Earth-sized dish spread across many sites, and its resolution is limited instead by the recording electronics."
+    ],
+    "correct": 0,
+    "why": [
+      "Correct. Each pair of stations recovers one Fourier component of the sky brightness, fixed by the vector between them, and Earth's rotation sweeps out a few more. The team ended up with a handful of samples where a filled aperture would supply millions, which is why the image had to be fitted rather than read off.",
+      "Sensitivity comes from collecting area, and eight dishes have the area of eight dishes. The array is sharp and starved of photons at the same time.",
+      "This is the misreading that turns a reconstruction into a photograph. The gaps in coverage are precisely why four teams reconstructed the data independently and why every pipeline was first run on synthetic data containing no ring.",
+      "The relationship runs the other way. Separation sets resolution and area sets sensitivity. The hydrogen maser clocks and the hard drives were demanding engineering, but they were not what limited the image."
+    ],
+    "praise": "Sharpness and completeness are different properties, and the array only bought us one of them.",
+    "console": "Worth another look. Resolution comes from how far apart the dishes sit; everything else comes from the dishes themselves."
+  },
+  "darwin": {
+    "lead": "I bred fancy pigeons for years and boiled their skeletons down. Let me ask what those birds actually proved, because I was careful never to claim too much for them.",
+    "prompt": "Darwin's argument from domestic pigeons — that fantails, pouters and tumblers all descend from the wild rock pigeon — was central to the Origin. What does that evidence establish?",
+    "options": [
+      "That natural selection produced the differences between wild species, since the same process is at work in both cases.",
+      "Nothing about nature, because artificial breeding involves a human chooser and natural selection does not.",
+      "That selection acting on heritable variation can produce divergence large enough to look like separate genera within a few centuries — which shows the mechanism has sufficient power, but not that nature supplies the selecting.",
+      "That variation within a species is essentially unlimited, so given enough time any form can arise from any other."
+    ],
+    "correct": 2,
+    "why": [
+      "This is the step the pigeons cannot make on their own. Darwin needed a separate argument, from the struggle for existence and from differential survival, to show that nature does the choosing.",
+      "Too dismissive. The disanalogy is real and Darwin discussed it at length, but the domestic case still establishes that the mechanism has enough power to matter — which was exactly what his critics doubted.",
+      "Correct. The pigeons are an existence proof about the strength of selection on heritable variation, bounded by the fact that a breeder supplies the selection. Note the extra detail Darwin drew out: crossing two fancy breeds brings back the wild bird's blue wing bars and dark tail-band, which is evidence of the shared ancestor.",
+      "Unlimited variation is not what the breeds show, and Darwin did not claim it. Breeders work within the variation a species actually throws up, which is why some traits move easily under selection and others barely budge."
+    ],
+    "praise": "An analogy is a loan, not a gift. It shows the mechanism has force; the rest had to be argued separately.",
+    "console": "You have granted me more than I asked for. The birds show what selection can do — who does the selecting in the wild is a different chapter."
+  },
+  "franklin": {
+    "lead": "The camera was the easy part. Getting a fibre to diffract truthfully took control over something nobody thought worth reporting: the water around it.",
+    "prompt": "Two laboratories publish different diffraction patterns from what they believe is the same fibrous biological molecule, and each is confident of its own camera and exposures. Which explanation should be tested first, and how?",
+    "options": [
+      "One laboratory's sample is contaminated; test by repeating the preparation from fresh material and checking chemical purity.",
+      "The specimens were in different physical states; identify the environmental variable — humidity is the usual culprit — and show that the pattern switches back and forth reproducibly as that variable is set.",
+      "The molecule has no single fixed structure, and both patterns are correct averages over a flexible population.",
+      "One pattern was misindexed during analysis; test by having a third group re-measure the spot positions from the original films."
+    ],
+    "correct": 1,
+    "why": [
+      "Worth checking, and cheap. But contamination usually adds features or degrades a pattern rather than substituting a different well-ordered one, so it does not account for two clean and distinct patterns.",
+      "Correct. Franklin controlled hydration by bubbling hydrogen through salt solutions, and DNA gave one crystalline form when dry and a quite different one above roughly ninety percent humidity. Being able to drive the pattern back and forth on demand turns a contradiction into a measurement: the specimen's state is part of the experiment, not background.",
+      "A real possibility for some molecules, and the hardest position to climb back out of once adopted. It belongs last, because it explains the disagreement by giving up on structure altogether.",
+      "Indexing errors happen and are worth ruling out, but they change how a pattern is interpreted rather than what the film recorded. Two genuinely different sets of spots point at the specimens instead."
+    ],
+    "praise": "The specimen is part of the apparatus. Control its state and the contradiction turns into data.",
+    "console": "Understandable, but look upstream of the analysis. What the molecule was doing while you photographed it is the variable nobody writes down."
+  },
+  "mcclintock": {
+    "lead": "In autumn I sit down and read the ears. A kernel's pattern is a record of when something happened, not merely whether it happened.",
+    "prompt": "Two maize kernels each show colourless patches on a coloured background. The first has three large sectors; the second has dozens of tiny specks. What does that difference most directly indicate?",
+    "options": [
+      "The first kernel underwent a more complete change, since a larger area of pigment was affected.",
+      "The second kernel has a higher rate of change per cell, since more separate events are visible.",
+      "The first kernel carries more copies of the element, so each event silenced a larger region.",
+      "The events happened at different times during the kernel's development: an early event leaves a large clone of descendant cells, a late one leaves only a few."
+    ],
+    "correct": 3,
+    "why": [
+      "Patch size measures the number of descendant cells, not the completeness of the change. The very same event produces a broad sector early in development and a fine speck late.",
+      "Tempting, and the reading most students reach for first. But a speckled kernel is equally consistent with the same per-cell rate acting late, when the affected cells have only a few divisions left. Counting spots without accounting for timing confuses rate with schedule.",
+      "Copy number is a separate question that would have to be settled by crosses. Nothing about the size of a patch reports on how many elements are present in the genome.",
+      "Correct. Each patch is the descendant clone of the single cell in which the change occurred, so patch size works as a clock. McClintock read spot geometry this way and paired it with controlled crosses and chromosome preparations from the same plants."
+    ],
+    "praise": "The kernel is a lineage map. Size tells you when, and that was the clue I could not put down.",
+    "console": "Look at a patch as a family rather than as a measure of severity. A cell that changes early has a great many descendants."
+  },
+  "tu": {
+    "lead": "We began by reading — old texts, folk prescriptions, anything written down — and then carried each candidate into the laboratory. People misunderstand which half of that was the evidence.",
+    "prompt": "A team reads a nineteenth-century regional herbal describing a root preparation given for dysentery. What role can that text legitimately play in a modern research programme?",
+    "options": [
+      "It supplies a candidate hypothesis worth screening, and can suggest how to prepare the material — but whether the preparation does anything is settled only by controlled test.",
+      "It counts as accumulated clinical evidence, since a remedy that persisted for generations was presumably observed to work.",
+      "It has no scientific role, because traditional accounts are anecdotal and cannot support any conclusion.",
+      "It becomes evidence once a laboratory confirms activity, which retrospectively validates the tradition it came from."
+    ],
+    "correct": 0,
+    "why": [
+      "Correct. Tu's group assembled roughly two thousand candidate remedies and tested a few hundred extracts against a rodent malaria parasite; sweet wormwood was one entry among them. The text earned its place twice — as a hypothesis, and as a procedural hint, since a fourth-century handbook describing a cold-water preparation is what prompted the switch to low-temperature extraction.",
+      "Persistence is a weak signal. Remedies survive for reasons unrelated to efficacy — availability, ritual, and the fact that most illnesses resolve on their own — and the great majority of the candidates Tu screened did nothing measurable at all.",
+      "Wrong in the opposite direction. Where to look is a scientific decision, and a written record of long use is a better-than-random reason to look somewhere. Refusing to read the texts would have cost the world artemisinin.",
+      "One hit does not validate a corpus. Roughly two thousand candidates yielded one drug, which is a statement about that compound rather than an endorsement of everything the tradition contains."
+    ],
+    "praise": "The text told us where to look. The mice told us what was true.",
+    "console": "Notice where the evidence actually enters. Reading is how you choose a candidate; the assay is what settles it."
+  },
+  "doudna": {
+    "lead": "Cas9 cutting DNA is interesting biology on its own. Something more specific had to be true before it could become a tool anyone could point at anything.",
+    "prompt": "Which finding about Cas9 was the essential step in turning a bacterial defence system into a general laboratory tool?",
+    "options": [
+      "That Cas9 makes a clean double-strand break rather than nicking only one strand.",
+      "That the cutting site is specified by a short guide RNA which can be synthesised to any sequence, so targeting lives in a cheap interchangeable part rather than in the protein.",
+      "That Cas9 requires a short adjacent motif, the PAM, beside any site it will cut.",
+      "That Cas9 functions inside human cells as well as in bacteria."
+    ],
+    "correct": 1,
+    "why": [
+      "A double-strand break is what the cell's repair machinery responds to, so this does matter for editing. But many enzymes cut DNA, and cutting alone gives you no way to choose where.",
+      "Correct. Doudna's and Charpentier's groups fused the two natural RNAs into a single synthetic guide and it still worked, which means about twenty letters of RNA now select the target. Programmable in the ordinary engineering sense means exactly this: the specificity sits in a component you can order by mail.",
+      "The PAM is real and consequential, and it is a constraint rather than an enabler — it limits which sites you can target at all, and it exists so a bacterium does not shred its own stored records.",
+      "Necessary for applications, and demonstrated soon afterwards largely by Feng Zhang's and George Church's groups. It made the tool useful in mammals, but the reprogrammability had already been established in the tube."
+    ],
+    "praise": "Put the specificity into the part you can synthesise, and the enzyme becomes an instrument.",
+    "console": "Each of those is true of Cas9. Ask which one lets a stranger aim the enzyme at a target nobody has tested."
+  },
+  "kariko": {
+    "lead": "Our RNA made human immune cells scream. The temptation is to quiet the screaming. We wanted to know which atom was doing it.",
+    "prompt": "A therapeutic protein made in the laboratory triggers a strong inflammatory response in cultured immune cells, while the same protein purified from human tissue does not. Which experimental design is most likely to identify the cause?",
+    "options": [
+      "Titrate the laboratory preparation down until the inflammatory response falls to background, and adopt that as the working dose.",
+      "Co-administer an anti-inflammatory agent and confirm that the response is suppressed.",
+      "Produce the same protein repeatedly, changing one chemical feature at a time toward the natural version, and measure the immune readout after each change.",
+      "Screen several cell types and identify one that mounts no response to the laboratory preparation."
+    ],
+    "correct": 2,
+    "why": [
+      "This manages the symptom and abandons the question. A dose quiet enough to tolerate may be too low to do anything useful, and you still do not know what the immune sensors are detecting.",
+      "Blocking the response confirms that the response exists. It cannot tell you which feature of your preparation is being recognised, and it commits you to shipping a second drug alongside the first.",
+      "Correct. Karikó and Weissman noticed that transfer RNA, which the cell decorates with dozens of chemical modifications, provoked almost nothing — so they rebuilt the same message swapping one nucleoside at a time and measured cytokine release from human dendritic cells. Replacing uridine with pseudouridine collapsed the signal to near background, and the modified RNA also turned out to be translated more efficiently.",
+      "Choosing a cell type that does not react hides the problem instead of solving it, and a patient contains all the cell types you excluded."
+    ],
+    "praise": "One variable at a time is slow, and it is the only way to name the culprit.",
+    "console": "Those would all quiet the response. None of them would tell you what the cell was objecting to."
+  },
+  "mendeleev": {
+    "lead": "Tellurium is heavier than iodine, and yet iodine plainly belongs with chlorine and bromine. I placed tellurium first and declared its weight mismeasured.",
+    "prompt": "Mendeleev overrode a measured atomic weight because it conflicted with his arrangement. Under what conditions is that kind of move defensible rather than special pleading?",
+    "options": [
+      "It is never defensible: a measurement outranks a theoretical pattern, since the pattern is the thing being tested.",
+      "It is defensible whenever the theoretical scheme is simpler and more elegant than the alternative.",
+      "It is defensible for chemical properties but not for physical quantities such as mass, which are measured far more directly.",
+      "It is defensible when the pattern already has independent support and the override is stated as a specific, checkable claim — here, that a particular weight would be found to be wrong — so that the move can be shown to have failed."
+    ],
+    "correct": 3,
+    "why": [
+      "This rule would forbid a great deal of successful science. Measurements carry error, and a strong pattern can legitimately flag one as suspect, provided the suspicion is made testable rather than merely asserted.",
+      "Elegance is not evidence. It suggests where to look and has no power to settle what is true, and a scheme that gets adjusted whenever it is inconvenient has stopped being a scheme.",
+      "The distinction does not hold up. Mendeleev's chemical assignments rested on measurements too — oxide formulas, valences, reactivity — every one of which could have been wrong in the same way.",
+      "Correct. He made the bet explicit and left it open to refutation; he even wrote to Lecoq de Boisbaudran insisting a measured gallium density was too low, and repurification proved him right. On tellurium he was right that the ordering was wrong and wrong about why — the real answer was isotopes, not sloppy weighing, and nobody could have proposed that for decades."
+    ],
+    "praise": "Make the override a wager anyone can collect on, and it stays science.",
+    "console": "Not quite. The question is not whether you may doubt a number, but whether your doubt commits you to something checkable."
+  },
+  "hodgkin": {
+    "lead": "Half the information in a diffraction experiment is missing — the phases. Where you get them from decides how much you should trust the picture at the end.",
+    "prompt": "A crystallographer estimates the missing phases from a preliminary atomic model, computes an electron density map, and finds that the map shows the very feature the model contained. What is the correct reading of that agreement?",
+    "options": [
+      "It is weak evidence at best, because the map inherits the model used to phase it; the feature has to be tested with phases that do not depend on the model, or by omitting that region and seeing whether density returns.",
+      "It confirms the model, since a wrong model would not produce a map consistent with the measured intensities.",
+      "It is meaningless, because a map built partly from a model can carry no information about the real structure.",
+      "It can be settled by collecting data to higher resolution, which will reveal whether the feature is genuine."
+    ],
+    "correct": 0,
+    "why": [
+      "Correct. Hodgkin's own warning was that a map is only as good as its phases, and a wrong starting model will politely show you what you expected. The standard remedies are experimental phasing — the heavy-atom method, using the cobalt at the centre of vitamin B12 or heavy atoms soaked in elsewhere — and omit maps, which leave a region out of the model and ask whether the density comes back anyway.",
+      "This is model bias, and it is among the most common self-deceptions in structural work. The measured intensities constrain the map, but the phases you supplied also shape it, so partial agreement is expected whether the feature is there or not.",
+      "Too strong. Model phasing is a legitimate and universal technique and the maps do carry real information. What they cannot do is confirm the part of the model that generated them.",
+      "Higher resolution sharpens a biased map just as readily as an unbiased one. Resolution and independence are different problems."
+    ],
+    "praise": "A map will show you what you asked it for. That is why we omit a region and ask again.",
+    "console": "Careful — you have let the model vouch for itself. The check has to come from phases that know nothing about the feature."
+  },
+  "molina": {
+    "lead": "Our 1974 chemistry was sound and our geography was wrong. When Farman's team reported the Antarctic loss, it was far deeper than anything our model allowed.",
+    "prompt": "The observed Antarctic ozone loss was much larger and far more localised than the 1974 chlorine calculations predicted. What is the best characterisation of that discrepancy?",
+    "options": [
+      "The chlorine mechanism was falsified, and the observed hole required a different explanation.",
+      "The model was incomplete rather than wrong: its gas-phase reactions held up, but it omitted chemistry occurring on the surfaces of polar stratospheric cloud particles, which activates chlorine far faster.",
+      "The prediction was confirmed, since ozone loss was indeed found where loss had been predicted.",
+      "The episode shows that atmospheric models are too uncertain to support policy, since the central quantity was off by a large factor."
+    ],
+    "correct": 1,
+    "why": [
+      "The opposite happened. The hole turned out to be driven by chlorine, and the measurements that followed traced it to the chlorine monoxide the mechanism had predicted. The mechanism was vindicated; the accounting was found to be missing a pathway.",
+      "Correct. Reactions on ice particles in the extreme cold of the Antarctic winter convert chlorine reservoirs into forms that ultraviolet light frees immediately, concentrating the loss in polar spring. Nothing in the 1974 paper anticipated that, which is a failure of completeness rather than of the reaction chemistry the paper did contain.",
+      "Too generous, and this is how a prediction gets credited for more than it earned. Molina and Rowland expected slow, roughly even thinning worldwide; a seasonal hole over one pole was not their prediction.",
+      "The depletion estimates did swing by large factors through the early 1980s, and critics were right to point at that. But the direction of the effect and the catalytic mechanism were robust, and those are what the Montreal Protocol rested on — the surprise was worse than predicted, not milder."
+    ],
+    "praise": "A model can be right about the mechanism it contains and still be missing a room in the house.",
+    "console": "Have another look at what actually failed. The reactions in the model held up; the ones left out of it did not."
+  },
+  "arnold": {
+    "lead": "That freezer is full of tens of thousands of variants that did nothing. Sometimes the failure is not in the variants — it is in where you started climbing.",
+    "prompt": "A directed evolution campaign improves an enzyme's activity for four rounds and then stops: further rounds of mutation and screening yield nothing better. What does the plateau most likely mean, and what follows from it?",
+    "options": [
+      "The property has hit a physical ceiling for this class of enzyme, so further effort belongs on a different reaction.",
+      "The mutation rate is too low, and raising it substantially will resume progress.",
+      "The population may be sitting on a local peak, so escaping it needs a bigger jump than single mutations allow — recombination, a different starting scaffold, or a changed screen — and the plateau is not evidence that the target is unreachable.",
+      "The screen has become too easy, so the surviving variants are no longer being distinguished from one another."
+    ],
+    "correct": 2,
+    "why": [
+      "Directed evolution climbs to local peaks rather than global optima, so a plateau is a statement about the path taken, not about what is possible. Reading a ceiling off a stalled climb overreads it badly.",
+      "Mutation rate is a real knob, and pushing it too high is the standard way to destroy a protein population, since most mutations are neutral or harmful and everything eventually unfolds. Worth trying, but it is a tactic rather than an explanation.",
+      "Correct. This is why practitioners recombine improved variants, revisit the starting sequence, or switch parents altogether. Arnold's subtilisin E work took four rounds of mutation and screening in dimethylformamide to reach roughly 250 times the parent's activity, and the useful mutations sat in positions no designer would have chosen — the landscape is not navigable by intuition.",
+      "Worth checking, since a saturated assay genuinely can hide improvements. But that shows up as variants piling up at the top of the readout, which is a diagnosis you make from the data rather than an assumption you start with."
+    ],
+    "praise": "A plateau describes your route, not the mountain.",
+    "console": "Reasonable, but a stalled climb is ambiguous. Ask what a local peak would look like from inside the experiment."
+  },
+  "lovelace": {
+    "lead": "The engine was conceived for numbers, and in Note A I argued it need not stay there. The argument does not run the way most readers assume.",
+    "prompt": "Lovelace argued that a machine designed to combine numbers could in principle compose elaborate music. What is the structure of that argument?",
+    "options": [
+      "Music is mathematical at bottom, since pitches are frequency ratios, so a machine that handles numbers already handles music.",
+      "The Analytical Engine had capacity well beyond arithmetic, so it could take on additional tasks alongside its calculations.",
+      "Any sufficiently complex mechanism will eventually produce novel output, music included.",
+      "The engine operates on symbols according to rules, and numbers are only one thing symbols can stand for — so any domain whose relations can be encoded as symbols and rules falls within reach of the same mechanism."
+    ],
+    "correct": 3,
+    "why": [
+      "The most tempting answer, because its premise is true. But it makes the case depend on a special property of music, whereas Lovelace's point was about the machine: what it manipulates are marks, whatever those marks are taken to mean.",
+      "Spare capacity is a claim about size, not about kind. A larger adding machine is still an adding machine unless you have an argument about what its operations are performed on.",
+      "Lovelace argued the reverse about novelty. She insisted the engine could bring nothing genuinely new into being, and stated that as settled fact about a machine nobody had built. Turing took the claim up a century later and argued against it.",
+      "Correct. This is the general-purpose idea, and it is the assumption underneath every computer since: one mechanism, any subject matter, with the interpretation supplied from outside. Roughly a century passed before a machine existed that could put it to the test."
+    ],
+    "praise": "It is an argument about representation, not about music.",
+    "console": "Close, and the premise you chose is true. But her claim was about what the engine acts on, which makes it far more general."
+  },
+  "noether": {
+    "lead": "My theorem tells you what follows from a symmetry. Which symmetries your system actually has is not a question algebra can answer for you.",
+    "prompt": "A modeller studying a crystal assumes the system is invariant under rotations about any axis, applies Noether's theorem, and concludes that total angular momentum is conserved. Measurements show it is not. Where is the failure?",
+    "options": [
+      "In the physical input. A crystal lattice picks out preferred axes, so full rotational symmetry does not hold, and the theorem returns nothing for a symmetry the system does not have.",
+      "In the theorem, which applies to continuous media rather than to systems built on a discrete lattice.",
+      "In the measurement, since angular momentum is conserved in any closed system regardless of its internal structure.",
+      "In the conclusion's strength: a lattice has discrete rotational symmetry, so the theorem yields an approximately conserved angular momentum rather than an exactly conserved one."
+    ],
+    "correct": 0,
+    "why": [
+      "Correct. The theorem is a conditional — given a continuous symmetry of the action, here is the conserved current. Assert a symmetry the system lacks and you get a beautiful conservation law for a world that does not exist, which is precisely the failure mode Noether warned about.",
+      "The theorem is mathematics and cares only about variational structure, not about whether matter is continuous or discrete. Crystals have perfectly good Lagrangians.",
+      "The angular momentum of the whole isolated system, lattice included, is conserved. The modeller's claim was about the system as they had defined it, with the lattice treated as a fixed background that can quietly absorb angular momentum.",
+      "The most instructive wrong answer. Noether's theorem requires a continuous symmetry; a discrete one gives you selection rules and allowed transitions, not a conserved quantity, approximate or otherwise."
+    ],
+    "praise": "The theorem never promised you a symmetry. It only tells you what one buys.",
+    "console": "The algebra is not what broke here. Look at the premise that was fed into it."
+  },
+  "turing": {
+    "lead": "Before I could show that no procedure decides the question, I had to say what a procedure is. That sounds like housekeeping, and it is the whole difficulty.",
+    "prompt": "Turing's 1936 result shows that no procedure can decide, for every program and input, whether that program halts. Why did establishing this require first defining what counts as a procedure?",
+    "options": [
+      "Because Hilbert's problem was posed in formal terms, and an answer had to be given inside the same formalism to be admissible.",
+      "Because the claim quantifies over every possible procedure, so it can only be proved with a definition general enough to cover any of them — otherwise you can report that particular attempts failed, and nothing more.",
+      "Because impossibility can only be shown by exhibiting a counterexample, and a counterexample must be constructed within a specified system.",
+      "Because a definition precise enough to reason about was also precise enough to build, and the machine was needed to run the argument."
+    ],
+    "correct": 1,
+    "why": [
+      "Turing did answer Hilbert, but his machine model was a new construction rather than a move inside Hilbert's formalism — and Church reached the same conclusion using a quite different formalism, which is part of why the definition was accepted as capturing the right notion.",
+      "Correct. A universal negative claim needs a definition with the right scope. Turing got one by watching what a human computer actually does with paper and a rule, then stripping the description down to a tape, a finite set of states, and a table of instructions — general enough that anything we would call a procedure is covered by it.",
+      "This inverts how the proof works. The halting argument runs by contradiction: assume the deciding machine exists, then feed it a program built to consult it and do the opposite. No counterexample is exhibited, because the object in question is shown not to exist at all.",
+      "Buildability is beside the point, and the universal machine was a mathematical object defined years before any electronic computer existed. Its unlimited tape means no physical machine is quite one."
+    ],
+    "praise": "You cannot rule out all methods until you have said what a method is.",
+    "console": "Not the reason. Think about the scope of the claim — every procedure, not merely the ones anyone had tried."
+  },
+  "cajal": {
+    "lead": "Golgi's stain blackens perhaps one cell in a hundred and leaves the rest invisible. Students always ask why I did not want a stain that showed everything.",
+    "prompt": "The Golgi stain fills a small, apparently random fraction of neurons completely and leaves neighbouring cells unstained. Why was that partial staining an advantage for settling whether nerve cells are separate individuals?",
+    "options": [
+      "A random subset is an unbiased sample, so proportions measured within it can be generalised to the whole tissue.",
+      "Staining fewer cells uses less reagent and reduces the chemical artifacts that heavy impregnation introduces.",
+      "The claim under test required following one cell's process all the way to its end, and that is possible only when the cell stands alone against an empty field — a stain filling every cell would give a black mass in which no individual could be traced.",
+      "Partially stained tissue preserves the surrounding cells for other techniques, allowing several methods on one preparation."
+    ],
+    "correct": 2,
+    "why": [
+      "A genuine virtue of random sampling, and the wrong virtue here. The question was structural — does a fibre end or continue — and no proportion measured across cells answers it.",
+      "Reagent economy was not the issue, and Cajal in fact ran the dichromate and silver steps twice to strengthen the impregnation. He wanted more complete filling of the few cells that took the stain, not less.",
+      "Correct. In the cerebellum of a young bird Cajal could follow a single axon until it broke into a spray of terminals wrapping the next cell's body, and stopped. That inference needs figure against ground, which is exactly what a complete stain destroys: less coverage, more information.",
+      "Running several techniques on one block is useful in modern work but is not what made this decisive, and the unstained cells here are simply invisible rather than held in reserve."
+    ],
+    "praise": "One cell against an empty field is what an ending looks like. Stain everything and you see nothing.",
+    "console": "Think about what you must see in order to claim a fibre ends. Following it requires that nothing else is in the way."
+  },
+  "li": {
+    "lead": "A benchmark decides what counts as progress, which makes designing one a scientific choice rather than a neutral one. Watch what happens when a score travels.",
+    "prompt": "A group reports the best-ever accuracy on a public benchmark of dermatology photographs and announces that its model is ready for clinical use. What does the benchmark result actually support?",
+    "options": [
+      "Clinical readiness, provided the test set was properly held out and never used during training.",
+      "Nothing at all, since benchmark performance bears no relationship to real-world performance.",
+      "Readiness for the specific conditions represented in the benchmark, with performance on other conditions expected to be similar.",
+      "Performance on images drawn from that benchmark's distribution and scored against its labels — so any claim about patients requires prospective evaluation in the population where the system would be deployed."
+    ],
+    "correct": 3,
+    "why": [
+      "A clean held-out split guards against one specific failure, memorising the test set. It says nothing about whether the benchmark's images resemble the patients, cameras, lighting or skin tones a real clinic sees.",
+      "Too strong, and it discards a genuinely useful instrument. Shared benchmarks made computer vision comparable across groups, which is why the 2012 ImageNet result could be recognised as a result at all.",
+      "The first half is right and the second half is the assumption that fails. Generalisation to unrepresented cases is precisely what an in-distribution score cannot establish.",
+      "Correct. A benchmark is a dataset plus a scoring rule, so what it measures is bounded by both. Li's own account of ImageNet's limits runs this way: the images came from web search and inherited whatever the web over-represents, and for categories describing people the label set included terms that were offensive or not verifiable from a photograph in the first place."
+    ],
+    "praise": "A score is a measurement of the benchmark. Anything past that is a further claim, and it needs its own evidence.",
+    "console": "Reasonable, but ask what the number was measured on. The dataset sets the boundary of what the score can say."
+  },
+  "thompson": {
+    "lead": "Near the surface I can count years the way you count tree rings. Deep in the core the layers are squeezed together and I have to do something else entirely.",
+    "prompt": "In a mountain ice core, ages near the top come from counting visible annual layers, while ages deep down come from ice-flow models and from matching features to other climate records. Why are these two kinds of date different in kind, not merely in precision?",
+    "options": [
+      "The shallow dates are a direct count whose errors accumulate step by step, while the deep dates inherit the assumptions of a flow model and are partly tied to the very records they were matched against — so they are not independent of those records.",
+      "The deep dates are simply less precise, in the way any measurement degrades with distance from the instrument.",
+      "Both rest on physical principles that are equally well established, so the difference is one of stated uncertainty rather than of kind.",
+      "The shallow dates are the unreliable ones, since surface layers can be removed by melting or wind and a missing year is invisible in a count."
+    ],
+    "correct": 0,
+    "why": [
+      "Correct. This is why Thompson's Quelccaya chronology, with countable wet-season snow alternating with dry-season dust back roughly fifteen centuries, is a stronger claim than his oldest Tibetan ages, which other groups dispute. It also means a deep date matched to another archive cannot then be offered as independent confirmation of that archive.",
+      "Precision is not the distinction. A deep date could in principle be quoted with a tight error bar and still depend on a model whose assumptions might be wrong, which is a different kind of exposure.",
+      "Ice flow really is physics, but a flow model needs inputs — accumulation history, thinning, temperature — that are estimated rather than observed. Layer counting needs far fewer of them.",
+      "Missing layers are a real problem and Thompson takes them seriously; some glaciers he sampled have lost their upper layers entirely. Even so, a count with gaps remains a more direct measurement than a modelled age."
+    ],
+    "praise": "Two dates on the same core, and only one of them is a count.",
+    "console": "Both carry uncertainty, but they are not exposed to the same kind of error. Ask which one depends on a model."
+  },
+  "hayhoe": {
+    "lead": "Twelve minutes, so I will be blunt. Someone will eventually offer you climate projections at one kilometre for your county, and you should know what that resolution is and is not.",
+    "prompt": "A consultancy offers climate projections at one-kilometre resolution, produced by statistically downscaling output from a global model. A city treats these as preferable to coarser projections. What is the key caveat?",
+    "options": [
+      "Statistical downscaling is less reliable than dynamical downscaling, so the fine-scale results should be regenerated with a regional physical model.",
+      "Downscaling cannot add information the global model does not have: if the parent model misplaces a feature such as the jet stream or the monsoon, that error is delivered at one kilometre, looking far more authoritative than it deserves.",
+      "One kilometre is finer than the observational network used to fit the relationship, so the projections cannot be validated at all.",
+      "Fine resolution is only a problem for rainfall; for temperature the downscaled values can be taken at face value."
+    ],
+    "correct": 1,
+    "why": [
+      "The two methods have different strengths — dynamical downscaling is physically consistent and expensive, statistical downscaling is cheap and depends on the historical relationship holding. Neither escapes the limits of the global model it is nested in, which is the actual caveat.",
+      "Correct. Resolution is not accuracy. Hayhoe's group also has to assume that the historical link between large-scale and local variables still holds in a climate nobody has observed, an assumption unverifiable by construction — and shakier for rainfall than for temperature.",
+      "Validation is possible and standard: you fit the relationship on one historical period and test it on a withheld one. The gap between grid scale and station density is a real difficulty, not a bar to any testing at all.",
+      "Rainfall is indeed shakier than temperature, but errors inherited from the parent model reach both. A misplaced circulation feature moves temperature patterns as well as rainfall."
+    ],
+    "praise": "Resolution is not accuracy, and a fine grid can make a bad answer look excellent.",
+    "console": "Good instinct, wrong lever. Fineness is about presentation; what limits you is what the parent model knows."
+  },
+  "simard": {
+    "lead": "Birch and fir, each fed a different carbon isotope, and a cedar seedling planted alongside them. The cedar is the part of that design I would defend hardest.",
+    "prompt": "In Simard's field experiment, paper birch and Douglas-fir seedlings were labelled with different carbon isotopes, and a western redcedar seedling was included in each triplet. What does the cedar contribute to the inference?",
+    "options": [
+      "A second recipient species, which increases the statistical power of the comparison.",
+      "A demonstration that the isotope labels are harmless to plants outside the experiment.",
+      "An estimate of how much label can reach a neighbour by ordinary routes — soil water, root exudates, decomposition — because cedar forms a different type of mycorrhiza and cannot join the same fungal network.",
+      "A check on airborne transfer, since cedar foliage would intercept any label released into the atmosphere."
+    ],
+    "correct": 2,
+    "why": [
+      "Replication of that sort calls for more triplets, not a third species. Cedar is not a substitute recipient; it is a different kind of recipient, chosen for what it cannot do.",
+      "Labels are used at tracer levels and their safety was never the question. The cedar earns its place through its biology, not through its tolerance.",
+      "Correct. Without such a control, label arriving in the fir is perfectly consistent with plain soil transfer and the network explanation gains nothing. Cedar picked up far less label than the fir did, and that contrast is what made a fungal route the better explanation — note how much still rests on it, since a 2023 review concluded that isotope transfer alone cannot show carbon travelled through fungal hyphae rather than through soil.",
+      "Atmospheric leakage is worth worrying about and is handled by bagging the labelled seedlings during exposure. Foliage interception would not distinguish an airborne route from a below-ground one in any case."
+    ],
+    "praise": "The control is the argument. Without the cedar there is no network claim to make.",
+    "console": "Look at what the cedar cannot do rather than what it can. That inability is exactly what makes it a control."
+  },
+  "bertozzi": {
+    "lead": "Genetics gave us no handle on sugars — you cannot fuse a fluorescent protein onto a glycan. So we borrowed the cell's own assembly line instead.",
+    "prompt": "A researcher wants to image a class of molecule in living cells that has no genetic handle: it is not copied from a template and cannot be fused to a fluorescent protein. Which strategy follows Bertozzi's approach, and what limitation comes with it?",
+    "options": [
+      "Feed the cells a building block carrying a small chemically inert handle, let their own enzymes install it, then couple a probe to that handle from outside — accepting that you see only the fraction the enzymes will accept, and that the analogue may itself perturb the pathway you are measuring.",
+      "Raise an antibody against the molecule class and use a labelled antibody, accepting that antibodies reach only the outside of a cell.",
+      "Attach a bright fluorophore directly to the building block and feed that in, accepting that the label is bulkier than the natural molecule.",
+      "Express an enzyme that modifies the molecule class and tag that enzyme, accepting that you then observe the enzyme rather than its product."
+    ],
+    "correct": 0,
+    "why": [
+      "Correct. Bertozzi's group fed cells azide-bearing sugars, relying on earlier work from Reutter's group showing the biosynthetic pathway tolerates modified side chains, then reacted the azide with a probe delivered from outside. That reaction must be bioorthogonal — unreactive toward everything already present, fast at low concentration in water at body temperature, and free of any toxic catalyst, which is why a copper-catalysed coupling had to be replaced by a strained cyclooctyne.",
+      "Antibodies are genuinely useful here and are widely used for glycans. But they report on pre-existing structures rather than on newly made molecules, they need a well-defined epitope, and inside a living cell they are hard to deliver.",
+      "A bulky fluorophore is the problem the two-step design exists to avoid. The enzymes usually will not accept it, and if they do, a tag that large can change where the molecule ends up. Keeping the installed handle tiny is the entire point.",
+      "Tagging the enzyme tells you where the machinery is, not where its product goes. A reasonable complementary experiment that answers a different question."
+    ],
+    "praise": "Small handle in, probe on afterwards. The size of that handle is the whole design.",
+    "console": "Each of those is a real technique. Ask which one lets the cell's own enzymes do the installing while the tag stays invisible to them."
+  },
+  "yamanaka": {
+    "lead": "Twenty-four candidate genes, and not one of them does anything on its own. That is the part worth teaching, so let me hand you a version of the problem.",
+    "prompt": "A laboratory has twenty candidate genes that might jointly drive a change of cell state, and a clean survival readout for success. Introducing each gene individually produces nothing. What design would identify the required genes, and why does it work when the one-at-a-time test failed?",
+    "options": [
+      "Test every pair of genes, since a two-gene interaction is the simplest explanation for a null result from single genes.",
+      "Introduce all twenty together to establish that the full set works, then run twenty conditions each omitting one gene: if dropping a gene abolishes the readout, that gene is required.",
+      "Raise the expression level of each single gene, since the individual tests may have fallen below the threshold needed for the change.",
+      "Conclude that the readout is insensitive, and develop a better assay before testing any combinations."
+    ],
+    "correct": 1,
+    "why": [
+      "Combinatorial testing gets expensive very fast and still fails if the effect needs four genes together, since no pair would show anything at all. The number of possible subsets is precisely why nobody searches this way.",
+      "Correct. Kazutoshi Takahashi introduced all twenty-four candidates at once and colonies appeared; the informative step was then subtraction, twenty-four pools each missing one factor. Four genes proved necessary — Oct3/4, Sox2, Klf4 and c-Myc. Subtraction works because it starts from a condition where the readout is already positive, so each removal is measured against a signal rather than against nothing.",
+      "Dose is a fair worry and easy to check. But if the requirement is genuinely a combination, no amount of one factor supplies the others, and this is how a real interaction gets misdiagnosed as a sensitivity problem.",
+      "The assay was not the limitation, and here it is doing its job — reporting honestly that one factor is not enough. Rebuilding a working readout before trying the obvious design would have cost years."
+    ],
+    "praise": "Start from something that works and take pieces away. Addition tells you nothing when nothing works alone.",
+    "console": "The instinct to add is natural. Notice that you can only measure a loss against a signal you already have."
+  },
+  "charpentier": {
+    "lead": "We deleted things one at a time and looked at a blot. With Cas9 gone the guide RNA never matured, which surprised us, since Cas9 was supposed to be the scissors for DNA.",
+    "prompt": "Deleting the Cas9 gene abolished maturation of the guide RNA, even though the RNA cutting itself is done by the cell's own RNase III. What does the deletion result establish?",
+    "options": [
+      "That Cas9 cuts the CRISPR transcript into mature guides, and RNase III plays a supporting role.",
+      "That Cas9 acts only downstream of RNA maturation, so the deletion must be affecting the cell indirectly.",
+      "That RNase III cannot be the processing enzyme, since removing a different protein blocked processing.",
+      "That Cas9 is required for the processing step — necessity, not mechanism — which is a reminder that a protein can be needed for a step other than the one it is named for."
+    ],
+    "correct": 3,
+    "why": [
+      "This reads necessity as mechanism, the standard overreach from a knockout. The processing cuts are made by RNase III; Cas9 is needed for them to happen, plausibly by binding and holding the paired RNAs in a form the nuclease can act on.",
+      "Cas9 does act after maturation too, when it cuts target DNA. But the blot showed maturation failing in its absence, which places a requirement for Cas9 at the earlier step as well. A protein can be needed twice.",
+      "Two proteins can both be required for one step, and here both are: deleting RNase III also blocked maturation. Necessity is not exclusive, and treating it as exclusive makes knockout results appear to contradict each other for no reason.",
+      "Correct. Charpentier's group found tracrRNA, RNase III and Cas9 all necessary before mature guide RNA appears. A deletion licenses a necessity claim and nothing more; what the protein does at that step has to be worked out separately, which is what the later reconstitution from purified components was for."
+    ],
+    "praise": "A deletion buys you necessity. Anything past that has to be earned in a tube.",
+    "console": "Careful with what a knockout says. Absence tells you the step needs the protein, not what the protein does there."
+  }
+}

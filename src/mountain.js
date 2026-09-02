@@ -99,7 +99,8 @@ function buildMountain(gl, roster) {
     for (let v = 0; v < pos.length / 3; v++) {
       verts.push(pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2],
                  nrm[v * 3], nrm[v * 3 + 1], nrm[v * 3 + 2],
-                 col[v * 3], col[v * 3 + 1], col[v * 3 + 2], glow[v]);
+                 col[v * 3], col[v * 3 + 1], col[v * 3 + 2], glow[v],
+                 0.88, 0.0);                       // snow: rough, dielectric
     }
     // the terrain is its own mesh so it can use a 32-bit index buffer
     var terrainMesh = uploadMesh(gl, new Float32Array(verts), new Uint32Array(idx));
@@ -250,7 +251,9 @@ function buildMountain(gl, roster) {
     var finish = { x: 0, y: fy, z: fz };
   }
 
-  return {
+  // one note beside each session marquee, off the piste centre so a rider has to steer for it
+  const spots = stations.map((s, i) => ({ district: 'summit', kind: 'session', x: s.x + (i % 2 ? -6 : 6), y: mtnHeight(s.x + (i % 2 ? -6 : 6), s.z) + 1.3, z: s.z }));
+  return { spots,
     mesh: b.upload(gl),
     terrain: terrainMesh,
     spinners, lights, stations,

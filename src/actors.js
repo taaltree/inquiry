@@ -260,69 +260,6 @@ function makeTextPlate(gl, lines, opts = {}) {
 }
 
 /* ---------- the Inquiry Device (viewmodel) ---------- */
-/* Built with the muzzle toward -Z so the camera basis [right, up, back]
-   stays right-handed when used directly as the model matrix. */
-const PANEL_TILT = -0.62;                 // reader panel rake, shared with the pips
-const PANEL_AT = [0.0, 0.086, 0.088];
-
-function buildDevice(gl) {
-  const b = new Builder();
-  const shell  = hex2rgb('#39404f');
-  const shellD = hex2rgb('#20252f');
-  const trim   = hex2rgb('#8d9ab5');
-  const glass  = hex2rgb('#7fe8ff');
-  const hot    = hex2rgb('#bff4ff');
-
-  /* grip, angled back under the body */
-  b.add(BOX, xform([0, -0.095, 0.128], [0.30, 0, 0], [0.088, 0.210, 0.072]), shellD, 0.02);
-  b.add(BOX, xform([0, -0.185, 0.163], [0.30, 0, 0], [0.096, 0.050, 0.084]), trim, 0.25);
-  b.add(BOX, xform([0.046, -0.075, 0.108], [0.30, 0, 0], [0.008, 0.150, 0.050]), glass, 2.2);
-  b.add(BOX, xform([-0.046, -0.075, 0.108], [0.30, 0, 0], [0.008, 0.150, 0.050]), glass, 2.2);
-
-  /* main body */
-  b.add(BOX, xform([0, 0.020, -0.020], [0, 0, 0], [0.120, 0.104, 0.330]), shell, 0.05);
-  b.add(BOX, xform([0, 0.076, -0.030], [0, 0, 0], [0.086, 0.026, 0.290]), shellD, 0.02);
-  b.add(BOX, xform([0, 0.090, -0.030], [0, 0, 0], [0.052, 0.010, 0.250]), glass, 2.6);   // spine light
-  for (const s of [-1, 1]) {
-    b.add(BOX, xform([s * 0.063, 0.020, -0.020], [0, 0, 0], [0.012, 0.066, 0.300]), glass, 2.4);
-    b.add(BOX, xform([s * 0.058, -0.032, -0.020], [0, 0, 0], [0.018, 0.016, 0.310]), trim, 0.75);
-  }
-  /* cooling fins */
-  for (let i = 0; i < 4; i++) {
-    b.add(BOX, xform([0, 0.056, 0.030 + i * 0.030], [0, 0, 0], [0.132, 0.032, 0.010]), trim, 0.7);
-  }
-
-  /* emitter head at the muzzle (-Z) */
-  b.add(pCyl(16), xform([0, 0.022, -0.196], [Math.PI / 2, 0, 0], [0.126, 0.070, 0.126]), shell, 0.08);
-  b.add(pTorus(0.09, 24, 8), xform([0, 0.022, -0.232], [Math.PI / 2, 0, 0], [0.150, 0.150, 0.150]), trim, 0.5);
-  b.add(pTorus(0.05, 24, 8), xform([0, 0.022, -0.238], [Math.PI / 2, 0, 0], [0.104, 0.104, 0.104]), glass, 2.0);
-  b.add(pCyl(18), xform([0, 0.022, -0.240], [Math.PI / 2, 0, 0], [0.076, 0.014, 0.076]), glass, 2.4);
-  b.add(pCyl(18), xform([0, 0.022, -0.248], [Math.PI / 2, 0, 0], [0.036, 0.008, 0.036]), hot, 3.0);
-  /* three prongs around the emitter — reads well in silhouette */
-  for (let i = 0; i < 3; i++) {
-    const a = -Math.PI / 2 + (i / 3) * TAU;
-    b.add(BOX, xform([Math.cos(a) * 0.082, 0.022 + Math.sin(a) * 0.082, -0.212], [0, 0, a],
-      [0.026, 0.052, 0.070]), shellD, 0.05);
-    b.add(SPHERE_LO, xform([Math.cos(a) * 0.092, 0.022 + Math.sin(a) * 0.092, -0.244], [0, 0, 0],
-      [0.026, 0.026, 0.026]), glass, 2.6);
-  }
-
-  /* reader panel raked toward the player's eye — the part actually read in play */
-  b.add(BOX, xform(PANEL_AT, [PANEL_TILT, 0, 0], [0.168, 0.120, 0.014]), shellD, 0.03);
-  b.add(BOX, xform([PANEL_AT[0], PANEL_AT[1] + 0.004, PANEL_AT[2] - 0.008], [PANEL_TILT, 0, 0],
-    [0.146, 0.098, 0.006]), hex2rgb('#08131f'), 0.30);
-  b.add(BOX, xform([PANEL_AT[0], PANEL_AT[1] + 0.036, PANEL_AT[2] - 0.030], [PANEL_TILT, 0, 0],
-    [0.146, 0.008, 0.008]), glass, 2.8);
-  b.add(BOX, xform([PANEL_AT[0], PANEL_AT[1] - 0.030, PANEL_AT[2] + 0.014], [PANEL_TILT, 0, 0],
-    [0.146, 0.006, 0.008]), glass, 2.0);
-
-  /* antenna + status bead */
-  b.add(pCyl(6), xform([-0.056, 0.118, 0.120], [0.34, 0, -0.20], [0.011, 0.180, 0.011]), trim, 0.3);
-  b.add(SPHERE_LO, xform([-0.086, 0.202, 0.092], [0, 0, 0], [0.030, 0.030, 0.030]), glass, 2.8);
-
-  return b.upload(gl);
-}
-
 /* The player's own board, seen from above as you ride. Built with +Z toward
    the viewer so it matches the viewmodel basis, same as the Inquiry Device. */
 function buildRideModel(gl) {
@@ -341,18 +278,6 @@ function buildRideModel(gl) {
     b.add(BOX, xform([0, 0.240, dz], [0, ang, 0], [0.20, 0.085, 0.26]), trouser, 0.03);
   }
   return b.upload(gl);
-}
-
-/* five slot pips across the reader panel, lit individually */
-function buildDevicePips(gl) {
-  const out = [];
-  for (let i = 0; i < 5; i++) {
-    const b = new Builder();
-    b.add(BOX, xform([-0.052 + i * 0.026, PANEL_AT[1] + 0.002, PANEL_AT[2] - 0.014], [PANEL_TILT, 0, 0],
-      [0.018, 0.062, 0.006]), [1, 1, 1], 2.6);
-    out.push(b.upload(gl));
-  }
-  return out;
 }
 
 /* expanding ring pulse, used when an insight lands */
@@ -463,4 +388,102 @@ function buildGainPlate(gl, text, hex) {
   c.fillStyle = hex; c.shadowColor = hex; c.shadowBlur = 30;
   c.fillText(text, 210, 108);
   return texFromCanvas(gl, cv);
+}
+
+/* ============================================================
+   The Codex — a large open tome held low and to the right; knowledge
+   fires from the sigil on its right-hand page. Built in viewmodel space:
+   +X right, +Y up, +Z toward the viewer; the muzzle direction is -Z.
+   Page frame: u runs from the spine outward, v is height above the
+   page mid-plane, z runs along the spine.
+   ============================================================ */
+const CODEX = { theta: 0.26, pageW: 0.215, pageT: 0.030, pageH: 0.320, gap: 0.012 };
+function codexPt(s, u, v, z) {
+  const th = CODEX.theta;
+  return [s * (u * Math.cos(th) - v * Math.sin(th)), u * Math.sin(th) + v * Math.cos(th), z];
+}
+
+function buildCodex(gl) {
+  const b = new Builder();
+  const th = CODEX.theta, W = CODEX.pageW, T = CODEX.pageT, H = CODEX.pageH, G0 = CODEX.gap;
+  const leather = hex2rgb('#4b1d24'), brass = hex2rgb('#c9a35a'), gilt = hex2rgb('#d8b464');
+  const paper = hex2rgb('#e9e0c9'), paperD = hex2rgb('#cfc4a6'), ink = hex2rgb('#3a3350');
+  const glove = hex2rgb('#2a2d38'), ribbon = hex2rgb('#a8202c');
+
+  /* spine, running along z */
+  b.add(pCyl(12), xform([0, -0.014, 0], [Math.PI / 2, 0, 0], [0.056, H + 0.03, 0.056]), leather, 0.02, 0.55, 0.05);
+  for (const ez of [-1, 1]) b.add(pCyl(12), xform([0, -0.014, ez * (H / 2 + 0.006)], [Math.PI / 2, 0, 0], [0.062, 0.012, 0.062]), brass, 0.1, 0.3, 0.95);
+
+  for (const s of [-1, 1]) {
+    const rz = s * th, uc = G0 + W / 2;
+    b.add(BOX, xform(codexPt(s, uc, -T / 2 - 0.007, 0), [0, 0, rz], [W + 0.03, 0.012, H + 0.03]), leather, 0.02, 0.6, 0.05);  // cover
+    b.add(BOX, xform(codexPt(s, uc, 0, 0), [0, 0, rz], [W, T, H]), paperD, 0, 0.9, 0);                                        // page block
+    b.add(BOX, xform(codexPt(s, uc, T / 2 - 0.001, 0), [0, 0, rz], [W - 0.008, 0.003, H - 0.008]), paper, 0.05, 0.95, 0);     // top sheet
+    b.add(BOX, xform(codexPt(s, G0 + W - 0.004, 0, 0), [0, 0, rz], [0.008, T - 0.004, H - 0.004]), gilt, 0.15, 0.3, 0.9);    // gilt fore-edge
+    for (const ez of [-1, 1]) {
+      b.add(BOX, xform(codexPt(s, G0 + W + 0.006, -T / 2 - 0.007, ez * (H / 2 + 0.006)), [0, 0, rz], [0.03, 0.018, 0.03]), brass, 0.12, 0.3, 0.95);
+    }
+    // a thumb holding the page down near the bottom corner
+    b.add(CAPSULE, xform(codexPt(s, G0 + W - 0.05, T / 2 + 0.013, H / 2 - 0.07), [0.25, 0, rz + s * 1.25], [0.030, 0.080, 0.030]), glove, 0.02, 0.7, 0);
+  }
+  /* the left page is written; the right page carries the sigil (drawn separately, tinted) */
+  for (let i = 0; i < 12; i++) {
+    const len = 0.125 + Math.sin(i * 2.3) * 0.03;
+    b.add(BOX, xform(codexPt(-1, G0 + 0.026 + len / 2, T / 2 + 0.002, -H / 2 + 0.032 + i * 0.022), [0, 0, -th], [len, 0.002, 0.006]), ink, 0, 0.8, 0);
+  }
+  b.add(BOX, xform(codexPt(-1, G0 + 0.020, T / 2 + 0.002, -H / 2 + 0.028), [0, 0, -th], [0.018, 0.003, 0.018]), gilt, 0.3, 0.3, 0.9);   // illuminated capital
+  b.add(BOX, xform([0, -0.055, H / 2 + 0.02], [0.35, 0, 0], [0.018, 0.10, 0.003]), ribbon, 0.05, 0.7, 0);                       // bookmark
+  return b.upload(gl);
+}
+
+/* the sigil on the right page: white, tinted by the question type at draw time */
+function buildCodexSigil(gl) {
+  const b = new Builder();
+  const th = CODEX.theta, W = CODEX.pageW, T = CODEX.pageT;
+  const c = codexPt(1, CODEX.gap + W / 2, T / 2 + 0.004, -0.015);
+  b.add(pTorus(0.045, 40, 6), xform(c, [0, 0, th], [0.135, 0.135, 0.135]), [1, 1, 1], 2.2);
+  b.add(pTorus(0.06, 32, 6), xform(c, [0, 0, th], [0.085, 0.085, 0.085]), [1, 1, 1], 1.8);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * TAU;
+    const p = codexPt(1, CODEX.gap + W / 2 + Math.cos(a) * 0.052, T / 2 + 0.004, -0.015 + Math.sin(a) * 0.052);
+    b.add(BOX, xform(p, [0, -a, th], [0.004, 0.002, 0.020]), [1, 1, 1], 2.4);
+  }
+  b.add(SPHERE_LO, xform(codexPt(1, CODEX.gap + W / 2, T / 2 + 0.010, -0.015), [0, 0, 0], [0.020, 0.012, 0.020]), [1, 1, 1], 3.0);
+  return b.upload(gl);
+}
+
+/* a single loose sheet, hinged at the spine, animated on a slot change */
+function buildCodexPage(gl) {
+  const b = new Builder();
+  const W = CODEX.pageW, T = CODEX.pageT, H = CODEX.pageH;
+  b.add(BOX, xform(codexPt(1, CODEX.gap + W / 2, T / 2 + 0.003, 0), [0, 0, CODEX.theta], [W - 0.01, 0.002, H - 0.012]), hex2rgb('#f1e9d4'), 0.08, 0.95, 0);
+  return b.upload(gl);
+}
+
+/* five index tabs on the right page's fore-edge, one per question type */
+function buildCodexTabs(gl) {
+  const out = [];
+  const W = CODEX.pageW, H = CODEX.pageH;
+  for (let i = 0; i < 5; i++) {
+    const b = new Builder();
+    const z = -H / 2 + 0.055 + i * 0.052;
+    b.add(BOX, xform(codexPt(1, CODEX.gap + W + 0.014, 0, z), [0, 0, CODEX.theta], [0.024, 0.014, 0.040]), [1, 1, 1], 2.2);
+    out.push(b.upload(gl));
+  }
+  return out;
+}
+
+/* a floating page — a marginal note waiting to be found */
+function buildPageMark(gl) {
+  const b = new Builder();
+  const paper = hex2rgb('#f3ecd8'), ink = hex2rgb('#4a3d6a'), gilt = hex2rgb('#d8b464');
+  b.add(BOX, xform([0, 0, 0], [0, 0, 0.08], [0.46, 0.60, 0.016]), paper, 1.1, 0.9, 0);
+  for (let i = 0; i < 7; i++) {
+    const len = 0.30 - (i % 3) * 0.05;
+    for (const side of [1, -1]) {
+      b.add(BOX, xform([-0.02, 0.19 - i * 0.065, side * 0.011], [0, 0, 0.08], [len, 0.014, 0.004]), ink, 0.4, 0.8, 0);
+    }
+  }
+  b.add(BOX, xform([-0.15, 0.20, 0.011], [0, 0, 0.08], [0.06, 0.06, 0.004]), gilt, 1.6, 0.3, 0.9);
+  return b.upload(gl);
 }

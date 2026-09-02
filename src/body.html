@@ -42,6 +42,8 @@
         <div class="stat" id="st-vau-row"><span>Vaults</span><span id="st-vau">0/5</span></div>
         <div class="stat"><span>Students taught</span><span id="st-taught">0</span></div>
         <div class="stat"><span>Claims dismantled</span><span id="st-deb">0</span></div>
+        <div class="stat"><span>Marginalia</span><span id="st-marg">0/0</span></div>
+        <div class="stat"><span>Endorsements</span><span id="st-end">0/0</span></div>
       </div>
     </div>
 
@@ -61,6 +63,10 @@
     <div id="intercept"><div id="intercept-inner"><div id="intercept-body"></div></div></div>
 
     <div id="technique"></div>
+    <div id="marginalia"></div>
+    <div id="waypoints"></div>
+    <div id="bossbar"><div class="bb-name">PEER REVIEW</div><div class="bb-pips" id="bb-pips"></div><div class="bb-next" id="bb-next"></div></div>
+    <div id="hitdir"></div>
     <div id="secured"></div>
     <div id="ctrl-hint"></div>
 
@@ -200,6 +206,29 @@
   </div>
 
   <!-- ============ LEVEL SELECT ============ -->
+  <div class="screen" id="pause">
+    <div class="pz">
+      <div class="pz-title">PAUSED</div>
+      <div class="pz-sub">The feed waits. So does everyone else.</div>
+      <div class="pz-grid">
+        <div><kbd>Drag</kbd> / mouse</div><div>look</div>
+        <div><kbd>W A S D</kbd> / arrows</div><div>move</div>
+        <div><kbd>Shift</kbd></div><div>sprint</div>
+        <div><kbd>Space</kbd></div><div>jump — stairs, lofts and islands are all reachable</div>
+        <div><kbd>Click</kbd> / <kbd>F</kbd></div><div>fire the Codex</div>
+        <div><kbd>1</kbd>–<kbd>5</kbd> · <kbd>Q</kbd> <kbd>R</kbd> · wheel</div><div>choose a question</div>
+        <div><kbd>E</kbd> / right-click</div><div>interview · ride a zipline</div>
+        <div><kbd>Tab</kbd></div><div>Field Codex</div>
+        <div><kbd>Esc</kbd></div><div>pause</div>
+      </div>
+      <div class="pz-btns">
+        <button class="btn" id="btn-resume">Resume</button>
+        <button class="btn ghost" id="btn-pause-codex">Codex</button>
+        <button class="btn ghost" id="btn-pause-levels">Level select</button>
+      </div>
+    </div>
+  </div>
+
   <div class="screen" id="levels">
     <div class="screen-inner">
       <div class="subtitle">CHOOSE YOUR MEETING</div>

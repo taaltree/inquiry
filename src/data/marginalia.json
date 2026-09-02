@@ -1,0 +1,272 @@
+[
+  {
+    "id": "newton_prism",
+    "owner": "newton",
+    "district": "foundry",
+    "title": "A glass prism",
+    "object": "lens",
+    "text": "A triangular glass prism of the sort Isaac Newton bought at a fair in the mid-1660s and used in a darkened room. Letting sunlight through a hole in the shutter, he found that the prism spread it into a spectrum, and that a second prism could not split a single color further. White light, he argued, is a mixture, not a pure substance. He reported the experiments to the Royal Society in 1672.",
+    "look": "triangular glass prism"
+  },
+  {
+    "id": "curie_notebook",
+    "owner": "curie",
+    "district": "foundry",
+    "title": "A radioactive notebook",
+    "object": "book",
+    "text": "Marie Curie's laboratory notebooks from the late 1890s record the work, with Pierre Curie, that identified polonium and radium in 1898. They are held at the Bibliothèque nationale de France in lead-lined boxes, because the pages remain contaminated with radium-226, whose half-life is about 1,600 years. Readers must sign a liability waiver and wear protective clothing to consult them. They will remain hazardous for many centuries.",
+    "look": "worn bound notebook in a lead box"
+  },
+  {
+    "id": "wu_cryostat",
+    "owner": "wu",
+    "district": "foundry",
+    "title": "A cryostat for cobalt-60",
+    "object": "instrument",
+    "text": "In late 1956 Chien-Shiung Wu and colleagues at the National Bureau of Standards cooled cobalt-60 nuclei in a crystal to within a hundredth of a degree of absolute zero and aligned their spins with a magnet. Beta electrons flew out preferentially opposite the spin direction: nature distinguishes left from right. Each cold run lasted minutes before the crystal warmed. Lee and Yang, who proposed the test, shared the 1957 Nobel Prize; Wu did not.",
+    "look": "squat metal cryostat with glass dewar"
+  },
+  {
+    "id": "strickland_gratings",
+    "owner": "strickland",
+    "district": "foundry",
+    "title": "A grating pair",
+    "object": "instrument",
+    "text": "A pair of diffraction gratings like those Donna Strickland used as a graduate student at the University of Rochester. In 1985 she and Gérard Mourou stretched a short laser pulse through about 1.4 kilometers of optical fiber, amplified the lengthened pulse without wrecking the amplifier, then used gratings to squeeze it back down. Chirped pulse amplification was the subject of her first paper; it now underlies laser eye surgery and petawatt lasers.",
+    "look": "two ruled gratings on a metal rail"
+  },
+  {
+    "id": "einstein_eclipse_plate",
+    "owner": "einstein",
+    "district": "observatory",
+    "title": "An eclipse plate",
+    "object": "plate",
+    "text": "A glass photographic plate of the kind exposed during the total solar eclipse of 29 May 1919. Expeditions to Príncipe, led by Arthur Eddington, and Sobral in Brazil photographed stars near the darkened Sun, then measured how far their images shifted compared with night plates of the same field. General relativity predicted a deflection of 1.75 arcseconds at the Sun's edge, twice the Newtonian value. The Sobral plates gave about 1.98, Príncipe about 1.61.",
+    "look": "glass photographic plate in a paper sleeve"
+  },
+  {
+    "id": "payne_thesis",
+    "owner": "payne",
+    "district": "observatory",
+    "title": "A 1925 thesis",
+    "object": "book",
+    "text": "Cecilia Payne's doctoral thesis, Stellar Atmospheres, printed in 1925, was the first PhD in astronomy earned at Harvard's observatory, awarded through Radcliffe College because Harvard did not grant doctorates to women. Applying Meghnad Saha's ionization theory to stellar spectra, she found hydrogen and helium overwhelmingly more abundant in stars than on Earth. Pressed by Henry Norris Russell, she added a line calling the hydrogen result probably spurious. Russell published the same conclusion in 1929.",
+    "look": "slim printed monograph"
+  },
+  {
+    "id": "chandrasekhar_calculations",
+    "owner": "chandrasekhar",
+    "district": "observatory",
+    "title": "Shipboard calculations",
+    "object": "letter",
+    "text": "Sheets of calculation like those Subrahmanyan Chandrasekhar filled during his 1930 voyage from Bombay to England, aged nineteen, bound for graduate study at Cambridge. Combining special relativity with the quantum statistics of electrons, he found that a white dwarf above a certain mass cannot support itself. His first estimate was revised upward; the accepted limit is about 1.4 solar masses. Arthur Eddington ridiculed the idea in 1935. The Chandrasekhar limit is now textbook physics.",
+    "look": "loose handwritten sheets"
+  },
+  {
+    "id": "rubin_spectrograph",
+    "owner": "rubin",
+    "district": "observatory",
+    "title": "An image-tube spectrograph",
+    "object": "instrument",
+    "text": "Kent Ford built this image-tube spectrograph at the Carnegie Institution in Washington in the 1960s. An image intensifier made faint galaxy light recordable in hours instead of nights. Vera Rubin used it to measure how fast stars and gas orbit at different distances from a galaxy's center. In Andromeda and other spirals the speed did not fall off with distance, implying unseen mass. The instrument is now in the Smithsonian's National Air and Space Museum.",
+    "look": "boxy metal spectrograph with a tube"
+  },
+  {
+    "id": "bouman_drives",
+    "owner": "bouman",
+    "district": "observatory",
+    "title": "A crate of data drives",
+    "object": "card",
+    "text": "Hard drives like these carried the Event Horizon Telescope's April 2017 observations, about five petabytes, from radio dishes around the world to correlator centers at MIT Haystack Observatory and in Bonn. No network could move that volume, so the drives flew by plane; the South Pole Telescope's drives waited until Antarctic flights resumed months later. Katie Bouman co-led an imaging team that turned the data into the first picture of the black hole M87*, released in 2019.",
+    "look": "rack of sealed hard drives"
+  },
+  {
+    "id": "darwin_barnacle",
+    "owner": "darwin",
+    "district": "helix",
+    "title": "A barnacle specimen jar",
+    "object": "specimen",
+    "text": "Between 1846 and 1854 Charles Darwin put his theory aside to dissect and classify barnacles, publishing four volumes on living and fossil species. The work taught him how much variation exists within a species, a point his argument would need. His barnacle collection is now at the Natural History Museum in London. It began with a minute burrowing barnacle collected in Chile in 1835 that fit no known group.",
+    "look": "small glass specimen jar"
+  },
+  {
+    "id": "franklin_photo51",
+    "owner": "franklin",
+    "district": "helix",
+    "title": "Photo 51",
+    "object": "plate",
+    "text": "Photo 51 is an X-ray diffraction photograph of the B form of DNA, exposed in May 1952 by Raymond Gosling, Rosalind Franklin's doctoral student at King's College London. The X-shaped pattern of spots is the signature of a helix, and the strong spots at top and bottom mark the 3.4 angstrom spacing between stacked bases. Maurice Wilkins showed the image to James Watson in January 1953 without Franklin's knowledge. Franklin died in 1958.",
+    "look": "glass X-ray plate with a dark X pattern"
+  },
+  {
+    "id": "mcclintock_maize",
+    "owner": "mcclintock",
+    "district": "helix",
+    "title": "A speckled ear of maize",
+    "object": "specimen",
+    "text": "An ear of maize with speckled, streaked kernels like those Barbara McClintock grew in her plots at Cold Spring Harbor from the 1940s. Each spot marks a cell lineage in which a mobile piece of DNA jumped out of a pigment gene and switched it back on. She named the elements Activator and Dissociation, described them in 1950 and 1951, and found acceptance slow to come. She received the 1983 Nobel Prize, unshared.",
+    "look": "dried ear of corn with mottled kernels"
+  },
+  {
+    "id": "tu_extract",
+    "owner": "tu",
+    "district": "helix",
+    "title": "Extract number 191",
+    "object": "flask",
+    "text": "A flask of the low-temperature ether extract of sweet wormwood, Artemisia annua, that Tu Youyou's group prepared in 1971 during Project 523, China's secret antimalarial program. Earlier hot-water extracts had failed. A fourth-century handbook by Ge Hong, which advised wringing the fresh herb in cold water, prompted her to avoid heat. Sample number 191 wiped out malaria parasites in infected mice, leading to artemisinin. She was among the first volunteers to take it.",
+    "look": "round-bottom flask of pale extract"
+  },
+  {
+    "id": "doudna_guide_rna",
+    "owner": "doudna",
+    "district": "helix",
+    "title": "A tube of guide RNA",
+    "object": "flask",
+    "text": "A tube of single-guide RNA, described in the 2012 Science paper by Martin Jinek, Jennifer Doudna, Emmanuelle Charpentier and colleagues. In bacteria the Cas9 enzyme needs two RNAs to find its target; the team fused them into one strand whose first twenty letters can be rewritten to match any chosen DNA sequence. In vitro, Cas9 loaded with a guide cut plasmid DNA where programmed. Doudna and Charpentier shared the 2020 Nobel Prize in Chemistry.",
+    "look": "small capped tube in a rack"
+  },
+  {
+    "id": "kariko_mrna",
+    "owner": "kariko",
+    "district": "helix",
+    "title": "A vial of modified mRNA",
+    "object": "flask",
+    "text": "A vial of synthetic messenger RNA in which every uridine has been swapped for pseudouridine, a natural variant. In 2005 Katalin Karikó and Drew Weissman at the University of Pennsylvania reported that this substitution stopped the RNA from triggering the inflammatory alarm that had stymied earlier mRNA therapies; a 2008 paper showed it translated into more protein. Karikó had been demoted in 1995 for failing to win grants. They shared the 2023 Nobel Prize.",
+    "look": "frosted vial on dry ice"
+  },
+  {
+    "id": "mendeleev_draft",
+    "owner": "mendeleev",
+    "district": "lattice",
+    "title": "A table with holes in it",
+    "object": "letter",
+    "text": "A draft of the periodic system, dated 17 February 1869 in the old Russian calendar, in Dmitri Mendeleev's hand. He arranged the sixty-three known elements by atomic weight and chemical family, leaving blank spaces where the pattern demanded an element nobody had found. He predicted properties for three of them, matched by gallium in 1875, scandium in 1879 and germanium in 1886. The draft survives in the Mendeleev Museum at St Petersburg State University.",
+    "look": "creased handwritten sheet"
+  },
+  {
+    "id": "hodgkin_insulin_crystal",
+    "owner": "hodgkin",
+    "district": "lattice",
+    "title": "An insulin crystal",
+    "object": "crystal",
+    "text": "A rhombohedral crystal of insulin, the kind Dorothy Hodgkin first placed in an X-ray beam in the mid-1930s. The diffraction photograph was among the earliest for any protein, but the molecule was too complex for the methods of the day. She returned to it repeatedly and published the three-dimensional structure in 1969, thirty-five years later, using heavy-atom replacement and electronic computers. Her 1964 Nobel Prize had already been awarded for penicillin and vitamin B12.",
+    "look": "tiny faceted crystal on a mount"
+  },
+  {
+    "id": "molina_chlorine_chart",
+    "owner": "molina",
+    "district": "lattice",
+    "title": "A chlorine-cycle chart",
+    "object": "card",
+    "text": "A chart of the chlorine cycle drawn from the 1974 paper by Mario Molina, a postdoc with Sherwood Rowland at the University of California, Irvine. They argued in Nature that chlorofluorocarbons, inert enough to survive for decades, drift into the stratosphere, where ultraviolet light splits off chlorine atoms; each atom can then destroy thousands of ozone molecules. Industry disputed the claim. The 1987 Montreal Protocol phased CFCs out; the 1995 Nobel Prize followed.",
+    "look": "creased printed diagram"
+  },
+  {
+    "id": "arnold_well_plate",
+    "owner": "arnold",
+    "district": "lattice",
+    "title": "A 96-well plate",
+    "object": "plate",
+    "text": "A 96-well plate, the workhorse of Frances Arnold's directed evolution at Caltech. In 1993 she and Keqin Chen reported evolving the enzyme subtilisin E to work in the solvent dimethylformamide. The gene was randomly mutated, thousands of variants were screened in plates like these, the best performers were picked, and the cycle repeated. Three rounds gave an enzyme hundreds of times more active in solvent. Arnold received half the 2018 Nobel Prize in Chemistry.",
+    "look": "clear plastic plate with 96 wells"
+  },
+  {
+    "id": "lovelace_note_g",
+    "owner": "lovelace",
+    "district": "engine",
+    "title": "The Note G table",
+    "object": "book",
+    "text": "A foldout table from Note G, the last of seven notes Ada Lovelace attached to her 1843 translation of Luigi Menabrea's account of Charles Babbage's Analytical Engine. Operation by operation, it shows how the unbuilt machine could compute the Bernoulli numbers, with columns tracking each variable as it changes. Often called the first published program, it contains an error in one entry. The notes, signed only A.A.L., ran longer than the article they accompanied.",
+    "look": "folded printed sheet of columns"
+  },
+  {
+    "id": "noether_offprint",
+    "owner": "noether",
+    "district": "engine",
+    "title": "A 1918 offprint",
+    "object": "book",
+    "text": "An offprint of Emmy Noether's paper Invariante Variationsprobleme, presented to the Göttingen scientific society in July 1918. It proves that every continuous symmetry of a physical system's laws corresponds to a conserved quantity: symmetry in time gives conservation of energy, symmetry in space gives momentum. Hilbert and Klein had brought her to Göttingen in 1915 to help with energy in general relativity, but the university would not let a woman lecture under her own name until 1919. She was dismissed in 1933 and died at Bryn Mawr in 1935.",
+    "look": "stapled offprint with a pencilled dedication"
+  },
+  {
+    "id": "turing_tape",
+    "owner": "turing",
+    "district": "engine",
+    "title": "A coil of paper tape",
+    "object": "card",
+    "text": "A coil of paper tape marked off in squares, the way Alan Turing imagined it in On Computable Numbers, received by the London Mathematical Society in May 1936. His imaginary machine reads one square at a time, writes or erases a symbol, moves left or right, and changes state according to a finite table. He showed that one such machine can imitate any other given a description of it, and that no machine can decide in general whether another will ever halt. Alonzo Church reached a related result the same year by a different route.",
+    "look": "coil of punched paper tape"
+  },
+  {
+    "id": "cajal_slide",
+    "owner": "cajal",
+    "district": "engine",
+    "title": "A Golgi-stained slide",
+    "object": "specimen",
+    "text": "A microscope slide prepared with Camillo Golgi's black reaction, which stains only a few cells in a piece of nervous tissue but stains them entire, in silver chromate. Santiago Ramón y Cajal first saw such preparations in Madrid in 1887, improved the method, and applied it to young animals whose nerve fibres were not yet sheathed. He concluded that nerve cells are separate units that touch without fusing. He and Golgi shared the 1906 Nobel Prize, and Golgi used his Nobel lecture to disagree.",
+    "look": "glass slide with a single dark branching cell"
+  },
+  {
+    "id": "li_index_card",
+    "owner": "li",
+    "district": "engine",
+    "title": "A labelled index card",
+    "object": "card",
+    "text": "An index card from the labelling of ImageNet, the dataset Fei-Fei Li began at Princeton in 2007 and presented in 2009. Rather than teach machines better rules, her group gathered examples: about fourteen million photographs sorted into more than twenty thousand categories from the WordNet dictionary, labelled by tens of thousands of workers on Amazon Mechanical Turk. The annual ImageNet challenge began in 2010; in 2012 a deep convolutional network cut the error rate so sharply that the field changed direction.",
+    "look": "index card with a pinned photograph"
+  },
+  {
+    "id": "thompson_core",
+    "owner": "thompson",
+    "district": "summit",
+    "title": "An ice core section",
+    "object": "specimen",
+    "text": "A section of ice core in a foil sleeve, like those Lonnie Thompson's team drilled to bedrock on the Quelccaya ice cap in Peru in 1983. No helicopter could lift a drill to 5,670 metres, so they built a lightweight, solar-powered one and carried it up. The two cores held about fifteen hundred years of annual layers: dust from droughts, ash, and the chemistry of past temperatures. As the ice cap has since retreated, its edge has exposed plants that had been buried for around five thousand years.",
+    "look": "cylinder of cloudy ice in a foil sleeve"
+  },
+  {
+    "id": "hayhoe_map",
+    "owner": "hayhoe",
+    "district": "summit",
+    "title": "A downscaled projection",
+    "object": "card",
+    "text": "A map of California shaded by projected summer temperature, of the kind Katharine Hayhoe and colleagues published in 2004. Global climate models work on grid cells hundreds of kilometres across; her contribution was statistical downscaling, translating their output to the scale of a valley or a city under different emissions pathways. Two futures were drawn side by side: more heat waves and a large loss of Sierra Nevada snowpack, with the losses much larger under the higher-emissions path. The choice between them was the point.",
+    "look": "folded map shaded in reds"
+  },
+  {
+    "id": "simard_seedlings",
+    "owner": "simard",
+    "district": "summit",
+    "title": "A bag of labelled seedlings",
+    "object": "specimen",
+    "text": "Paper birch and Douglas fir seedlings, tagged and bagged, like those Suzanne Simard planted in a British Columbia forest for a study published in Nature in 1997. She fed the trees carbon dioxide made with different carbon isotopes and traced where the carbon went: it moved between the two species through the fungal threads joining their roots, with more flowing toward fir seedlings kept in shade. A 2023 review argued that later claims about such networks have outrun the evidence; the isotope result itself still stands.",
+    "look": "sealed bag of seedlings with tags"
+  },
+  {
+    "id": "bertozzi_cyclooctyne",
+    "owner": "bertozzi",
+    "district": "summit",
+    "title": "A flask of a strained ring",
+    "object": "flask",
+    "text": "A flask of cyclooctyne, an eight-carbon ring bent so tightly that it reacts eagerly with azides and with almost nothing else. Carolyn Bertozzi's group reported in 2004 that the strain does the work that a toxic copper catalyst had done before, so the reaction can run inside living cells without harming them. Feed a cell a sugar carrying an azide, let it build the sugar into its surface, then click on a fluorescent tag. Her lab imaged sugars on living zebrafish embryos this way in 2008.",
+    "look": "small flask with a ring sketched on the label"
+  },
+  {
+    "id": "yamanaka_four_genes",
+    "owner": "yamanaka",
+    "district": "summit",
+    "title": "Four genes on a card",
+    "object": "card",
+    "text": "An index card listing four genes: Oct3/4, Sox2, Klf4 and c-Myc. In 2006 Kazutoshi Takahashi and Shinya Yamanaka reported in Cell that these four, delivered into adult mouse skin cells by retroviruses, turned them back into cells resembling embryonic stem cells. They had started from twenty-four candidates and removed them one at a time until the effect vanished. Human cells followed in 2007. Yamanaka shared the 2012 Nobel Prize with John Gurdon, whose frog experiments half a century earlier had shown the clock could run backward.",
+    "look": "index card with four gene names"
+  },
+  {
+    "id": "charpentier_gel",
+    "owner": "charpentier",
+    "district": "summit",
+    "title": "A gel with an extra band",
+    "object": "plate",
+    "text": "A photograph of an electrophoresis gel, the kind that showed Emmanuelle Charpentier's group an RNA nobody had been looking for. Studying the bacterium Streptococcus pyogenes, they found in 2011 that a small RNA, tracrRNA, pairs with the immune system's guide RNAs and helps mature them, with the enzyme now called Cas9. That detail became the key: in 2012, with Jennifer Doudna's laboratory, she showed the two RNAs could be fused into one programmable guide. She shared the 2020 Nobel Prize in Chemistry.",
+    "look": "gel photograph with dark bands"
+  }
+]

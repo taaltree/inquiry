@@ -81,6 +81,21 @@ const M4 = {
     return o;
   },
 
+  /* right-handed look-at, for the light camera */
+  lookAt(o, ex, ey, ez, cx, cy, cz, ux, uy, uz) {
+    let fx=cx-ex, fy=cy-ey, fz=cz-ez; let L=Math.hypot(fx,fy,fz)||1; fx/=L; fy/=L; fz/=L;
+    let rx=fy*uz-fz*uy, ry=fz*ux-fx*uz, rz=fx*uy-fy*ux; L=Math.hypot(rx,ry,rz)||1; rx/=L; ry/=L; rz/=L;
+    const nx=ry*fz-rz*fy, ny=rz*fx-rx*fz, nz=rx*fy-ry*fx;
+    o[0]=rx; o[1]=nx; o[2]=-fx; o[3]=0;
+    o[4]=ry; o[5]=ny; o[6]=-fy; o[7]=0;
+    o[8]=rz; o[9]=nz; o[10]=-fz; o[11]=0;
+    o[12]=-(rx*ex+ry*ey+rz*ez);
+    o[13]=-(nx*ex+ny*ey+nz*ez);
+    o[14]=(fx*ex+fy*ey+fz*ez);
+    o[15]=1;
+    return o;
+  },
+
   /* inverse-transpose of the upper 3x3, as a mat3 in a 9-float array */
   normalMat(o, m) {
     const a=m[0],b=m[1],c=m[2], d=m[4],e=m[5],f=m[6], g=m[8],h=m[9],i=m[10];
@@ -140,8 +155,9 @@ function makeProgram(gl, vsSrc, fsSrc, name) {
 }
 
 /* Vertex layout shared by every 3D mesh in the game:
-   position(3) normal(3) colour(3) glow(1)  = 10 floats / 40 bytes */
-const STRIDE = 10;
+   position(3) normal(3) colour(3) glow(1) roughness(1) metalness(1)
+   = 12 floats / 48 bytes */
+const STRIDE = 12;
 
 function uploadMesh(gl, verts, idx) {
   const vao = gl.createVertexArray();
@@ -156,6 +172,7 @@ function uploadMesh(gl, verts, idx) {
   gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, bs, 12);
   gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, bs, 24);
   gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, bs, 36);
+  gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 2, gl.FLOAT, false, bs, 40);
 
   const ebo = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
@@ -176,22 +193,59 @@ function makeTargetTex(gl, w, h, internal, format, type, filter) {
   return t;
 }
 
+function makeDepthTex(gl, w, h, shadow) {
+  const t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT24, w, h, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
+  const f = shadow ? gl.LINEAR : gl.NEAREST;
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  if (shadow) {
+    // hardware 2x2 PCF: sampler2DShadow compares the reference depth for us
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+  }
+  return t;
+}
+
+/* opts: float, depth (renderbuffer), depthTex (readable), mrt (second colour
+   attachment for the g-buffer), shadow (depth-only target) */
 function makeFBO(gl, w, h, opts = {}) {
   const fbo = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  const out = { fbo, w, h, tex: null, tex2: null, depth: null, depthTex: null };
+  if (opts.shadow) {
+    out.depthTex = makeDepthTex(gl, w, h, true);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, out.depthTex, 0);
+    gl.drawBuffers([gl.NONE]);
+    gl.readBuffer(gl.NONE);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return out;
+  }
   const internal = opts.float ? gl.RGBA16F : gl.RGBA8;
   const type = opts.float ? gl.HALF_FLOAT : gl.UNSIGNED_BYTE;
-  const tex = makeTargetTex(gl, w, h, internal, gl.RGBA, type, gl.LINEAR);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
-  let depth = null;
-  if (opts.depth) {
-    depth = gl.createRenderbuffer();
-    gl.bindRenderbuffer(gl.RENDERBUFFER, depth);
-    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, w, h);
-    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth);
+  out.tex = makeTargetTex(gl, w, h, internal, gl.RGBA, type, gl.LINEAR);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, out.tex, 0);
+  if (opts.mrt) {
+    out.tex2 = makeTargetTex(gl, w, h, internal, gl.RGBA, type, gl.NEAREST);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, out.tex2, 0);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
   }
+  if (opts.depthTex) {
+    out.depthTex = makeDepthTex(gl, w, h, false);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, out.depthTex, 0);
+  } else if (opts.depth) {
+    out.depth = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, out.depth);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, w, h);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, out.depth);
+  }
+  const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  if (status !== gl.FRAMEBUFFER_COMPLETE) console.warn('FBO incomplete', status, opts);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  return { fbo, tex, depth, w, h };
+  return out;
 }
 
 /* canvas2d -> GL texture, used for every piece of world-space text */

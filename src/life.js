@@ -43,9 +43,13 @@ function buildStudentMesh(gl, seed) {
   const skin = hex2rgb(skinI[(rnd() * skinI.length) | 0]);
   const hairC = mixc(hex2rgb('#1a1512'), hex2rgb('#6b5744'), rnd());
 
+  // limbs are separate meshes, each built around its own pivot so it can swing
+  const limbs = {};
   for (const s of [-1, 1]) {
-    b.add(pCapsule(0.068, 8, 3), xform([s * 0.084, hipY * 0.52, 0], [0, 0, 0], [1, hipY * 1.05, 1]), legC, 0.02);
-    b.add(BOX, xform([s * 0.084, 0.030, 0.038], [0, 0, 0], [0.112, 0.058, 0.225]), scalec(legC, 0.7), 0.02);
+    const lb = new Builder();
+    lb.add(pCapsule(0.068, 8, 3), xform([s * 0.084, hipY * 0.52 - hipY, 0], [0, 0, 0], [1, hipY * 1.05, 1]), legC, 0.02);
+    lb.add(BOX, xform([s * 0.084, 0.030 - hipY, 0.038], [0, 0, 0], [0.112, 0.058, 0.225]), scalec(legC, 0.7), 0.02);
+    limbs[s < 0 ? 'legL' : 'legR'] = lb.upload(gl);
   }
   b.add(pCyl(12, true, true, sw, sw * 0.72), xform([0, (hipY + chestY) / 2, 0], [0, 0, 0],
     [1, chestY - hipY + 0.10, 0.62]), coat, 0.02);
@@ -57,11 +61,14 @@ function buildStudentMesh(gl, seed) {
     b.add(BOX, xform([0, chestY - 0.24, -0.145], [0, 0, 0], [0.27, 0.36, 0.14]), bag, 0.02);
     b.add(BOX, xform([0, chestY - 0.06, -0.150], [0, 0, 0], [0.19, 0.07, 0.13]), scalec(bag, 1.4), 0.03);
   }
+  const shY = chestY + 0.02;
   for (const s of [-1, 1]) {
-    b.add(pCapsule(0.052, 8, 3), xform([s * (sw + 0.045), chestY - 0.19, 0.01], [0, 0, s * 0.12],
+    const ab = new Builder();
+    ab.add(pCapsule(0.052, 8, 3), xform([s * (sw + 0.045), chestY - 0.19 - shY, 0.01], [0, 0, s * 0.12],
       [1, 0.42, 1]), coat, 0.02);
-    b.add(pCapsule(0.045, 8, 3), xform([s * (sw + 0.095), chestY - 0.53, 0.05], [0.18, 0, s * 0.05],
+    ab.add(pCapsule(0.045, 8, 3), xform([s * (sw + 0.095), chestY - 0.53 - shY, 0.05], [0.18, 0, s * 0.05],
       [1, 0.34, 1]), skin, 0.02);
+    limbs[s < 0 ? 'armL' : 'armR'] = ab.upload(gl);
   }
   b.add(SPHERE_LO, xform([0, headY, 0], [0, 0, 0], [0.205, 0.245, 0.215]), skin, 0.02);
   const hairStyle = rnd();
@@ -77,7 +84,7 @@ function buildStudentMesh(gl, seed) {
     b.add(pCyl(8, true, true, 0.135, 0.128), xform([0, headY + 0.105, -0.005], [0, 0, 0], [1, 0.10, 1]), hairC, 0.05);
     b.add(SPHERE_LO, xform([0, headY + 0.030, -0.008], [0, 0, 0], [0.222, 0.196, 0.228]), hairC, 0.02);
   }
-  return b.upload(gl);
+  return { body: b.upload(gl), ...limbs, hipY, shY };
 }
 
 /* Worn marks of education, drawn over the base student mesh. */
@@ -200,6 +207,7 @@ class Life {
     this.marks = buildStudentMarks(gl);
     this.boardMesh = buildSnowboard(gl);
     this.droneMesh = buildDroneMesh(gl);
+    this.shieldRing = (() => { const b = new Builder(); b.add(pTorus(0.035, 48, 8), xform([0, 0, 0], [0, 0, 0], [1, 1, 1]), [1, 1, 1], 2.2); return b.upload(gl); })();
     this.insightBolt = buildBoltMesh(gl, hex2rgb('#8ff0ff'), 2.2);
     this.misinfoBolt = buildBoltMesh(gl, hex2rgb('#ff45a6'), 2.0);
     this.studentBolt = buildBoltMesh(gl, hex2rgb('#9fe8c0'), 1.6);
@@ -357,12 +365,18 @@ class Life {
     const cam = G.cam;
     const p = this.randomPoint(cam.x, cam.z, 34);
     const card = MISINFO[(this.rnd() * MISINFO.length) | 0];
+    // the district's last drone is its Peer Review: five shields, in argument order
+    const cleared = G.feedCleared[d.id] || 0;
+    const boss = cleared === DRONES_PER_DISTRICT - 1 && !(G.bossDone || {})[d.id]
+      && !this.drones.some((x) => x.boss && !x.dead);
     const drone = {
-      x: p.x, y: 3.0 + this.rnd() * 1.4, z: p.z,
-      district: d.id, card, cooldown: 2.2 + this.rnd() * 2.5,
+      x: p.x, y: boss ? 4.6 : 3.0 + this.rnd() * 1.4, z: p.z,
+      district: d.id, card, cooldown: boss ? 4 : 2.2 + this.rnd() * 2.5,
       integrity: 1, yaw: 0, phase: this.rnd() * TAU,
       dying: 0, dead: false, scanned: false, born: 0, stagger: 0,
+      boss, shields: boss ? QTYPES.map((q) => q.key) : null,
     };
+    if (boss) G.onBossSpawn(drone);
     this.drones.push(drone);
     return drone;
   }
@@ -370,10 +384,14 @@ class Life {
   /* a student's contribution: chips integrity, staggers, and can finish it off */
   chipDrone(d, amount, byTier) {
     if (d.dead) return;
+    if (d.boss) amount *= 0.35;                 // a Peer Review is heavier going
     d.integrity -= amount;
     d.stagger = 0.7;
     d.cooldown = Math.max(d.cooldown, 1.6);
-    if (d.integrity <= 0) this.game.onDroneOverwhelmed(d, byTier);
+    if (d.integrity <= 0) {
+      if (d.boss) { d.integrity = 1; this.game.onBossShieldBroken(d, null, byTier); }
+      else this.game.onDroneOverwhelmed(d, byTier);
+    }
   }
 
   /* ---------- projectiles ---------- */
@@ -552,7 +570,7 @@ class Life {
       // drift toward the player but keep an uneasy distance
       const dx = cam.x - d.x, dz = cam.z - d.z;
       const dist = Math.hypot(dx, dz);
-      const want = dist > 16 ? 1 : dist < 9 ? -0.7 : 0;
+      const want = dist > (d.boss ? 22 : 16) ? 1 : dist < (d.boss ? 12 : 9) ? -0.7 : 0;
       if (want) {
         const sp = 3.4 * want;
         const nx = d.x + (dx / dist) * sp * dt, nz = d.z + (dz / dist) * sp * dt;
@@ -564,12 +582,17 @@ class Life {
       if (d.hover) {
         const g = mtnHeight(d.x, d.z) + 8.5;
         d.y += (g - d.y) * (1 - Math.exp(-2.4 * dt));
-      } else d.y = clamp(d.y, 2.3, 5.2);
+      } else d.y = clamp(d.y, d.boss ? 4.0 : 2.3, d.boss ? 6.5 : 5.2);
       d.yaw = Math.atan2(dx, dz);
 
       d.cooldown -= dt;
       if (d.cooldown <= 0 && dist < 34) {
-        d.cooldown = 6.5 + this.rnd() * 5.0;
+        d.cooldown = d.boss ? 5.0 + this.rnd() * 3.0 : 6.5 + this.rnd() * 5.0;
+        if (d.boss && d.shields && d.shields.length) {
+          // its claims are always ones the next shield's question dismantles
+          const pool = MISINFO.filter((m) => m.weakness === d.shields[0]);
+          if (pool.length) d.card = pool[(this.rnd() * pool.length) | 0];
+        }
         // Never aim at a player who is still processing the last claim, and never
         // let two claims be in the air at you at once — reading time is protected.
         const grace = t < (G.graceUntil || 0);
@@ -666,7 +689,19 @@ class Life {
       const tint = s.confused > 0
         ? [1.40, 0.60, 1.05]
         : [1 + t * 0.10, 1 + t * 0.13, 1 + t * 0.16];
-      R.drawMesh(s.mesh, this.model, { tint });
+      R.drawMesh(s.mesh.body, this.model, { tint });
+      // limbs: legs and arms swing in opposition while walking; riders crouch with arms out
+      const ride = this.mode === 'ride';
+      const sw = ride ? 0 : (s.state === 'walk' ? Math.sin(s.bob) * 0.62 : Math.sin(time * 1.1 + s.phase) * 0.04);
+      const limbM = this.limbM || (this.limbM = M4.create());
+      const limb = (mesh, py, rx, rz) => {
+        M4.mul(limbM, this.model, xform([0, py, 0], [rx, 0, rz], [1, 1, 1]));
+        R.drawMesh(mesh, limbM, { tint });
+      };
+      limb(s.mesh.legL, s.mesh.hipY, ride ? 0.50 : sw, 0);
+      limb(s.mesh.legR, s.mesh.hipY, ride ? 0.50 : -sw, 0);
+      limb(s.mesh.armL, s.mesh.shY, ride ? -0.35 : -sw * 0.8, ride ? 0.85 : 0);
+      limb(s.mesh.armR, s.mesh.shY, ride ? -0.35 : sw * 0.8, ride ? -0.85 : 0);
 
       // worn marks of education — the whole win condition has to be readable
       if (t >= 2) {
@@ -690,9 +725,21 @@ class Life {
     for (const d of this.drones) {
       const k = d.dying > 0 ? Math.max(0.02, d.dying / 0.5) : 1;
       const spin = d.dying > 0 ? (1 - k) * 6 : 0;
-      M4.trs(this.model, d.x, d.y, d.z, d.yaw + spin, k, k, k);
+      const sc = k * (d.boss ? 1.9 : 1);
+      M4.trs(this.model, d.x, d.y, d.z, d.yaw + spin, sc, sc, sc);
       const flick = 0.9 + 0.35 * Math.sin(time * 21 + d.phase) * Math.sin(time * 7.3);
       R.drawMesh(this.droneMesh, this.model, { tint: [flick, flick * 0.9, flick] });
+      if (d.boss && !d.dead && d.shields) {
+        // the remaining shields orbit it; the next one to fall burns brightest
+        const ringM = this.ringM || (this.ringM = M4.create());
+        d.shields.forEach((key, i) => {
+          const qi = QTYPES.findIndex((q) => q.key === key), col = QCOLOURS[qi];
+          const r = 3.1 + i * 0.45, bright = i === 0 ? 1.7 + 0.6 * Math.sin(time * 6) : 0.55;
+          M4.trs(this.model, d.x, d.y, d.z, time * (0.5 + i * 0.13) + i * 1.3, 1, 1, 1);
+          M4.mul(ringM, this.model, xform([0, 0, 0], [0.55 + i * 0.28, 0, 0.2 * i], [r, r, r]));
+          R.drawMesh(this.shieldRing, ringM, { tint: [col[0] * bright, col[1] * bright, col[2] * bright] });
+        });
+      }
     }
   }
 

@@ -7,10 +7,10 @@
 function xform(t = [0,0,0], r = [0,0,0], s = [1,1,1]) {
   const [rx, ry, rz] = r;
   const cx=Math.cos(rx), sx=Math.sin(rx), cy=Math.cos(ry), sy=Math.sin(ry), cz=Math.cos(rz), sz=Math.sin(rz);
-  // R = Ry * Rx * Rz
-  const m00 =  cy*cz + sy*sx*sz, m01 =  cx*sz, m02 = -sy*cz + cy*sx*sz;
-  const m10 = -cy*sz + sy*sx*cz, m11 =  cx*cz, m12 =  sy*sz + cy*sx*cz;
-  const m20 =  sy*cx,            m21 = -sx,    m22 =  cy*cx;
+  // R = Ry * Rx * Rz, right-handed: a yaw of atan2(dx, dz) points local +z along (dx, dz)
+  const m00 =  cy*cz + sy*sx*sz, m01 = -cy*sz + sy*sx*cz, m02 =  sy*cx;
+  const m10 =  cx*sz,            m11 =  cx*cz,            m12 = -sx;
+  const m20 = -sy*cz + cy*sx*sz, m21 =  sy*sz + cy*sx*cz, m22 =  cy*cx;
   return new Float32Array([
     m00*s[0], m10*s[0], m20*s[0], 0,
     m01*s[1], m11*s[1], m21*s[1], 0,
@@ -23,7 +23,7 @@ class Builder {
   constructor() { this.v = []; this.i = []; this.n = 0; }
 
   /* add a primitive, baking the transform into world space */
-  add(prim, m, color, glow = 0) {
+  add(prim, m, color, glow = 0, rough = 0.62, metal = 0.0) {
     const { pos, nrm, idx } = prim;
     const base = this.n;
     // normal matrix = inverse-transpose 3x3; for our uniform-ish scales the
@@ -42,7 +42,7 @@ class Builder {
       let ny = nm[1]*a + nm[4]*b + nm[7]*c;
       let nz = nm[2]*a + nm[5]*b + nm[8]*c;
       const L = Math.hypot(nx, ny, nz) || 1;
-      this.v.push(nx/L, ny/L, nz/L, color[0], color[1], color[2], glow);
+      this.v.push(nx/L, ny/L, nz/L, color[0], color[1], color[2], glow, rough, metal);
     }
     for (let k = 0; k < idx.length; k++) this.i.push(base + idx[k]);
     this.n += pos.length / 3;
@@ -219,7 +219,7 @@ function pGround(n = 1) {
 }
 
 /* thin line-segment as a box, from p0 to p1 — girders, cables, lattice edges */
-function strut(b, p0, p1, thick, color, glow = 0) {
+function strut(b, p0, p1, thick, color, glow = 0, rough = 0.5, metal = 0.6) {
   const dx = p1[0]-p0[0], dy = p1[1]-p0[1], dz = p1[2]-p0[2];
   const len = Math.hypot(dx, dy, dz);
   if (len < 1e-5) return;
@@ -230,7 +230,7 @@ function strut(b, p0, p1, thick, color, glow = 0) {
     [pitch, yaw, 0],
     [thick, len, thick],
   );
-  b.add(BOX, m, color, glow);
+  b.add(BOX, m, color, glow, rough, metal);
 }
 
 /* shared primitive instances — built once */

@@ -70,6 +70,12 @@ try {
   students = { taught: ['Huh — say that again?'], confused: ['I saw something about this…'] };
 }
 
+/* marginalia (one collectible note per scientist) and challenges (the
+   role-reversal question each scientist asks back) */
+let marginalia, challenges, EXTRAS_STUBBED = false;
+try { marginalia = data('marginalia.json'); } catch (e) { EXTRAS_STUBBED = true; marginalia = []; }
+try { challenges = data('challenges.json'); } catch (e) { EXTRAS_STUBBED = true; challenges = {}; }
+
 /* ---------- validation ---------- */
 const KEYS = ['question', 'method', 'evidence', 'impact', 'doubt'];
 const problems = [];
@@ -135,6 +141,31 @@ if (!STUBBED) {
   for (const k of QKEYS) if (!byW[k]) problems.push(`misinfo: nothing is vulnerable to "${k}"`);
 }
 if (!Array.isArray(students.taught) || !students.taught.length) problems.push('students: no taught lines');
+
+const VALID_DISTRICTS = new Set([...DISTRICT_FILES.map(([d]) => d), 'summit']);
+const margIds = new Set();
+for (const [i, m] of marginalia.entries()) {
+  for (const f of ['id', 'owner', 'district', 'title', 'object', 'text', 'look']) {
+    if (!m[f]) problems.push(`marginalia ${i}: missing "${f}"`);
+  }
+  if (margIds.has(m.id)) problems.push(`marginalia ${i}: duplicate id "${m.id}"`);
+  margIds.add(m.id);
+  if (!ids.has(m.owner)) problems.push(`marginalia ${i}: unknown owner "${m.owner}"`);
+  if (!VALID_DISTRICTS.has(m.district)) problems.push(`marginalia ${i}: bad district "${m.district}"`);
+  const owner = roster.find((p) => p.id === m.owner);
+  if (owner && owner.district !== m.district) problems.push(`marginalia ${i}: ${m.owner} is not in ${m.district}`);
+}
+if (!EXTRAS_STUBBED) {
+  for (const p of roster) {
+    if (!marginalia.some((m) => m.owner === p.id)) problems.push(`marginalia: nothing for ${p.id}`);
+    const ch = challenges[p.id];
+    if (!ch) { problems.push(`challenges: nothing for ${p.id}`); continue; }
+    if (!ch.lead || !ch.prompt) problems.push(`challenge ${p.id}: missing lead/prompt`);
+    if (!Array.isArray(ch.options) || ch.options.length !== 4) problems.push(`challenge ${p.id}: needs 4 options`);
+    if (!(ch.correct >= 0 && ch.correct <= 3)) problems.push(`challenge ${p.id}: bad correct index`);
+    if (Array.isArray(ch.why) && ch.why.length !== 4) problems.push(`challenge ${p.id}: needs 4 explanations`);
+  }
+}
 if (!Array.isArray(students.confused) || !students.confused.length) problems.push('students: no confused lines');
 
 if (problems.length) {
@@ -145,7 +176,7 @@ if (problems.length) {
 }
 
 /* ---------- assemble ---------- */
-const SCRIPTS = ['core.js', 'geom.js', 'render.js', 'world.js', 'actors.js', 'portrait.js', 'campus.js', 'mountain.js', 'life.js', 'hud.js', 'game.js'];
+const SCRIPTS = ['core.js', 'geom.js', 'render.js', 'world.js', 'actors.js', 'portrait.js', 'campus.js', 'mountain.js', 'fx.js', 'life.js', 'hud.js', 'game.js'];
 
 const dataBlock = `/* content data — see the on-screen notice: all dialogue is written for this game */
 const ROSTER = ${JSON.stringify(roster)};
@@ -153,6 +184,8 @@ const CONNECTIONS = ${JSON.stringify(connections)};
 const VAULTS = ${JSON.stringify(vaults)};
 const MISINFO = ${JSON.stringify(misinfo)};
 const STUDENT_LINES = ${JSON.stringify(students)};
+const MARGINALIA = ${JSON.stringify(marginalia)};
+const CHALLENGES = ${JSON.stringify(challenges)};
 `;
 
 const js = [dataBlock, ...SCRIPTS.map((f) => `\n/* ==== ${f} ==== */\n` + src(f))].join('\n');
@@ -184,6 +217,9 @@ writeFileSync(join(here, 'dist/.nojekyll'), '');
 if (STUBBED) {
   console.warn('\n  ⚠  connections.json / vaults.json missing — built with STUBS. Do not ship.\n');
 }
+if (EXTRAS_STUBBED) {
+  console.warn('\n  ⚠  marginalia.json / challenges.json missing — built without them.\n');
+}
 if (SUMMIT_STUBBED) {
   console.warn('\n  ⚠  summit.json missing — level 2 professors are STUBS. Do not ship.\n');
 }
@@ -193,4 +229,4 @@ console.log(`  built  dist/inquiry.html   ${kb(standalone)}`);
 console.log(`  built  dist/artifact.html  ${kb(inner)}`);
 console.log(`  ${roster.length} scientists · ${roster.length * 5} answers · ${connections.length} connections · ` +
   `${Object.values(vaults).reduce((n, v) => n + v.questions.length, 0)} vault questions · ` +
-  `${misinfo.length} misinformation cards`);
+  `${misinfo.length} misinformation cards · ${marginalia.length} marginalia · ${Object.keys(challenges).length} challenges`);
