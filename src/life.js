@@ -24,7 +24,9 @@ const TIERS = [
   { at: 4, name: 'Graduate', aura: 1.00, fire: 3.0,  chip: 0.30 },
 ];
 const tierOf = (taught) => (taught >= 4 ? 3 : taught >= 2 ? 2 : taught >= 1 ? 1 : 0);
-const DRONES_PER_DISTRICT = 3;
+const DRONES_PER_DISTRICT = 5;   // per department; the fifth is its Peer Review
+const FEED_MAX = 14;             // drones alive across the campus at once
+const HUNTERS_MAX = 3;           // how many break off to chase an armed player
 const SUMMIT_DRONES = 5;
 
 /* ---------- meshes ---------- */
@@ -399,6 +401,284 @@ class Life {
     return drone;
   }
 
+  /* ---------- the summit: drones come at you down the run (unchanged) ---------- */
+  updateRideDrones(dt, t) {
+    const G = this.game, cam = G.cam;
+    /* Drones are in the world from the first minute. Until you can answer one
+       they ignore you and work on the students, which is both the honest version
+       of the metaphor and the reason to go and ask somebody something. */
+    const armed = G.unlockedTypes().length > 0;
+    this.spawnTimer -= dt;
+    if (this.spawnTimer <= 0) {
+      this.spawnTimer = (armed ? 9 : 14) + this.rnd() * 9;
+      const born = this.spawnDrone();
+      if (born && !G.feedIntroduced) {
+        G.feedIntroduced = true;
+        if (armed) {
+          HUD.banner('THE FEED HAS FOUND YOU',
+            'A drone is circling. Aim at it to read its technique.', '#ff3fa8');
+        } else {
+          HUD.banner('THE FEED IS ALREADY HERE',
+            'It is working on the students, not on you — you have nothing to answer it with yet. Go and ask a scientist a question.', '#ff3fa8');
+          HUD.log('<b>FEED DRONE</b> — it is pushing claims at the students. Interview someone and that question becomes your counter.');
+        }
+        Sfx.deny();
+      }
+    }
+    if (armed && !G.feedNoticedYou && this.drones.some((d) => !d.dead)) {
+      G.feedNoticedYou = true;
+      if (G.feedIntroduced) {
+        HUD.banner('THE FEED HAS NOTICED YOU',
+          'Now it aims at you as well. A claim that reaches you stops the world until you answer it.', '#ff3fa8');
+      }
+    }
+
+    for (const d of this.drones) {
+      d.born += dt;
+      if (d.dead) { d.dying -= dt; continue; }
+      if (d.stagger > 0) { d.stagger -= dt; }
+      // leash: a drone the player has walked away from gives up its slot, so the
+      // global cap can never deadlock a district that still owes you kills
+      const far = Math.hypot(cam.x - d.x, cam.z - d.z);
+      d.away = far > (armed ? 95 : 150) ? (d.away || 0) + dt : 0;
+      if (d.away > 20) { d.despawn = true; continue; }
+      // drift toward the player but keep an uneasy distance
+      let ax = cam.x, az = cam.z;
+      if (!armed) {
+        // it has no interest in you yet: it goes where the crowd is
+        let bs = null, bd = 1e9;
+        for (const s of this.students) {
+          const sd = Math.hypot(s.x - d.x, s.z - d.z);
+          if (sd < bd) { bd = sd; bs = s; }
+        }
+        if (bs && bd > 12) { ax = bs.x; az = bs.z; }
+      }
+      const dx = ax - d.x, dz = az - d.z;
+      const dist = Math.hypot(dx, dz);
+      const want = dist > (d.boss ? 22 : 16) ? 1 : dist < (d.boss ? 12 : 9) ? -0.7 : 0;
+      if (want) {
+        const sp = 3.4 * want;
+        const nx = d.x + (dx / dist) * sp * dt, nz = d.z + (dz / dist) * sp * dt;
+        d.x = nx; d.z = nz;                       // drones fly, so no walkable test
+      }
+      d.x += Math.sin(t * 0.7 + d.phase) * 0.6 * dt;
+      d.z += Math.cos(t * 0.55 + d.phase) * 0.6 * dt;
+      d.y += Math.sin(t * 1.3 + d.phase) * 0.32 * dt;
+      if (d.hover) {
+        const g = mtnHeight(d.x, d.z) + 8.5;
+        d.y += (g - d.y) * (1 - Math.exp(-2.4 * dt));
+      } else { const gy = groundH(d.x, d.z); d.y = clamp(d.y, gy + (d.boss ? 4.0 : 2.3), gy + (d.boss ? 6.5 : 5.2)); }
+      d.yaw = Math.atan2(dx, dz);
+
+      d.cooldown -= dt;
+      if (d.cooldown <= 0 && (dist < 34 || !armed)) {
+        d.cooldown = d.boss ? 5.0 + this.rnd() * 3.0 : (armed ? 6.5 : 9.0) + this.rnd() * 5.0;
+        if (d.boss && d.shields && d.shields.length) {
+          // its claims are always ones the next shield's question dismantles
+          const pool = MISINFO.filter((m) => m.weakness === d.shields[0]);
+          if (pool.length) d.card = pool[(this.rnd() * pool.length) | 0];
+        }
+        // Never aim at a player who is still processing the last claim, and never
+        // let two claims be in the air at you at once — reading time is protected.
+        const grace = t < (G.graceUntil || 0);
+        const incoming = this.bolts.some((b) => b.kind === 'misinfo' && b.atPlayer);
+        let target = null;
+        if (!armed || grace || incoming || this.rnd() > 0.5) {
+          const near = this.students.filter((s) =>
+            Math.hypot(s.x - d.x, s.z - d.z) < (armed ? 26 : 46) && s.confused <= 0);
+          if (near.length) target = near[(this.rnd() * near.length) | 0];
+        }
+        if (target) this.fireMisinfo(d, target.x, (this.mode === 'ride' ? target.y : groundH(target.x, target.z)) + 1.3, target.z);
+        else if (armed && !grace && !incoming) this.fireMisinfo(d, cam.x, cam.y - 0.1, cam.z, true);
+        else d.cooldown = 2.5;
+      }
+    }
+    this.drones = this.drones.filter((d) => !d.despawn && !(d.dead && d.dying <= 0));
+  }
+
+  /* ---------- the campus: the feed is an occupying force ----------
+     Drones circle the Great Court and every department still owed, and come
+     back after you dismantle them until that department's feed is cleared.
+     Unarmed, you are beneath their notice and they work on the students; once
+     you can answer them, the nearest few break off and hunt you. */
+  feedRoosts() {
+    if (this._roosts) return this._roosts;
+    const out = [{ id: 'court', x: 0, z: 0, r0: 10, r1: 26, h0: 12, h1: 18, district: null }];
+    for (const d of DISTRICTS) {
+      const D = DEPT[d.id];
+      // circle over the forecourt, shifted away from the building so they never clip it
+      out.push({ id: d.id, x: d.cx + Math.sin(D.yaw) * 8, z: d.cz + Math.cos(D.yaw) * 8, r0: 8, r1: 16, h0: 10, h1: 16, district: d.id });
+    }
+    return (this._roosts = out);
+  }
+
+  roostWant(r, armed) {
+    const G = this.game;
+    if (r.district) {
+      if ((G.feedCleared[r.district] || 0) >= DRONES_PER_DISTRICT) return 0;
+      return armed ? 2 : 1;
+    }
+    return DISTRICTS.every((d) => G.secured[d.id]) ? 0 : (armed ? 3 : 2);
+  }
+
+  spawnAt(r, boss, arriving) {
+    const G = this.game;
+    const a = this.rnd() * TAU;
+    const far = arriving ? 45 + this.rnd() * 25 : 0;
+    const orbitR = lerp(r.r0, r.r1, this.rnd()), orbitH = lerp(r.h0, r.h1, this.rnd());
+    const x = r.x + Math.cos(a) * (arriving ? far : orbitR), z = r.z + Math.sin(a) * (arriving ? far : orbitR);
+    const card = MISINFO[(this.rnd() * MISINFO.length) | 0];
+    const drone = {
+      x, y: groundH(x, z) + (arriving ? 26 + this.rnd() * 8 : orbitH), z,
+      roost: r.id, district: r.district, orbitA: a, orbitR, orbitH, orbitDir: this.rnd() < 0.5 ? -1 : 1,
+      orbitSp: 0.14 + this.rnd() * 0.1, strafe: this.rnd() * TAU,
+      card, cooldown: 3 + this.rnd() * 7, integrity: 1, yaw: 0, phase: this.rnd() * TAU,
+      dying: 0, dead: false, scanned: false, born: 0, stagger: 0, state: 'patrol', vx: 0, vy: 0, vz: 0,
+      boss, shields: boss ? QTYPES.map((q) => q.key) : null,
+    };
+    if (boss) drone.orbitR = r.r0 + 2;
+    this.drones.push(drone);
+    if (boss) G.onBossSpawn(drone);
+    return drone;
+  }
+
+  /* fill every roost at once: the campus is already occupied when you arrive */
+  fillFeed() {
+    const armed = this.game.unlockedTypes().length > 0;
+    for (const r of this.feedRoosts()) {
+      const want = this.roostWant(r, armed);
+      let alive = this.drones.filter((d) => !d.dead && d.roost === r.id).length;
+      while (alive < want && this.drones.filter((d) => !d.dead).length < FEED_MAX) { this.spawnAt(r, false, false); alive++; }
+      r.cool = 0;
+    }
+    this.feedFilled = true;
+  }
+
+  updateFeed(dt, t) {
+    const G = this.game, cam = G.cam;
+    const armed = G.unlockedTypes().length > 0;
+    if (!this.feedFilled) this.fillFeed();
+
+    // ---- keep the population up: a roost that has lost a drone calls another in ----
+    this.feedT = (this.feedT || 0) - dt;
+    if (this.feedT <= 0) {
+      this.feedT = 0.5;
+      const aliveAll = this.drones.filter((d) => !d.dead).length;
+      for (const r of this.feedRoosts()) {
+        r.cool = (r.cool || 0) - 0.5;
+        const want = this.roostWant(r, armed);
+        const alive = this.drones.filter((d) => !d.dead && d.roost === r.id).length;
+        if (alive >= want || r.cool > 0 || aliveAll >= FEED_MAX) continue;
+        const needBoss = !!r.district && (G.feedCleared[r.district] || 0) >= DRONES_PER_DISTRICT - 1
+          && !(G.bossDone || {})[r.district] && !this.drones.some((d) => d.boss && !d.dead && d.district === r.district);
+        this.spawnAt(r, needBoss, true);
+        r.cool = 9 + this.rnd() * 8;
+        break;
+      }
+    }
+
+    // ---- first sight ----
+    const alive = this.drones.filter((d) => !d.dead);
+    let nearest = Infinity;
+    for (const d of alive) nearest = Math.min(nearest, Math.hypot(d.x - cam.x, d.z - cam.z));
+    G.feedNearest = nearest;
+    if (!G.feedIntroduced && nearest < 70) {
+      G.feedIntroduced = true;
+      if (armed) G.feedNoticedYou = true;          // one banner, not two
+      if (armed) {
+        HUD.banner('THE FEED IS HERE', 'Drones over every court and department. The nearest will come for you — aim at one to read its technique.', '#ff3fa8');
+      } else {
+        HUD.banner('THE FEED IS ALREADY HERE',
+          'Drones over every court and department, pushing claims at the students. You have nothing to answer them with yet — go and ask a scientist a question.', '#ff3fa8');
+        HUD.log('<b>FEED DRONES</b> — they circle the court and every department. Interview someone and that question becomes your counter.');
+      }
+      Sfx.deny();
+    }
+    if (armed && !G.feedNoticedYou && G.feedIntroduced) {
+      G.feedNoticedYou = true;
+      HUD.banner('THE FEED HAS NOTICED YOU',
+        'Now the nearest drones come for you. A claim that reaches you stops the world until you answer it.', '#ff3fa8');
+    }
+
+    // ---- who is hunting: the nearest few, if you are armed and close ----
+    const hunters = new Set();
+    if (armed && G.mode !== 'talk') {
+      alive.map((d) => ({ d, k: Math.hypot(d.x - cam.x, d.z - cam.z) }))
+        .filter((o) => o.k < (o.d.boss ? 70 : 52))
+        .sort((p, q) => p.k - q.k).slice(0, HUNTERS_MAX).forEach((o) => hunters.add(o.d));
+    }
+    G.feedHunters = hunters.size;
+    const grace = t < (G.graceUntil || 0);
+    const incoming = this.bolts.some((b) => b.kind === 'misinfo' && b.atPlayer);
+    const canShootPlayer = armed && !grace && !incoming && t - (G.feedShotT || -99) > 8.0;
+
+    for (const d of this.drones) {
+      d.born += dt;
+      if (d.dead) { d.dying -= dt; continue; }
+      if (d.stagger > 0) d.stagger -= dt;
+      const r = this.feedRoosts().find((x) => x.id === d.roost) || this.feedRoosts()[0];
+      let tx, ty, tz, speed;
+      d.state = hunters.has(d) ? 'hunt' : 'patrol';
+      if (d.state === 'hunt') {
+        // hold a harassing distance, drifting side to side, above head height
+        d.strafe += dt * 0.35;
+        const want = d.boss ? 21 : 15;
+        let ox = d.x - cam.x, oz = d.z - cam.z; const ol = Math.hypot(ox, oz) || 1; ox /= ol; oz /= ol;
+        const sa = Math.sin(d.strafe) * 0.7, cs = Math.cos(sa), sn = Math.sin(sa);
+        const rx = ox * cs - oz * sn, rz = ox * sn + oz * cs;
+        tx = cam.x + rx * want; tz = cam.z + rz * want; ty = (G.footY || 0) + (d.boss ? 7.5 : 5.2) + Math.sin(t * 1.1 + d.phase) * 0.8;
+        speed = 7;
+      } else {
+        d.orbitA += d.orbitSp * dt * d.orbitDir;
+        tx = r.x + Math.cos(d.orbitA) * d.orbitR; tz = r.z + Math.sin(d.orbitA) * d.orbitR;
+        ty = groundH(tx, tz) + d.orbitH + Math.sin(t * 0.9 + d.phase) * 0.9;
+        speed = d.born < 8 ? 8 : 4.5;
+      }
+      // never fly through a building: rise over anything below you
+      for (const o of G.colliders) {
+        if (!o.obb) continue;
+        const ex = tx - o.x, ez = tz - o.z;
+        if (Math.abs(ex) > o.hw + o.hd + 4 || Math.abs(ez) > o.hw + o.hd + 4) continue;
+        const c = Math.cos(o.yaw), s = Math.sin(o.yaw);
+        if (Math.abs(ex * c - ez * s) < o.hw + 3 && Math.abs(ex * s + ez * c) < o.hd + 3) ty = Math.max(ty, o.y0 + o.h + 2);
+      }
+      // steer with a little inertia
+      const dx = tx - d.x, dy = ty - d.y, dz = tz - d.z, L = Math.hypot(dx, dy, dz) || 1;
+      const sp = Math.min(speed, L * 1.2);
+      const k = 1 - Math.exp(-2.5 * dt);
+      d.vx += ((dx / L) * sp - d.vx) * k; d.vy += ((dy / L) * sp - d.vy) * k; d.vz += ((dz / L) * sp - d.vz) * k;
+      const stag = d.stagger > 0 ? 0.3 : 1;
+      d.x += d.vx * dt * stag; d.y += d.vy * dt * stag; d.z += d.vz * dt * stag;
+      d.y = Math.max(d.y, groundH(d.x, d.z) + 2.5);
+      // face the player when hunting, the way it is going otherwise
+      const face = d.state === 'hunt' ? Math.atan2(cam.x - d.x, cam.z - d.z) : Math.atan2(d.vx, d.vz);
+      let df = face - d.yaw; while (df > Math.PI) df -= TAU; while (df < -Math.PI) df += TAU;
+      d.yaw += df * Math.min(1, dt * 3);
+
+      // ---- fire ----
+      d.cooldown -= dt;
+      if (d.cooldown > 0) continue;
+      if (d.boss && d.shields && d.shields.length) {
+        const pool = MISINFO.filter((m) => m.weakness === d.shields[0]);
+        if (pool.length) d.card = pool[(this.rnd() * pool.length) | 0];
+      }
+      const pd = Math.hypot(cam.x - d.x, cam.z - d.z);
+      if (d.state === 'hunt' && canShootPlayer && pd < 40 && this.rnd() < 0.75) {
+        this.fireMisinfo(d, cam.x, cam.y - 0.1, cam.z, true);
+        G.feedShotT = t;
+        d.cooldown = (d.boss ? 4.5 : 6) + this.rnd() * 4;
+        continue;
+      }
+      const near = this.students.filter((s) => Math.hypot(s.x - d.x, s.z - d.z) < 34 && s.confused <= 0);
+      if (near.length) {
+        const s = near[(this.rnd() * near.length) | 0];
+        this.fireMisinfo(d, s.x, groundH(s.x, s.z) + 1.3, s.z);
+        d.cooldown = 7 + this.rnd() * 6;
+      } else d.cooldown = 2.5;
+    }
+    this.drones = this.drones.filter((d) => !(d.dead && d.dying <= 0));
+  }
+
   /* a student's contribution: chips integrity, staggers, and can finish it off */
   chipDrone(d, amount, byTier) {
     if (d.dead) return;
@@ -591,96 +871,8 @@ class Life {
       }
     }
 
-    /* Drones are in the world from the first minute. Until you can answer one
-       they ignore you and work on the students, which is both the honest version
-       of the metaphor and the reason to go and ask somebody something. */
-    const armed = G.unlockedTypes().length > 0;
-    this.spawnTimer -= dt;
-    if (this.spawnTimer <= 0) {
-      this.spawnTimer = (armed ? 9 : 14) + this.rnd() * 9;
-      const born = this.spawnDrone();
-      if (born && !G.feedIntroduced) {
-        G.feedIntroduced = true;
-        if (armed) {
-          HUD.banner('THE FEED HAS FOUND YOU',
-            'A drone is circling. Aim at it to read its technique.', '#ff3fa8');
-        } else {
-          HUD.banner('THE FEED IS ALREADY HERE',
-            'It is working on the students, not on you — you have nothing to answer it with yet. Go and ask a scientist a question.', '#ff3fa8');
-          HUD.log('<b>FEED DRONE</b> — it is pushing claims at the students. Interview someone and that question becomes your counter.');
-        }
-        Sfx.deny();
-      }
-    }
-    if (armed && !G.feedNoticedYou && this.drones.some((d) => !d.dead)) {
-      G.feedNoticedYou = true;
-      if (G.feedIntroduced) {
-        HUD.banner('THE FEED HAS NOTICED YOU',
-          'Now it aims at you as well. A claim that reaches you stops the world until you answer it.', '#ff3fa8');
-      }
-    }
-
-    for (const d of this.drones) {
-      d.born += dt;
-      if (d.dead) { d.dying -= dt; continue; }
-      if (d.stagger > 0) { d.stagger -= dt; }
-      // leash: a drone the player has walked away from gives up its slot, so the
-      // global cap can never deadlock a district that still owes you kills
-      const far = Math.hypot(cam.x - d.x, cam.z - d.z);
-      d.away = far > (armed ? 95 : 150) ? (d.away || 0) + dt : 0;
-      if (d.away > 20) { d.despawn = true; continue; }
-      // drift toward the player but keep an uneasy distance
-      let ax = cam.x, az = cam.z;
-      if (!armed) {
-        // it has no interest in you yet: it goes where the crowd is
-        let bs = null, bd = 1e9;
-        for (const s of this.students) {
-          const sd = Math.hypot(s.x - d.x, s.z - d.z);
-          if (sd < bd) { bd = sd; bs = s; }
-        }
-        if (bs && bd > 12) { ax = bs.x; az = bs.z; }
-      }
-      const dx = ax - d.x, dz = az - d.z;
-      const dist = Math.hypot(dx, dz);
-      const want = dist > (d.boss ? 22 : 16) ? 1 : dist < (d.boss ? 12 : 9) ? -0.7 : 0;
-      if (want) {
-        const sp = 3.4 * want;
-        const nx = d.x + (dx / dist) * sp * dt, nz = d.z + (dz / dist) * sp * dt;
-        d.x = nx; d.z = nz;                       // drones fly, so no walkable test
-      }
-      d.x += Math.sin(t * 0.7 + d.phase) * 0.6 * dt;
-      d.z += Math.cos(t * 0.55 + d.phase) * 0.6 * dt;
-      d.y += Math.sin(t * 1.3 + d.phase) * 0.32 * dt;
-      if (d.hover) {
-        const g = mtnHeight(d.x, d.z) + 8.5;
-        d.y += (g - d.y) * (1 - Math.exp(-2.4 * dt));
-      } else { const gy = groundH(d.x, d.z); d.y = clamp(d.y, gy + (d.boss ? 4.0 : 2.3), gy + (d.boss ? 6.5 : 5.2)); }
-      d.yaw = Math.atan2(dx, dz);
-
-      d.cooldown -= dt;
-      if (d.cooldown <= 0 && (dist < 34 || !armed)) {
-        d.cooldown = d.boss ? 5.0 + this.rnd() * 3.0 : (armed ? 6.5 : 9.0) + this.rnd() * 5.0;
-        if (d.boss && d.shields && d.shields.length) {
-          // its claims are always ones the next shield's question dismantles
-          const pool = MISINFO.filter((m) => m.weakness === d.shields[0]);
-          if (pool.length) d.card = pool[(this.rnd() * pool.length) | 0];
-        }
-        // Never aim at a player who is still processing the last claim, and never
-        // let two claims be in the air at you at once — reading time is protected.
-        const grace = t < (G.graceUntil || 0);
-        const incoming = this.bolts.some((b) => b.kind === 'misinfo' && b.atPlayer);
-        let target = null;
-        if (!armed || grace || incoming || this.rnd() > 0.5) {
-          const near = this.students.filter((s) =>
-            Math.hypot(s.x - d.x, s.z - d.z) < (armed ? 26 : 46) && s.confused <= 0);
-          if (near.length) target = near[(this.rnd() * near.length) | 0];
-        }
-        if (target) this.fireMisinfo(d, target.x, (this.mode === 'ride' ? target.y : groundH(target.x, target.z)) + 1.3, target.z);
-        else if (armed && !grace && !incoming) this.fireMisinfo(d, cam.x, cam.y - 0.1, cam.z, true);
-        else d.cooldown = 2.5;
-      }
-    }
-    this.drones = this.drones.filter((d) => !d.despawn && !(d.dead && d.dying <= 0));
+    if (this.mode === 'ride') this.updateRideDrones(dt, t);
+    else this.updateFeed(dt, t);
 
     /* projectiles */
     for (const b of this.bolts) {
@@ -790,7 +982,7 @@ class Life {
     for (const d of this.drones) {
       const k = d.dying > 0 ? Math.max(0.02, d.dying / 0.5) : 1;
       const spin = d.dying > 0 ? (1 - k) * 6 : 0;
-      const sc = k * (d.boss ? 2.4 : 1.35);
+      const sc = k * (d.boss ? 2.6 : 1.65);
       M4.trs(this.model, d.x, d.y, d.z, d.yaw + spin, sc, sc, sc);
       const flick = 0.9 + 0.35 * Math.sin(time * 21 + d.phase) * Math.sin(time * 7.3);
       R.drawMesh(this.droneMesh, this.model, { tint: [flick, flick * 0.9, flick] });
@@ -832,6 +1024,15 @@ class Life {
   }
 
   drawGlows(R, cam, time) {
+    // a pink ring of light under every drone, so the feed reads from across a lawn
+    const ringM = this.glowRingM || (this.glowRingM = M4.create());
+    for (const d of this.drones) {
+      if (d.dead) continue;
+      const pulse = 0.75 + 0.25 * Math.sin(time * 5 + d.phase);
+      const s = d.boss ? 5.2 : 3.4;
+      M4.trs(ringM, d.x, d.y - (d.boss ? 1.6 : 1.1), d.z, time * 0.8 + d.phase, s, 1, s);
+      R.drawMesh(this.marks.aura, ringM, { alpha: (d.state === 'hunt' ? 0.55 : 0.32) * pulse, tint: [1.0, 0.25, 0.66] });
+    }
     /* additive pass — bolts and the sparks over taught students */
     for (const b of this.bolts) {
       const yaw = Math.atan2(b.vx, b.vz);

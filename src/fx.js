@@ -94,6 +94,11 @@ const Ambience = {
     this.windG = ctx.createGain(); this.windG.gain.value = 0;
     src.connect(this.windF); this.windF.connect(this.windG); this.windG.connect(ctx.destination);
     src.start();
+    // the feed's rotors: two detuned saws through a band-pass, louder as a drone comes close
+    this.humG = ctx.createGain(); this.humG.gain.value = 0;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 1.2;
+    for (const f of [182, 187.5]) { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.connect(bp); o.start(); }
+    bp.connect(this.humG); this.humG.connect(ctx.destination);
   },
   chirp(f0, f1, dur, gain, delay = 0) {
     const ctx = Sfx.ctx, t = ctx.currentTime + delay;
@@ -113,6 +118,8 @@ const Ambience = {
     const speed = game.vehicle ? Math.min(1, Math.abs(game.vehicle.speed) / 12) : 0;
     this.windG.gain.value = (0.012 + 0.014 * gust + speed * 0.03) * outdoorsK;
     this.windF.frequency.value = 280 + gust * 380 + speed * 900;
+    const dn = game.level === 'colloquium' ? (game.feedNearest || Infinity) : Infinity;
+    this.humG.gain.value = dn < 60 ? 0.018 * Math.pow(1 - dn / 60, 1.6) : 0;
     if (game.level !== 'colloquium') return;
     // birdsong by day: short phrases of two or three rising notes
     this.birdT -= dt;

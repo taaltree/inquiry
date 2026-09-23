@@ -282,6 +282,7 @@ class Game {
       this.world = e.world; this.colliders = e.colliders;
       if (this.vehicle) this.dismount(true);
       this.life = this.lives.colloquium;
+      this.life.feedFilled = false;
       const sp = this.world.spawn || { x: 0, z: 30, yaw: 0 };
       this.cam.x = sp.x; this.cam.z = sp.z;
       this.footY = groundH(sp.x, sp.z); this.cam.y = this.footY + EYE;
@@ -349,7 +350,7 @@ class Game {
   save() {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
-        v: 1, progress: this.progress, conns: this.connectionsFound, vaults: this.vaultAnswers,
+        v: 2, progress: this.progress, conns: this.connectionsFound, vaults: this.vaultAnswers,
         taught: this.taught || 0, rescued: this.rescued || 0, debunked: this.debunked || 0,
         feed: this.feedCleared, secured: this.secured, found: this.found || {},
         challenged: this.challenged || {}, bossDone: this.bossDone || {},
@@ -363,7 +364,7 @@ class Game {
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return;
       const s = JSON.parse(raw);
-      if (s && s.v === 1) {
+      if (s && (s.v === 1 || s.v === 2)) {
         this.progress = s.progress || {};
         this.connectionsFound = s.conns || [];
         this.vaultAnswers = s.vaults || {};
@@ -376,6 +377,12 @@ class Game {
         this.challenged = s.challenged || {};
         this.bossDone = s.bossDone || {};
         this.citations = s.citations || 0;
+        if (s.v === 1) {
+          // saved in the old station: interviews, vaults, notes and endorsements carry over,
+          // but the campus's feed has never been fought, so nothing there starts cleared
+          this.feedCleared = {}; this.bossDone = {}; this.secured = {};
+          this.migratedSave = true;
+        }
       }
     } catch (e) { /* ignore corrupt saves */ }
   }
@@ -616,6 +623,11 @@ class Game {
     HUD.showSlots(true, [], this.selSlot, this.ammo());
     HUD.controlMode(this.look.locked ? 'lock' : 'drag');
     HUD.log('<b>ARRIVAL</b> — the Great Court. Twenty-four scientists are on campus today.');
+    if (this.migratedSave) {
+      this.migratedSave = false;
+      HUD.log('<b>WELCOME BACK</b> — your interviews came with you. The campus is new, and so is the feed occupying it.');
+      this.save();
+    }
     HUD.log('Your Codex carries five questions. All five, on everyone, is the goal.');
     Sfx.open();
     this.navTick = 99;
@@ -969,7 +981,7 @@ class Game {
     this.particles.burst(d.x, d.y, d.z, 90, { cols: [[1, 0.88, 0.55], [1, 1, 1], [0.62, 0.23, 1]],
       speed: 10, life: 1.2, size: 0.28, grav: -6, drag: 1.3, streak: true });
     this.debunked = (this.debunked || 0) + 1;
-    if (d.district) this.feedCleared[d.district] = (this.feedCleared[d.district] || 0) + 1;
+    { const cd = this.creditDistrict(d); if (cd) this.feedCleared[cd] = (this.feedCleared[cd] || 0) + 1; }
     this.noise = Math.max(0, (this.noise || 0) - 0.42);
     HUD.resolveClutter(d, d.card);
     HUD.log(`<b>CITED</b> — ${esc(person.name)} settles “${esc(d.card.technique)}”.`);
@@ -998,6 +1010,20 @@ class Game {
       this.refreshSecured();
     }
     return n;
+  }
+
+  /* which department a dismantled drone counts for: its own, or — for the
+     drones over the Great Court — the nearest one still owed */
+  creditDistrict(d) {
+    if (d.district) return d.district;
+    if (this.level === 'summit') return 'summit';
+    let best = null, bd = Infinity;
+    for (const k of DISTRICTS) {
+      if ((this.feedCleared[k.id] || 0) >= DRONES_PER_DISTRICT - 1) continue;   // leave the boss's slot to the boss
+      const dist = Math.hypot(k.cx - this.cam.x, k.cz - this.cam.z);
+      if (dist < bd) { bd = dist; best = k.id; }
+    }
+    return best;
   }
 
   /* ---------- Peer Review: the district's last drone ---------- */
@@ -1059,7 +1085,7 @@ class Game {
         speed: 9, life: 1.1, size: 0.26, grav: -7, drag: 1.4, streak: true });
       this.particles.burst(d.x, d.y, d.z, 28, { col: [1, 1, 1], speed: 2, life: 0.5, size: 0.9, grav: 0, drag: 3, alpha: 0.6 });
       this.debunked = (this.debunked || 0) + 1;
-      if (d.district) this.feedCleared[d.district] = (this.feedCleared[d.district] || 0) + 1;
+      { const cd = this.creditDistrict(d); if (cd) this.feedCleared[cd] = (this.feedCleared[cd] || 0) + 1; }
       this.noise = Math.max(0, (this.noise || 0) - 0.34);
       HUD.resolveClutter(d, d.card);
       HUD.techniqueCard(d.card);
@@ -1082,7 +1108,7 @@ class Game {
     if (d.dead) return;
     d.dying = 0.5; d.dead = true;
     this.debunked = (this.debunked || 0) + 1;
-    if (d.district) this.feedCleared[d.district] = (this.feedCleared[d.district] || 0) + 1;
+    { const cd = this.creditDistrict(d); if (cd) this.feedCleared[cd] = (this.feedCleared[cd] || 0) + 1; }
     this.noise = Math.max(0, (this.noise || 0) - 0.20);
     HUD.resolveClutter(d, d.card);
     HUD.techniqueCard(d.card, true);
@@ -1205,10 +1231,11 @@ class Game {
       }
     }
     const drones = this.life.drones.filter((dr) => !dr.dead)
-      .map((dr) => ({ dr, dist: Math.hypot(dr.x - c.x, dr.z - c.z) })).sort((a, b) => a.dist - b.dist).slice(0, 2);
+      .map((dr) => ({ dr, dist: Math.hypot(dr.x - c.x, dr.z - c.z) })).sort((a, b) => a.dist - b.dist)
+      .filter((o, i) => o.dr.state === 'hunt' || (i < 3 && o.dist < 90));
     for (const { dr } of drones) {
       if (dr.boss) add(dr.x, dr.y + 3.0, dr.z, 'PEER REVIEW', `next ${QTYPES.find((q) => q.key === dr.shields[0]).name}`, '#ff8fcb', 'boss', { minDist: 3 });
-      else add(dr.x, dr.y + 1.2, dr.z, 'FEED DRONE', dr.scanned ? 'weakness known' : '', '#ff5fb0', 'd:' + dr.phase, { minDist: 3 });
+      else add(dr.x, dr.y + 1.6, dr.z, dr.state === 'hunt' ? 'FEED · HUNTING YOU' : 'FEED DRONE', dr.scanned ? 'weakness known' : '', '#ff5fb0', 'd:' + dr.phase, { minDist: 3 });
     }
     HUD.waypoints(list);
     HUD.bossBar(this.life.drones.find((x) => x.boss && !x.dead) || null);
@@ -1241,7 +1268,7 @@ class Game {
       const d = it.drone;
       if (d && !d.dead) {
         d.dead = true; d.dying = 0.5;
-        if (d.district) this.feedCleared[d.district] = (this.feedCleared[d.district] || 0) + 1;
+        { const cd = this.creditDistrict(d); if (cd) this.feedCleared[cd] = (this.feedCleared[cd] || 0) + 1; }
       }
       this.noise = Math.max(0, (this.noise || 0) - 0.12);
       Sfx.complete();
@@ -2038,6 +2065,7 @@ class Game {
     this.updateView(dt);
     Ambience.update(this, dt);
     if (this.mode === 'play') this.updateNav(dt);
+    HUD.feedHeat(this.level === 'colloquium' ? (this.feedHunters || 0) : 0);
     this._radarT = (this._radarT || 0) + dt;
     if (this._radarT > 0.05 && this.mode !== 'title') { this._radarT = 0; HUD.drawRadarHUD(this); }
     HUD.tickHit();
@@ -2318,6 +2346,10 @@ class Game {
         pos: [t.x + (this.cam.x - t.x) * 0.42, (t.y || 0) + 2.5, t.z + (this.cam.z - t.z) * 0.42],
         col: [1.0, 0.96, 0.90], range: 8.5, intensity: 1.6,
       }]);
+    }
+    if (this.level === 'colloquium' && this.env && this.env.night > 0.15) {
+      const near = this.life.drones.filter((d) => !d.dead).sort((a, b) => Math.hypot(a.x - this.cam.x, a.z - this.cam.z) - Math.hypot(b.x - this.cam.x, b.z - this.cam.z)).slice(0, 4);
+      lightSet = lightSet.concat(near.map((d) => ({ pos: [d.x, d.y - 0.8, d.z], col: [1.0, 0.22, 0.62], range: 14, intensity: 0.9 })));
     }
     const c = this.view.yaw === undefined ? this.cam : this.view;
     if (!this.viewInit && !(this.camMode === 'third')) Object.assign(this.view, { x: this.cam.x, y: this.cam.y, z: this.cam.z, yaw: this.cam.yaw, pitch: this.cam.pitch, fov: this.cam.fov });

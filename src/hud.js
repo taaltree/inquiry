@@ -486,6 +486,16 @@ const HUD = {
     $('#bar-cite').style.setProperty('--v', `${((1 - clamp((g.citeCd || 0) / 9, 0, 1)) * 100).toFixed(0)}%`);
   },
 
+  /* how many feed drones are hunting you: a wanted meter, by the radar */
+  feedHeat(n) {
+    const el = $('#heat');
+    if (!el) return;
+    if (n === this._heat) return;
+    this._heat = n;
+    el.classList.toggle('on', n > 0);
+    el.innerHTML = `<span>FEED</span>${[0, 1, 2].map((i) => `<i class="${i < n ? 'hot' : ''}"></i>`).join('')}`;
+  },
+
   /* the place you have just walked into, GTA-style, bottom right */
   areaName(name, sub) {
     if (this._areaNow === name) return;

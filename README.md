@@ -105,6 +105,12 @@ crossing districts, opened by pairing two completed interviews at the atrium ter
 counter, so the drones ignore you and work on the students — which is the honest version of the
 metaphor and the reason to go and find a scientist. Ask one question and the feed notices you.
 
+**The feed occupies the campus.** Drones circle the Great Court and every department from the
+moment you arrive — seven before you can answer them, a dozen once you can. When you dismantle one,
+another flies in, until that department's feed is cleared: four drones and then its Peer Review.
+The nearest three break off to hunt you, a GTA-style heat meter by the radar shows how many, and at
+night they carry their own pink light.
+
 **The feed fights back.** Drifting Feed Drones fire manipulative claims at the player and at the
 student crowd. Each of the 20 cards is destroyed by exactly one question type — the one that
 structurally dismantles its technique (cherry-picking falls to EVIDENCE; fake expertise to METHOD;
@@ -146,7 +152,7 @@ SECURE THE FOUNDRY
   ✓ Interview the researchers   4/4
   ✓ Seal the Insight Vault      3/3
   ▢ Educate the students        2/4     (to Informed or better)
-  ▢ Clear the feed              1/3     (the third is a Peer Review)
+  ▢ Clear the feed              1/5     (the fifth is a Peer Review)
 ```
 
 All four secures the district. All five districts opens the **Convocation** at the atrium terminal —
