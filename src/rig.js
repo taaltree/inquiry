@@ -133,6 +133,7 @@ function buildCharacter(gl, look) {
   A(hb, SPHERE, [0, hy, 0.005 * s], [0, 0, 0], [0.19 * s, 0.235 * s, 0.215 * s], skinM(hb));
   A(hb, SPHERE_LO, [0, hy - 0.075 * s, 0.035 * s], [0, 0, 0], [0.15 * s, 0.1 * s, 0.14 * s], skinM(hb));      // jaw
   A(hb, BOX, [0, hy - 0.005 * s, 0.108 * s], [0.25, 0, 0], [0.032 * s, 0.06 * s, 0.035 * s], skinM(hb));      // nose
+  A(hb, BOX, [0, hy - 0.06 * s, 0.1 * s], [0, 0, 0], [0.045 * s, 0.009 * s, 0.01 * s], plain(skin.map((c) => c * 0.55), hb, 0.5));   // mouth
   for (const sx of [-1, 1]) {
     A(hb, SPHERE_LO, [sx * 0.098 * s, hy, 0], [0, 0, 0], [0.035 * s, 0.06 * s, 0.045 * s], skinM(hb));        // ears
     A(hb, SPHERE_LO, [sx * 0.042 * s, hy + 0.028 * s, 0.093 * s], [0, 0, 0], [0.028 * s, 0.018 * s, 0.012 * s], plain([0.05, 0.04, 0.035], hb, 0.3));   // eyes
@@ -144,10 +145,15 @@ function buildCharacter(gl, look) {
   }
   const hm = plain(hairC, hb, 0.75);
   const hairStyle = look.hair;
-  if (hairStyle !== 'bald') A(hb, SPHERE, [0, hy + 0.035 * s, -0.012 * s], [0, 0, 0], [0.205 * s, 0.205 * s, 0.225 * s], hm);
+  // a cap of hair that sits back from the forehead, with a little lift on top
+  if (hairStyle !== 'bald') {
+    A(hb, SPHERE, [0, hy + 0.058 * s, -0.03 * s], [-0.25, 0, 0], [0.2 * s, 0.17 * s, 0.215 * s], hm);
+    A(hb, SPHERE_LO, [0, hy + 0.1 * s, 0.0], [0, 0, 0], [0.16 * s, 0.07 * s, 0.17 * s], hm);
+    for (const sx of [-1, 1]) A(hb, BOX, [sx * 0.093 * s, hy + 0.02 * s, 0.02 * s], [0, 0, 0], [0.02 * s, 0.07 * s, 0.05 * s], hm);   // sideburns
+  }
   else A(hb, pTorus(0.25, 16, 5), [0, hy - 0.02 * s, -0.015 * s], [0.25, 0, 0], [0.2 * s, 0.2 * s, 0.21 * s], hm);
-  if (hairStyle === 'long') A(hb, pCyl(12, false, true, 0.5, 0.56), [0, hy - 0.1 * s, -0.045 * s], [0.12, 0, 0], [0.21 * s, 0.3 * s, 0.17 * s], hm);
-  if (hairStyle === 'bob') A(hb, pCyl(12, false, true, 0.5, 0.55), [0, hy - 0.03 * s, -0.02 * s], [0, 0, 0], [0.225 * s, 0.14 * s, 0.22 * s], hm);
+  if (hairStyle === 'long') A(hb, pCyl(12, false, true, 0.5, 0.58), [0, hy - 0.08 * s, -0.06 * s], [0.12, 0, 0], [0.215 * s, 0.34 * s, 0.15 * s], hm);
+  if (hairStyle === 'bob') A(hb, pCyl(12, false, true, 0.5, 0.56), [0, hy - 0.02 * s, -0.035 * s], [0, 0, 0], [0.225 * s, 0.15 * s, 0.19 * s], hm);
   if (hairStyle === 'bun') A(hb, SPHERE_LO, [0, hy + 0.09 * s, -0.12 * s], [0, 0, 0], [0.1 * s, 0.1 * s, 0.1 * s], hm);
   if (hairStyle === 'pony') A(hb, pCapsule(0.3, 8, 3), [0, hy - 0.04 * s, -0.14 * s], [0.4, 0, 0], [0.06 * s, 0.22 * s, 0.06 * s], hm);
   if (hairStyle === 'curly' || hairStyle === 'wild') for (let i = 0; i < 8; i++) {

@@ -4,7 +4,7 @@
    ============================================================ */
 
 const PM = {
-  iron:   mat(0, [0.05, 0.055, 0.06], { rough: 0.42, metal: 0.55 }),
+  iron:   mat(0, [0.018, 0.02, 0.022], { rough: 0.5, metal: 0.05 }),     // black-painted cast iron
   green:  mat(0, [0.06, 0.16, 0.10], { rough: 0.45, metal: 0.3 }),
   red:    mat(0, [0.62, 0.05, 0.04], { rough: 0.35, metal: 0.1 }),
   steel:  mat(0, [0.55, 0.57, 0.6], { rough: 0.3, metal: 0.9 }),

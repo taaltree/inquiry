@@ -72,3 +72,66 @@ class Particles {
 
   get list() { return this.items; }
 }
+
+
+/* ============================================================
+   Ambience — a quiet procedural soundscape: wind through the trees,
+   birdsong by day, crickets after dark, a freewheel ticking on a bike.
+   Everything is synthesised; nothing is loaded.
+   ============================================================ */
+const Ambience = {
+  started: false, t: 0, birdT: 2, crickT: 0,
+  start() {
+    if (this.started || !Sfx.ctx) return;
+    this.started = true;
+    const ctx = Sfx.ctx;
+    // wind: brown noise through a slowly wandering low-pass
+    const len = ctx.sampleRate * 4, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    this.windF = ctx.createBiquadFilter(); this.windF.type = 'lowpass'; this.windF.frequency.value = 420;
+    this.windG = ctx.createGain(); this.windG.gain.value = 0;
+    src.connect(this.windF); this.windF.connect(this.windG); this.windG.connect(ctx.destination);
+    src.start();
+  },
+  chirp(f0, f1, dur, gain, delay = 0) {
+    const ctx = Sfx.ctx, t = ctx.currentTime + delay;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + dur + 0.02);
+  },
+  update(game, dt) {
+    if (!Sfx.on || !Sfx.ctx || game.mode === 'title') return;
+    this.start();
+    if (!this.windG) return;
+    const night = game.env ? game.env.night || 0 : 0;
+    const outdoorsK = game.level === 'summit' ? 1.6 : 1;
+    this.t += dt;
+    const gust = 0.5 + 0.5 * Math.sin(this.t * 0.23) * Math.sin(this.t * 0.071 + 1);
+    const speed = game.vehicle ? Math.min(1, Math.abs(game.vehicle.speed) / 12) : 0;
+    this.windG.gain.value = (0.012 + 0.014 * gust + speed * 0.03) * outdoorsK;
+    this.windF.frequency.value = 280 + gust * 380 + speed * 900;
+    if (game.level !== 'colloquium') return;
+    // birdsong by day: short phrases of two or three rising notes
+    this.birdT -= dt;
+    if (night < 0.4 && this.birdT <= 0) {
+      this.birdT = 1.5 + Math.random() * 4;
+      const base = 2400 + Math.random() * 1800, n = 2 + (Math.random() * 3 | 0);
+      for (let i = 0; i < n; i++) this.chirp(base * (1 + i * 0.08), base * (1.25 + i * 0.1), 0.09 + Math.random() * 0.05, 0.006 + Math.random() * 0.006, i * 0.13);
+    }
+    // crickets after dark
+    this.crickT -= dt;
+    if (night > 0.5 && this.crickT <= 0) {
+      this.crickT = 0.35 + Math.random() * 0.6;
+      for (let i = 0; i < 3; i++) this.chirp(4300, 4200, 0.035, 0.004, i * 0.06);
+    }
+    // a freewheel ticking when you coast on a bike
+    const v = game.vehicle;
+    if (v && v.type === 'bike' && Math.abs(v.speed) > 1 && !(game.keys['w'] || game.keys['arrowup'])) {
+      this.tickT = (this.tickT || 0) - dt;
+      if (this.tickT <= 0) { this.tickT = 0.9 / Math.max(2, Math.abs(v.speed)); this.chirp(5200, 5000, 0.012, 0.004); }
+    }
+  },
+};

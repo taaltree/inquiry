@@ -222,6 +222,16 @@ class Game {
     this.traffic = new Traffic(gl);
     this.vehicle = null;
     this.lastLook = 0;
+    // a few birds wheeling over the court
+    this.birdMesh = (() => {
+      const b = new Builder(64);
+      const M = mat(0, [0.03, 0.03, 0.035], { rough: 0.8 });
+      b.add(BOX, xform([0, 0, 0], [0, 0, 0], [0.09, 0.07, 0.3]), M);
+      b.add(BOX, xform([-0.22, 0.02, 0.02], [0, 0, 0.25], [0.42, 0.015, 0.14]), M);
+      b.add(BOX, xform([0.22, 0.02, 0.02], [0, 0, -0.25], [0.42, 0.015, 0.14]), M);
+      return b.upload(gl);
+    })();
+    this.birds = Array.from({ length: 14 }, (_, i) => ({ a: (i / 14) * TAU, r: 30 + (i % 5) * 9, h: 34 + (i % 4) * 5, sp: 0.09 + (i % 3) * 0.02, ph: i * 1.7, cx: (i % 2 ? -20 : 25), cz: (i % 3 ? -10 : 30) }));
     this.aimHeld = false; this.aimTimer = 0;
 
     this.nav = new NavGraph(this.world);
@@ -1963,7 +1973,7 @@ class Game {
     }
     // ambient: dust motes on the station, snow on the mountain
     this._ambT = (this._ambT || 0) + dt;
-    const rate = this.level === 'summit' ? 0.012 : 0.05;
+    const rate = this.level === 'summit' ? 0.012 : 0.12;
     while (this._ambT > rate) {
       this._ambT -= rate;
       const a = Math.random() * TAU, r = 3 + Math.random() * 22;
@@ -1972,10 +1982,12 @@ class Game {
         P.emit({ x, y: c.y + 6 + Math.random() * 10, z,
           vx: (Math.random() - 0.5) * 0.8 - 0.6, vy: -1.6 - Math.random() * 1.2, vz: (Math.random() - 0.5) * 0.8,
           life: 6, size: 0.09 + Math.random() * 0.08, r: 1, g: 1, b: 1, a0: 0.85, grav: 0, drag: 0.1, shrink: false });
-      } else {
-        P.emit({ x: c.x + Math.cos(a) * r, y: c.y - 1 + Math.random() * 5, z: c.z + Math.sin(a) * r,
-          vx: (Math.random() - 0.5) * 0.25, vy: 0.08 + Math.random() * 0.15, vz: (Math.random() - 0.5) * 0.25,
-          life: 7, size: 0.05 + Math.random() * 0.05, r: 0.75, g: 0.86, b: 1.0, a0: 0.55, grav: 0, drag: 0, shrink: false });
+      } else if (this.env && this.env.night > 0.5 && Math.random() < 0.35) {
+        // fireflies over the lawns on a summer night
+        const x = c.x + Math.cos(a) * r, z = c.z + Math.sin(a) * r;
+        P.emit({ x, y: groundH(x, z) + 0.4 + Math.random() * 1.6, z,
+          vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.2, vz: (Math.random() - 0.5) * 0.4,
+          life: 3 + Math.random() * 3, size: 0.06, r: 0.9, g: 1.0, b: 0.45, a0: 0.9, grav: 0, drag: 0.2, shrink: false });
       }
     }
     P.update(dt);
@@ -2024,6 +2036,7 @@ class Game {
     }
     this.applyCamAnim(dt);
     this.updateView(dt);
+    Ambience.update(this, dt);
     if (this.mode === 'play') this.updateNav(dt);
     this._radarT = (this._radarT || 0) + dt;
     if (this._radarT > 0.05 && this.mode !== 'title') { this._radarT = 0; HUD.drawRadarHUD(this); }
@@ -2241,6 +2254,16 @@ class Game {
       this.traffic.draw(R, c);
     }
     this.drawAvatar(R);
+    if (this.level === 'colloquium' && !R.shadowPass && (this.env ? this.env.night : 0) < 0.6) {
+      const bm = this.tmpM2;
+      for (const b of this.birds) {
+        const a = b.a + this.time * b.sp;
+        const x = b.cx + Math.cos(a) * b.r, z = b.cz + Math.sin(a) * b.r, y = b.h + Math.sin(this.time * 0.7 + b.ph) * 2;
+        const flap = Math.sin(this.time * 9 + b.ph) * 0.7;
+        xformTo(bm, x, y, z, 0, a + Math.PI, flap * 0.3);
+        R.drawMesh(this.birdMesh, bm, { noShadow: true });
+      }
+    }
     if (this.world.foliage) {
       R.useLeaf(true);
       if (!R.shadowPass) gl.disable(gl.CULL_FACE);

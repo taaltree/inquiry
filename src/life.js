@@ -12,7 +12,8 @@
 const STUDENT_COUNT = 26;
 const SUMMIT_STUDENTS = 14;
 const DRONE_MAX = 4;
-const DRONE_MAX_UNARMED = 2;    // before you can answer back, the feed only works the crowd
+const DRONE_MAX_UNARMED = 2;
+const WALKERS = 18;    // before you can answer back, the feed only works the crowd
 
 /* Education is the win condition, so it has to be legible at a glance.
    Each tier adds an unmistakable silhouette cue and more agency in a fight. */
@@ -228,6 +229,12 @@ class Life {
       for (let i = 0; i < STUDENT_COUNT; i++) {
         const home = i < DISTRICTS.length * 4 ? DISTRICTS[i % DISTRICTS.length] : null;
         this.students.push(this.spawnStudent(i, home));
+      }
+      // passers-by: they walk the campus paths between buildings, like pedestrians on a street
+      for (let i = 0; i < WALKERS; i++) {
+        const s = this.spawnStudent(STUDENT_COUNT + i, null);
+        s.walker = true; s.path = null; s.pi = 0; s.speed = 1.25 + this.rnd() * 0.45;
+        this.students.push(s);
       }
     }
 
@@ -494,6 +501,31 @@ class Life {
         continue;
       }
 
+      if (s.walker && G.nav) {
+        // follow a sat-nav route to somewhere else on campus, then choose another
+        if (!s.path || s.pi >= s.path.length) {
+          if (!s.path) { const n0 = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0]; s.x = n0.x; s.z = n0.z; }
+          const n = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0];
+          s.path = G.nav.route(s.x, s.z, n.x, n.z); s.pi = 1;
+          // stay on the paths, a little to one side like real people
+          s.side = (this.rnd() - 0.5) * 1.6;
+        }
+        const [tx0, tz0] = s.path[Math.min(s.pi, s.path.length - 1)];
+        const dx = tx0 - s.x, dz = tz0 - s.z, d = Math.hypot(dx, dz);
+        if (d < 1.2) s.pi++;
+        else {
+          const sp = s.speed * (s.confused > 0 ? 0.55 : 1);
+          const nx = dx / d, nz = dz / d;
+          s.x += (nx - nz * s.side * 0.05) * sp * dt; s.z += (nz + nx * s.side * 0.05) * sp * dt;
+          s.bob += dt * sp * 3.4;
+          const want = Math.atan2(dx, dz);
+          let diff = want - s.yaw; while (diff > Math.PI) diff -= TAU; while (diff < -Math.PI) diff += TAU;
+          s.yaw += diff * Math.min(1, dt * 5);
+        }
+        s.state = 'walk';
+        if (s.confused > 0) s.confused -= dt;
+        continue;
+      }
       if (s.state === 'idle' && s.timer <= 0) {
         s.sit = false;
         const p = this.randomPoint(s.hx, s.hz, s.roam);

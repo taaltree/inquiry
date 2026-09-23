@@ -287,8 +287,8 @@ function buildWorld(gl, roster) {
     turrets: true, turretR: 1.5, crenel: true, openings: 2, winW: 1.6, winH: 2.4,
     arch: { side: 'front', at: 0.5, w: 5.2, h: 6.8 } }, rnd);
   addObbs(gate.colliders);
-  statue(W.at(0, 40), 0, 41.2, 0, 0);
-  obbs.push({ x: 0, z: 41.2, hw: 0.8, hd: 0.8, yaw: 0, y0: 0, h: 5 });
+  statue(W.at(-11, 38), -11, 38.2, 0, 0.3);
+  obbs.push({ x: -11, z: 38.2, hw: 0.8, hd: 0.8, yaw: 0.3, y0: 0, h: 5 });
   map.labels.push({ x: 0, z: 55, text: 'GREAT GATE', size: 0.7 });
 
   // east: the chapel

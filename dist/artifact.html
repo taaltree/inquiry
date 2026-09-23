@@ -4799,7 +4799,7 @@ function hedge(b, pts, h, w, y0f) {
    ============================================================ */
 
 const PM = {
-  iron:   mat(0, [0.05, 0.055, 0.06], { rough: 0.42, metal: 0.55 }),
+  iron:   mat(0, [0.018, 0.02, 0.022], { rough: 0.5, metal: 0.05 }),     // black-painted cast iron
   green:  mat(0, [0.06, 0.16, 0.10], { rough: 0.45, metal: 0.3 }),
   red:    mat(0, [0.62, 0.05, 0.04], { rough: 0.35, metal: 0.1 }),
   steel:  mat(0, [0.55, 0.57, 0.6], { rough: 0.3, metal: 0.9 }),
@@ -5327,8 +5327,8 @@ function buildWorld(gl, roster) {
     turrets: true, turretR: 1.5, crenel: true, openings: 2, winW: 1.6, winH: 2.4,
     arch: { side: 'front', at: 0.5, w: 5.2, h: 6.8 } }, rnd);
   addObbs(gate.colliders);
-  statue(W.at(0, 40), 0, 41.2, 0, 0);
-  obbs.push({ x: 0, z: 41.2, hw: 0.8, hd: 0.8, yaw: 0, y0: 0, h: 5 });
+  statue(W.at(-11, 38), -11, 38.2, 0, 0.3);
+  obbs.push({ x: -11, z: 38.2, hw: 0.8, hd: 0.8, yaw: 0.3, y0: 0, h: 5 });
   map.labels.push({ x: 0, z: 55, text: 'GREAT GATE', size: 0.7 });
 
   // east: the chapel
@@ -5970,6 +5970,7 @@ function buildCharacter(gl, look) {
   A(hb, SPHERE, [0, hy, 0.005 * s], [0, 0, 0], [0.19 * s, 0.235 * s, 0.215 * s], skinM(hb));
   A(hb, SPHERE_LO, [0, hy - 0.075 * s, 0.035 * s], [0, 0, 0], [0.15 * s, 0.1 * s, 0.14 * s], skinM(hb));      // jaw
   A(hb, BOX, [0, hy - 0.005 * s, 0.108 * s], [0.25, 0, 0], [0.032 * s, 0.06 * s, 0.035 * s], skinM(hb));      // nose
+  A(hb, BOX, [0, hy - 0.06 * s, 0.1 * s], [0, 0, 0], [0.045 * s, 0.009 * s, 0.01 * s], plain(skin.map((c) => c * 0.55), hb, 0.5));   // mouth
   for (const sx of [-1, 1]) {
     A(hb, SPHERE_LO, [sx * 0.098 * s, hy, 0], [0, 0, 0], [0.035 * s, 0.06 * s, 0.045 * s], skinM(hb));        // ears
     A(hb, SPHERE_LO, [sx * 0.042 * s, hy + 0.028 * s, 0.093 * s], [0, 0, 0], [0.028 * s, 0.018 * s, 0.012 * s], plain([0.05, 0.04, 0.035], hb, 0.3));   // eyes
@@ -5981,10 +5982,15 @@ function buildCharacter(gl, look) {
   }
   const hm = plain(hairC, hb, 0.75);
   const hairStyle = look.hair;
-  if (hairStyle !== 'bald') A(hb, SPHERE, [0, hy + 0.035 * s, -0.012 * s], [0, 0, 0], [0.205 * s, 0.205 * s, 0.225 * s], hm);
+  // a cap of hair that sits back from the forehead, with a little lift on top
+  if (hairStyle !== 'bald') {
+    A(hb, SPHERE, [0, hy + 0.058 * s, -0.03 * s], [-0.25, 0, 0], [0.2 * s, 0.17 * s, 0.215 * s], hm);
+    A(hb, SPHERE_LO, [0, hy + 0.1 * s, 0.0], [0, 0, 0], [0.16 * s, 0.07 * s, 0.17 * s], hm);
+    for (const sx of [-1, 1]) A(hb, BOX, [sx * 0.093 * s, hy + 0.02 * s, 0.02 * s], [0, 0, 0], [0.02 * s, 0.07 * s, 0.05 * s], hm);   // sideburns
+  }
   else A(hb, pTorus(0.25, 16, 5), [0, hy - 0.02 * s, -0.015 * s], [0.25, 0, 0], [0.2 * s, 0.2 * s, 0.21 * s], hm);
-  if (hairStyle === 'long') A(hb, pCyl(12, false, true, 0.5, 0.56), [0, hy - 0.1 * s, -0.045 * s], [0.12, 0, 0], [0.21 * s, 0.3 * s, 0.17 * s], hm);
-  if (hairStyle === 'bob') A(hb, pCyl(12, false, true, 0.5, 0.55), [0, hy - 0.03 * s, -0.02 * s], [0, 0, 0], [0.225 * s, 0.14 * s, 0.22 * s], hm);
+  if (hairStyle === 'long') A(hb, pCyl(12, false, true, 0.5, 0.58), [0, hy - 0.08 * s, -0.06 * s], [0.12, 0, 0], [0.215 * s, 0.34 * s, 0.15 * s], hm);
+  if (hairStyle === 'bob') A(hb, pCyl(12, false, true, 0.5, 0.56), [0, hy - 0.02 * s, -0.035 * s], [0, 0, 0], [0.225 * s, 0.15 * s, 0.19 * s], hm);
   if (hairStyle === 'bun') A(hb, SPHERE_LO, [0, hy + 0.09 * s, -0.12 * s], [0, 0, 0], [0.1 * s, 0.1 * s, 0.1 * s], hm);
   if (hairStyle === 'pony') A(hb, pCapsule(0.3, 8, 3), [0, hy - 0.04 * s, -0.14 * s], [0.4, 0, 0], [0.06 * s, 0.22 * s, 0.06 * s], hm);
   if (hairStyle === 'curly' || hairStyle === 'wild') for (let i = 0; i < 8; i++) {
@@ -7704,6 +7710,69 @@ class Particles {
 }
 
 
+/* ============================================================
+   Ambience — a quiet procedural soundscape: wind through the trees,
+   birdsong by day, crickets after dark, a freewheel ticking on a bike.
+   Everything is synthesised; nothing is loaded.
+   ============================================================ */
+const Ambience = {
+  started: false, t: 0, birdT: 2, crickT: 0,
+  start() {
+    if (this.started || !Sfx.ctx) return;
+    this.started = true;
+    const ctx = Sfx.ctx;
+    // wind: brown noise through a slowly wandering low-pass
+    const len = ctx.sampleRate * 4, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    this.windF = ctx.createBiquadFilter(); this.windF.type = 'lowpass'; this.windF.frequency.value = 420;
+    this.windG = ctx.createGain(); this.windG.gain.value = 0;
+    src.connect(this.windF); this.windF.connect(this.windG); this.windG.connect(ctx.destination);
+    src.start();
+  },
+  chirp(f0, f1, dur, gain, delay = 0) {
+    const ctx = Sfx.ctx, t = ctx.currentTime + delay;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + dur + 0.02);
+  },
+  update(game, dt) {
+    if (!Sfx.on || !Sfx.ctx || game.mode === 'title') return;
+    this.start();
+    if (!this.windG) return;
+    const night = game.env ? game.env.night || 0 : 0;
+    const outdoorsK = game.level === 'summit' ? 1.6 : 1;
+    this.t += dt;
+    const gust = 0.5 + 0.5 * Math.sin(this.t * 0.23) * Math.sin(this.t * 0.071 + 1);
+    const speed = game.vehicle ? Math.min(1, Math.abs(game.vehicle.speed) / 12) : 0;
+    this.windG.gain.value = (0.012 + 0.014 * gust + speed * 0.03) * outdoorsK;
+    this.windF.frequency.value = 280 + gust * 380 + speed * 900;
+    if (game.level !== 'colloquium') return;
+    // birdsong by day: short phrases of two or three rising notes
+    this.birdT -= dt;
+    if (night < 0.4 && this.birdT <= 0) {
+      this.birdT = 1.5 + Math.random() * 4;
+      const base = 2400 + Math.random() * 1800, n = 2 + (Math.random() * 3 | 0);
+      for (let i = 0; i < n; i++) this.chirp(base * (1 + i * 0.08), base * (1.25 + i * 0.1), 0.09 + Math.random() * 0.05, 0.006 + Math.random() * 0.006, i * 0.13);
+    }
+    // crickets after dark
+    this.crickT -= dt;
+    if (night > 0.5 && this.crickT <= 0) {
+      this.crickT = 0.35 + Math.random() * 0.6;
+      for (let i = 0; i < 3; i++) this.chirp(4300, 4200, 0.035, 0.004, i * 0.06);
+    }
+    // a freewheel ticking when you coast on a bike
+    const v = game.vehicle;
+    if (v && v.type === 'bike' && Math.abs(v.speed) > 1 && !(game.keys['w'] || game.keys['arrowup'])) {
+      this.tickT = (this.tickT || 0) - dt;
+      if (this.tickT <= 0) { this.tickT = 0.9 / Math.max(2, Math.abs(v.speed)); this.chirp(5200, 5000, 0.012, 0.004); }
+    }
+  },
+};
+
+
 /* ==== vehicles.js ==== */
 /* ============================================================
    vehicles.js — things you can ride, and the traffic on the town roads.
@@ -8137,7 +8206,8 @@ function drawRadar(ctx, W, H, g, mapImg, route) {
 const STUDENT_COUNT = 26;
 const SUMMIT_STUDENTS = 14;
 const DRONE_MAX = 4;
-const DRONE_MAX_UNARMED = 2;    // before you can answer back, the feed only works the crowd
+const DRONE_MAX_UNARMED = 2;
+const WALKERS = 18;    // before you can answer back, the feed only works the crowd
 
 /* Education is the win condition, so it has to be legible at a glance.
    Each tier adds an unmistakable silhouette cue and more agency in a fight. */
@@ -8353,6 +8423,12 @@ class Life {
       for (let i = 0; i < STUDENT_COUNT; i++) {
         const home = i < DISTRICTS.length * 4 ? DISTRICTS[i % DISTRICTS.length] : null;
         this.students.push(this.spawnStudent(i, home));
+      }
+      // passers-by: they walk the campus paths between buildings, like pedestrians on a street
+      for (let i = 0; i < WALKERS; i++) {
+        const s = this.spawnStudent(STUDENT_COUNT + i, null);
+        s.walker = true; s.path = null; s.pi = 0; s.speed = 1.25 + this.rnd() * 0.45;
+        this.students.push(s);
       }
     }
 
@@ -8619,6 +8695,31 @@ class Life {
         continue;
       }
 
+      if (s.walker && G.nav) {
+        // follow a sat-nav route to somewhere else on campus, then choose another
+        if (!s.path || s.pi >= s.path.length) {
+          if (!s.path) { const n0 = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0]; s.x = n0.x; s.z = n0.z; }
+          const n = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0];
+          s.path = G.nav.route(s.x, s.z, n.x, n.z); s.pi = 1;
+          // stay on the paths, a little to one side like real people
+          s.side = (this.rnd() - 0.5) * 1.6;
+        }
+        const [tx0, tz0] = s.path[Math.min(s.pi, s.path.length - 1)];
+        const dx = tx0 - s.x, dz = tz0 - s.z, d = Math.hypot(dx, dz);
+        if (d < 1.2) s.pi++;
+        else {
+          const sp = s.speed * (s.confused > 0 ? 0.55 : 1);
+          const nx = dx / d, nz = dz / d;
+          s.x += (nx - nz * s.side * 0.05) * sp * dt; s.z += (nz + nx * s.side * 0.05) * sp * dt;
+          s.bob += dt * sp * 3.4;
+          const want = Math.atan2(dx, dz);
+          let diff = want - s.yaw; while (diff > Math.PI) diff -= TAU; while (diff < -Math.PI) diff += TAU;
+          s.yaw += diff * Math.min(1, dt * 5);
+        }
+        s.state = 'walk';
+        if (s.confused > 0) s.confused -= dt;
+        continue;
+      }
       if (s.state === 'idle' && s.timer <= 0) {
         s.sit = false;
         const p = this.randomPoint(s.hx, s.hz, s.roam);
@@ -10406,6 +10507,16 @@ class Game {
     this.traffic = new Traffic(gl);
     this.vehicle = null;
     this.lastLook = 0;
+    // a few birds wheeling over the court
+    this.birdMesh = (() => {
+      const b = new Builder(64);
+      const M = mat(0, [0.03, 0.03, 0.035], { rough: 0.8 });
+      b.add(BOX, xform([0, 0, 0], [0, 0, 0], [0.09, 0.07, 0.3]), M);
+      b.add(BOX, xform([-0.22, 0.02, 0.02], [0, 0, 0.25], [0.42, 0.015, 0.14]), M);
+      b.add(BOX, xform([0.22, 0.02, 0.02], [0, 0, -0.25], [0.42, 0.015, 0.14]), M);
+      return b.upload(gl);
+    })();
+    this.birds = Array.from({ length: 14 }, (_, i) => ({ a: (i / 14) * TAU, r: 30 + (i % 5) * 9, h: 34 + (i % 4) * 5, sp: 0.09 + (i % 3) * 0.02, ph: i * 1.7, cx: (i % 2 ? -20 : 25), cz: (i % 3 ? -10 : 30) }));
     this.aimHeld = false; this.aimTimer = 0;
 
     this.nav = new NavGraph(this.world);
@@ -12147,7 +12258,7 @@ class Game {
     }
     // ambient: dust motes on the station, snow on the mountain
     this._ambT = (this._ambT || 0) + dt;
-    const rate = this.level === 'summit' ? 0.012 : 0.05;
+    const rate = this.level === 'summit' ? 0.012 : 0.12;
     while (this._ambT > rate) {
       this._ambT -= rate;
       const a = Math.random() * TAU, r = 3 + Math.random() * 22;
@@ -12156,10 +12267,12 @@ class Game {
         P.emit({ x, y: c.y + 6 + Math.random() * 10, z,
           vx: (Math.random() - 0.5) * 0.8 - 0.6, vy: -1.6 - Math.random() * 1.2, vz: (Math.random() - 0.5) * 0.8,
           life: 6, size: 0.09 + Math.random() * 0.08, r: 1, g: 1, b: 1, a0: 0.85, grav: 0, drag: 0.1, shrink: false });
-      } else {
-        P.emit({ x: c.x + Math.cos(a) * r, y: c.y - 1 + Math.random() * 5, z: c.z + Math.sin(a) * r,
-          vx: (Math.random() - 0.5) * 0.25, vy: 0.08 + Math.random() * 0.15, vz: (Math.random() - 0.5) * 0.25,
-          life: 7, size: 0.05 + Math.random() * 0.05, r: 0.75, g: 0.86, b: 1.0, a0: 0.55, grav: 0, drag: 0, shrink: false });
+      } else if (this.env && this.env.night > 0.5 && Math.random() < 0.35) {
+        // fireflies over the lawns on a summer night
+        const x = c.x + Math.cos(a) * r, z = c.z + Math.sin(a) * r;
+        P.emit({ x, y: groundH(x, z) + 0.4 + Math.random() * 1.6, z,
+          vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.2, vz: (Math.random() - 0.5) * 0.4,
+          life: 3 + Math.random() * 3, size: 0.06, r: 0.9, g: 1.0, b: 0.45, a0: 0.9, grav: 0, drag: 0.2, shrink: false });
       }
     }
     P.update(dt);
@@ -12208,6 +12321,7 @@ class Game {
     }
     this.applyCamAnim(dt);
     this.updateView(dt);
+    Ambience.update(this, dt);
     if (this.mode === 'play') this.updateNav(dt);
     this._radarT = (this._radarT || 0) + dt;
     if (this._radarT > 0.05 && this.mode !== 'title') { this._radarT = 0; HUD.drawRadarHUD(this); }
@@ -12425,6 +12539,16 @@ class Game {
       this.traffic.draw(R, c);
     }
     this.drawAvatar(R);
+    if (this.level === 'colloquium' && !R.shadowPass && (this.env ? this.env.night : 0) < 0.6) {
+      const bm = this.tmpM2;
+      for (const b of this.birds) {
+        const a = b.a + this.time * b.sp;
+        const x = b.cx + Math.cos(a) * b.r, z = b.cz + Math.sin(a) * b.r, y = b.h + Math.sin(this.time * 0.7 + b.ph) * 2;
+        const flap = Math.sin(this.time * 9 + b.ph) * 0.7;
+        xformTo(bm, x, y, z, 0, a + Math.PI, flap * 0.3);
+        R.drawMesh(this.birdMesh, bm, { noShadow: true });
+      }
+    }
     if (this.world.foliage) {
       R.useLeaf(true);
       if (!R.shadowPass) gl.disable(gl.CULL_FACE);
