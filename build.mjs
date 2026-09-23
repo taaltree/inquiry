@@ -134,6 +134,12 @@ for (const [i, m] of misinfo.entries()) {
     if (!m[f]) problems.push(`misinfo ${i}: missing "${f}"`);
   }
   if (!QKEYS.includes(m.weakness)) problems.push(`misinfo ${i}: bad weakness "${m.weakness}"`);
+  // every card must name at least one researcher whose own work settles it
+  if (!Array.isArray(m.counters) || !m.counters.length) problems.push(`misinfo ${i}: no counters`);
+  else for (const c of m.counters) {
+    if (!ids.has(c.id)) problems.push(`misinfo ${i}: counter names unknown id "${c.id}"`);
+    if (!c.note) problems.push(`misinfo ${i}: counter "${c.id}" has no note`);
+  }
 }
 if (!STUBBED) {
   const byW = {};
@@ -229,4 +235,5 @@ console.log(`  built  dist/inquiry.html   ${kb(standalone)}`);
 console.log(`  built  dist/artifact.html  ${kb(inner)}`);
 console.log(`  ${roster.length} scientists · ${roster.length * 5} answers · ${connections.length} connections · ` +
   `${Object.values(vaults).reduce((n, v) => n + v.questions.length, 0)} vault questions · ` +
-  `${misinfo.length} misinformation cards · ${marginalia.length} marginalia · ${Object.keys(challenges).length} challenges`);
+  `${misinfo.length} misinformation cards · ${misinfo.reduce((n, m) => n + (m.counters || []).length, 0)} citations · ` +
+  `${marginalia.length} marginalia · ${Object.keys(challenges).length} challenges`);

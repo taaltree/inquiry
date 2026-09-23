@@ -59,6 +59,15 @@ takes the colour of the question you have selected and is the muzzle; the tabs o
 are the five slots, and choosing a new question turns a page. A question type can only be fired
 once you have actually asked it of someone, so the field is gated on the interviews.
 
+**Citations are the specific weapon.** The right question type beats a claim generically. Somebody's
+actual work beats it *specifically* — and you only hold that work if you went and asked them about
+it. Every one of the 20 cards names the researchers whose findings settle it (55 citations in all),
+and aiming at a drone shows `C · cite Vera Rubin` if you have interviewed her. A citation destroys
+the claim whatever its weakness, strips a layer off a Peer Review, and — the point — **spreads to
+every student in earshot**, because a sourced refutation is the kind other people can repeat. If you
+have nobody, the game tells you who would have had the answer, which turns the feed into a reading
+list.
+
 **Then they ask you one.** Once all five questions are logged, the scientist turns the interview
 around: a short scenario in their own mode of inference, four answers, one right. Every option
 explains itself once chosen. A right answer earns their **endorsement**; a wrong one costs nothing
@@ -84,6 +93,10 @@ explains itself once chosen, so the distractors are the teaching.
 
 **Synthesis is the interdisciplinary layer.** 14 real links between researchers, 12 of them
 crossing districts, opened by pairing two completed interviews at the atrium terminal.
+
+**The feed is there from the first minute.** Before you have asked anybody anything you have no
+counter, so the drones ignore you and work on the students — which is the honest version of the
+metaphor and the reason to go and find a scientist. Ask one question and the feed notices you.
 
 **The feed fights back.** Drifting Feed Drones fire manipulative claims at the player and at the
 student crowd. Each of the 20 cards is destroyed by exactly one question type — the one that

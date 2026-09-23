@@ -6,7 +6,21 @@
     "claim": "The effect is real. It just doesn't show up when skeptics run the equipment, because their expectations interfere with the measurement.",
     "tell": "The claim arrives pre-loaded with an excuse that converts every failed replication into further proof, so no result can ever count against it.",
     "debunk": "PROBE asks what would count as being wrong. Here, nothing can: a positive result confirms the effect, a negative one confirms interference. A claim that survives every possible observation isn't strong, it's empty. An honest version names a specific outcome in advance — this reading, in this range — that would sink it.",
-    "domain": "physics"
+    "domain": "physics",
+    "counters": [
+      {
+        "id": "wu",
+        "note": "Wu built the parity test so that one specific outcome would have killed the hypothesis, and ran warm-up and decay controls that would have exposed an artifact. A claim that cannot fail has not been tested."
+      },
+      {
+        "id": "einstein",
+        "note": "Einstein published a number — 1.75 arcseconds — before the 1919 eclipse, where a different measurement would have sunk the theory. Stating the condition for being wrong is what makes a claim scientific."
+      },
+      {
+        "id": "franklin",
+        "note": "Franklin's patterns only appeared under controlled humidity, and she said so. A result that shows up in one pair of hands is a clue about the conditions, not a reason to distrust everyone else's."
+      }
+    ]
   },
   {
     "id": "goalposts_on_wheels",
@@ -15,7 +29,21 @@
     "claim": "Fine, the satellite record now matches the ground stations. But until a model calls next year's storms exactly, it's still guesswork.",
     "tell": "A test the evidence just passed is quietly retired and replaced with a harder one, so no amount of agreement ever settles anything.",
     "debunk": "PROBE pins the claim down before the data arrive: what result would you accept as settling this? Ask that first and the goalpost stops moving, because the standard is now on record. An honest version states its test in advance and takes the answer, including a losing one.",
-    "domain": "climate"
+    "domain": "climate",
+    "counters": [
+      {
+        "id": "molina",
+        "note": "Molina and Rowland stated in 1974 what CFCs would do to stratospheric ozone, years before the measurements came in. The criterion was fixed in advance, then met."
+      },
+      {
+        "id": "hayhoe",
+        "note": "Hayhoe's projections are judged against the scenario and the uncertainty range stated with them. A test you redefine after seeing the result is not a test."
+      },
+      {
+        "id": "einstein",
+        "note": "The 1919 expeditions were decisive because the prediction was on the record beforehand and could not be moved afterwards."
+      }
+    ]
   },
   {
     "id": "merely_curious",
@@ -24,7 +52,17 @@
     "claim": "Not saying the image is fake. Just asking why a picture assembled by software counts as seeing something nobody photographed.",
     "tell": "Insinuation is dressed as curiosity, so the speaker gets the force of an accusation while keeping the option to deny having made one.",
     "debunk": "PROBE forces the hidden claim into the open: are you saying the reconstruction is unconstrained by the data? Stated plainly, that is checkable — hand the same data to independent teams using different assumptions and see whether the structure survives. A real question invites an answer; this one is designed to avoid one.",
-    "domain": "space"
+    "domain": "space",
+    "counters": [
+      {
+        "id": "bouman",
+        "note": "The Event Horizon Telescope split into teams that could not see each other's work and used pipelines with different assumptions; the ring survived people trying to make it go away."
+      },
+      {
+        "id": "hodgkin",
+        "note": "Hodgkin knew a phased map can show you what you put into it, so she built tests for model bias. The worry about reconstruction is real — and answerable."
+      }
+    ]
   },
   {
     "id": "nineteen_objections",
@@ -33,7 +71,17 @@
     "claim": "Here are nineteen problems: a retraction in that lab, bad controls, funding source, sample size, missing raw data. Answer all nineteen.",
     "tell": "Volume substitutes for weight — each item is too brief to be checked, and the sheer count is meant to read as an argument.",
     "debunk": "PROBE asks which single claim is load-bearing and what would show it false. Nineteen unexamined objections collapse into one examinable one, and the flood loses its power, because it only worked while nothing was stated precisely enough to test. An honest critic leads with their strongest point.",
-    "domain": "chemistry"
+    "domain": "chemistry",
+    "counters": [
+      {
+        "id": "mendeleev",
+        "note": "Mendeleev faced real objections — tellurium's weight sat wrong — and asked which single one, if true, would break the system. He answered that one and left the noise."
+      },
+      {
+        "id": "arnold",
+        "note": "Directed evolution advances by changing one thing and screening it. A pile of nineteen unexamined objections is not nineteen pieces of evidence."
+      }
+    ]
   },
   {
     "id": "wrong_field_expert",
@@ -42,7 +90,21 @@
     "claim": "A physicist with thirty years of modelling experience has looked at the gene-editing safety data and says it doesn't hold up.",
     "tell": "The expertise is genuine but belongs to a different field, and the credential is being asked to certify work its training never covered.",
     "debunk": "METHOD asks who produced this and with what specific expertise. Modelling experience doesn't confer the ability to judge whether a genome edit landed somewhere unintended — that is a bench measurement with its own controls and failure modes. Expertise is domain-shaped. Name the technique under dispute and who is trained to assess it.",
-    "domain": "genetics"
+    "domain": "genetics",
+    "counters": [
+      {
+        "id": "doudna",
+        "note": "Whether a guide RNA cuts where it is programmed to is settled at the bench, by reconstituting the reaction in a tube. Thirty years of modelling in another field does not touch it."
+      },
+      {
+        "id": "charpentier",
+        "note": "Charpentier found tracrRNA by sequencing what the bacterium actually makes. The organism decides, not the credential."
+      },
+      {
+        "id": "kariko",
+        "note": "Kariko's field moved when someone did the RNA chemistry. Standing elsewhere gives you no view of this."
+      }
+    ]
   },
   {
     "id": "citation_laundry",
@@ -51,7 +113,21 @@
     "claim": "It's peer-reviewed: the university announced it, a news site covered the announcement, and the article cites the coverage. Fully sourced.",
     "tell": "Authority is manufactured by circulation — each retelling cites the previous one, until a press release ends up looking like reviewed research.",
     "debunk": "METHOD asks how this was produced and by whom. Follow the chain back and there is no study at the end, only an announcement quoting itself. Peer review is a specific procedure — named referees, a journal, a revision round — not a synonym for appearing in several places. Ask for the paper.",
-    "domain": "medicine"
+    "domain": "medicine",
+    "counters": [
+      {
+        "id": "kariko",
+        "note": "The 2005 result counted because the data were in a paper other laboratories could repeat. Karikó had been demoted the decade before; the announcement was never the evidence."
+      },
+      {
+        "id": "tu",
+        "note": "Artemisinin was established by an extraction protocol, infected-mouse assays and dose trials, published so that others could run them."
+      },
+      {
+        "id": "hodgkin",
+        "note": "Hodgkin's structures counted once the coordinates were published for anyone to check against their own data."
+      }
+    ]
   },
   {
     "id": "manufactured_grassroots",
@@ -60,7 +136,17 @@
     "claim": "Thousands of ordinary users independently raised the same three objections this week, in the same order. That's not a campaign, that's consensus.",
     "tell": "Coordinated messaging is presented as spontaneous public opinion, and the uniformity that should be the warning sign is offered instead as the proof.",
     "debunk": "METHOD asks by whom and through what process. Independent people converge on a conclusion, not on identical phrasing inside a single week — real agreement is messy and arrives at different times. Check account histories, timing, and who benefits. Genuine grassroots agreement survives that check; manufactured agreement does not.",
-    "domain": "computing"
+    "domain": "computing",
+    "counters": [
+      {
+        "id": "li",
+        "note": "Li built ImageNet knowing exactly where every label came from and who made it. Provenance is the first question you ask of a pile of agreement."
+      },
+      {
+        "id": "bouman",
+        "note": "Independence has to be built: separate teams, separate pipelines, no contact. Thousands of accounts saying the same thing this week is a claim about provenance, not a finding."
+      }
+    ]
   },
   {
     "id": "screening_causes_illness",
@@ -69,7 +155,17 @@
     "claim": "Regions that rolled out the new screening program saw diagnoses climb forty percent. The program isn't finding illness, it's creating it.",
     "tell": "Two things move together and one is declared the cause, with no design that could separate causing a condition from simply detecting more of it.",
     "debunk": "METHOD asks what procedure could distinguish these two stories. Screening changes who gets looked at, so recorded diagnoses can rise while the number of people actually ill stays flat. A comparison region with similar underlying rates and no program would separate them. Correlation opens the question; study design answers it.",
-    "domain": "statistics"
+    "domain": "statistics",
+    "counters": [
+      {
+        "id": "payne",
+        "note": "Payne showed that a measured signal — the strength of a spectral line — reflected the conditions of measurement rather than the abundance everyone assumed. Look harder and you find more, whether or not there is more."
+      },
+      {
+        "id": "rubin",
+        "note": "What you detect depends on what your instrument can reach. Rubin's image tube did not create the faint outer gas; it made it recordable."
+      }
+    ]
   },
   {
     "id": "start_year_trick",
@@ -78,7 +174,21 @@
     "claim": "Start the chart at that record-hot spike year and the global average has barely moved since. Flat. Look at it yourself.",
     "tell": "A real dataset is shown starting from an unusually high year, so a rising trend is made to look flat purely by the choice of start point.",
     "debunk": "EVIDENCE asks for the full series, not the flattering slice. Plot the whole record and the same data show a clear rise; slide the start year forward or back and the flat stretch vanishes. An honest version states the start date, says why it was chosen, and shows what other choices do.",
-    "domain": "climate"
+    "domain": "climate",
+    "counters": [
+      {
+        "id": "thompson",
+        "note": "Thompson's Quelccaya cores carry about fifteen hundred annual layers. Against a record like that, the choice of a single start year is visibly a choice."
+      },
+      {
+        "id": "hayhoe",
+        "note": "The interval has to be set by the physics and the noise, not picked after the fact because it flatters the conclusion."
+      },
+      {
+        "id": "rubin",
+        "note": "Rubin's anomaly only appears if you measure the whole rotation curve. Stop early and you see what you expected to see."
+      }
+    ]
   },
   {
     "id": "hedge_as_confession",
@@ -87,7 +197,21 @@
     "claim": "Their own paper admits the uncertainty is 'substantial' and the result 'may not hold.' Their words. I'm just reading the abstract.",
     "tell": "A hedging phrase is lifted out of a sentence that goes on to say the opposite, so the author's routine caution is repurposed as their confession.",
     "debunk": "EVIDENCE means the whole passage, not the excerpted fragment. Read the next clause and the sentence usually resolves — the uncertainty is quantified and bounded, and the paper states what would narrow it. Researchers hedge in writing as a matter of habit, and a hedge is not a retraction. Ask to see the paragraph.",
-    "domain": "physics"
+    "domain": "physics",
+    "counters": [
+      {
+        "id": "chandrasekhar",
+        "note": "Chandrasekhar stated his limit together with the assumptions that could break it. Naming your uncertainty is how a claim is made checkable — it is not a retraction."
+      },
+      {
+        "id": "einstein",
+        "note": "The 1919 result was published with substantial error bars and a discarded plate set, and it held anyway. The hedge was in the paper because the authors were being honest."
+      },
+      {
+        "id": "simard",
+        "note": "Simard is explicit about what the isotope data do and do not license. A stated caveat marks a boundary; it does not erase what is inside it."
+      }
+    ]
   },
   {
     "id": "mocked_then_vindicated",
@@ -96,7 +220,21 @@
     "claim": "Every big idea in science was mocked before it won. So the theory everyone is laughing at right now is probably the next one.",
     "tell": "Only the rejected ideas that were later vindicated stay in the story, while the far larger set of rejected ideas that stayed wrong is invisible.",
     "debunk": "EVIDENCE demands the whole sample, including the cases that never survived to be retold. Count every idea dismissed in a given decade and the vindicated ones are a thin minority. Ridicule is not evidence either way. What distinguished the vindicated cases was that someone eventually produced measurements the critics could check.",
-    "domain": "history-of-science"
+    "domain": "history-of-science",
+    "counters": [
+      {
+        "id": "chandrasekhar",
+        "note": "Chandrasekhar was ridiculed by Eddington and was right — but what settled it was the calculation, not the ridicule. Being doubted is not evidence."
+      },
+      {
+        "id": "mcclintock",
+        "note": "McClintock's mobile elements were accepted when the cytology and the genetics agreed and others found the same thing. Decades of neglect proved nothing on their own."
+      },
+      {
+        "id": "darwin",
+        "note": "Darwin spent eight years on barnacles building the evidence about variation his argument required, rather than resting on how boldly it broke with orthodoxy."
+      }
+    ]
   },
   {
     "id": "read_the_comments",
@@ -105,7 +243,21 @@
     "claim": "Read the comments. Hundreds of people describing the same experience, in their own words. You can't fake that many stories.",
     "tell": "A self-selected pile of reports is treated as a dataset, when everyone with nothing to report had no reason to post at all.",
     "debunk": "EVIDENCE asks for the full denominator — how many people had the experience out of how many total, and how many had nothing to describe. Comment threads collect only one kind of outcome. Hundreds of stories can sit comfortably alongside a rate no different from background. Honest reporting shows both columns.",
-    "domain": "medicine"
+    "domain": "medicine",
+    "counters": [
+      {
+        "id": "tu",
+        "note": "A fourth-century handbook gave Tu a lead, not a result. What established artemisinin was a cold extraction and a controlled assay in infected mice."
+      },
+      {
+        "id": "darwin",
+        "note": "Darwin took breeders' reports seriously as a starting point, then did the systematic comparison that could show whether they held."
+      },
+      {
+        "id": "arnold",
+        "note": "A variant that looks promising means nothing until it has been screened against the rest of the plate, including the ones nobody wrote in about."
+      }
+    ]
   },
   {
     "id": "one_study_solved_it",
@@ -114,7 +266,21 @@
     "claim": "New study proves the technique works. It's done — the disease is basically solved, we're just waiting on paperwork now.",
     "tell": "One result in one setting is converted into a finished outcome, skipping every step between a laboratory finding and anything that reaches a person.",
     "debunk": "IMPACT asks what actually follows, and for whom. From one study what follows is a hypothesis worth repeating in other hands, with more participants and longer follow-up — not a solved disease. Overstating the consequence is its own kind of misinformation, and it costs credibility when the real timeline turns out to be years.",
-    "domain": "genetics"
+    "domain": "genetics",
+    "counters": [
+      {
+        "id": "doudna",
+        "note": "Cutting plasmid DNA in a tube in 2012 was a beginning. Delivery, off-target effects and safety in a person are each their own problem."
+      },
+      {
+        "id": "yamanaka",
+        "note": "Mouse cells in 2006, human cells in 2007, and the clinic still years further on. Reprogramming was real and the road was long."
+      },
+      {
+        "id": "kariko",
+        "note": "Fifteen years separated the 2005 chemistry from a deployed vaccine, and most of that was delivery, manufacturing and trials."
+      }
+    ]
   },
   {
     "id": "consensus_or_denier",
@@ -123,7 +289,17 @@
     "claim": "You either accept the consensus completely or you're a denier. There's no third option. Pick a side and stop stalling.",
     "tell": "A wide range of positions is compressed into two, so any specific technical question gets scored as membership in the opposing camp.",
     "debunk": "IMPACT asks what actually follows from a strong consensus. What follows is that the burden on a challenger is high and the core result is reliable — not that every sub-question is closed, or that asking one makes you an opponent. Treating agreement as a conversation-ender is how a field stops noticing its own errors.",
-    "domain": "climate"
+    "domain": "climate",
+    "counters": [
+      {
+        "id": "hayhoe",
+        "note": "The live questions are how much, how fast and where — quantities with ranges attached. A loyalty test is not one of the available positions."
+      },
+      {
+        "id": "simard",
+        "note": "Simard holds her own isotope result and the criticism of the wider network claims at the same time. That is what calibration looks like."
+      }
+    ]
   },
   {
     "id": "imperfect_means_useless",
@@ -132,7 +308,21 @@
     "claim": "The prediction model misfires sometimes. If it isn't accurate every single time, it's worthless for making any real decision.",
     "tell": "An imperfect tool is measured against perfection rather than against the actual alternative, which is usually having no estimate at all.",
     "debunk": "IMPACT asks what actually follows from the error rate, and for whom. A model that is right most of the time still narrows the range of outcomes, and the fair comparison is with the next-best option — a guess — not with certainty. State the error rate and let people judge what it supports.",
-    "domain": "computing"
+    "domain": "computing",
+    "counters": [
+      {
+        "id": "hayhoe",
+        "note": "A projection is used together with its error bars, and judged against the alternative — which is deciding with no information at all."
+      },
+      {
+        "id": "li",
+        "note": "The 2012 ImageNet result was a large drop in the error rate, not its elimination, and that was enough to redirect the field."
+      },
+      {
+        "id": "bouman",
+        "note": "The black hole image has a stated resolution and stated uncertainties, and still rules out the alternatives it was built to test."
+      }
+    ]
   },
   {
     "id": "everyone_agrees_suspiciously",
@@ -141,7 +331,21 @@
     "claim": "Every survey reports the same missing mass because each team checks its numbers against the last one. That isn't independence, it's agreement.",
     "tell": "Agreement between separate groups, normally the strongest sign a result is real, is reinterpreted as evidence that the groups colluded.",
     "debunk": "IMPACT asks what would actually have to follow if this were true: thousands of people across competing institutions and rival countries, all silent, all giving up the career that comes from overturning a result. Scale is the test. Real coordinated deception is small, short-lived, and leaks, because defecting pays.",
-    "domain": "space"
+    "domain": "space",
+    "counters": [
+      {
+        "id": "rubin",
+        "note": "The flat curves turned up in galaxy after galaxy, measured by different people with different instruments, and Rubin had no stake in the answer."
+      },
+      {
+        "id": "bouman",
+        "note": "The EHT deliberately built teams that could not see each other's results, precisely so that agreement would mean something."
+      },
+      {
+        "id": "payne",
+        "note": "Russell pressed Payne to disown her hydrogen result; the same answer came back anyway, from other people's data."
+      }
+    ]
   },
   {
     "id": "not_settled_yet",
@@ -150,7 +354,21 @@
     "claim": "The science isn't settled. Serious researchers still have questions. Shouldn't we wait for certainty before disrupting an entire industry?",
     "tell": "Doubt is invoked in general terms and never attached to a specific quantity, so it can never be resolved and the delay becomes permanent.",
     "debunk": "DOUBT is the dismantling question because it demands specifics: which quantity is uncertain, how wide is the range, and what measurement would narrow it? Real uncertainty has a size and a way to shrink it. Doubt with no answer to those three isn't caution, it's a stalling device. Certainty was never on offer.",
-    "domain": "chemistry"
+    "domain": "chemistry",
+    "counters": [
+      {
+        "id": "molina",
+        "note": "The ozone mechanism was disputed for over a decade while the specific chemistry it rested on was never overturned. 'Questions remain' was the product being sold."
+      },
+      {
+        "id": "wu",
+        "note": "Wu could name the open question exactly, and then went and tested it. A doubt that cannot name what would settle it is not a doubt."
+      },
+      {
+        "id": "hayhoe",
+        "note": "Open questions at the edge of a field do not reopen the part that is settled, and confusing the two is the technique."
+      }
+    ]
   },
   {
     "id": "both_sides_panel",
@@ -159,7 +377,21 @@
     "claim": "There are two sides here, so put them on the same panel, give them equal time, and let people make up their own minds.",
     "tell": "Equal airtime is presented as fairness, which quietly implies the two positions carry equal evidential weight when they may not.",
     "debunk": "DOUBT exposes the asymmetry: ask each side what its uncertainty is and what result would change its mind. One gives you a stated margin of error and an experiment that would settle it; the other has no answer, because no procedure sits behind it. Fairness means weighting by evidence, not by seat count.",
-    "domain": "physics"
+    "domain": "physics",
+    "counters": [
+      {
+        "id": "chandrasekhar",
+        "note": "Eddington's side of the white dwarf argument was eminent, well spoken and wrong. Airtime was never the test; the calculation was."
+      },
+      {
+        "id": "wu",
+        "note": "Parity had two sides until somebody cooled the cobalt. After the experiment it had one, and no amount of stage time would have changed that."
+      },
+      {
+        "id": "noether",
+        "note": "A symmetry argument either holds or it does not. There is no midpoint to be reached by giving each position equal minutes."
+      }
+    ]
   },
   {
     "id": "three_point_swing",
@@ -168,7 +400,21 @@
     "claim": "The number moved three points since the last survey. Three points is a real shift — the chart makes the trend obvious.",
     "tell": "A movement smaller than the survey's own margin of error is read as a trend, because the uncertainty was never printed next to the number.",
     "debunk": "DOUBT asks for the uncertainty attached to the number. If each survey carries a margin of several points, a three-point move is indistinguishable from no move at all, and the honest description is unchanged within measurement error. Two dots on a chart are not a trend until the uncertainty is smaller than the gap between them.",
-    "domain": "statistics"
+    "domain": "statistics",
+    "counters": [
+      {
+        "id": "einstein",
+        "note": "The 1919 measurement mattered only because the predicted difference was larger than the uncertainty. A number smaller than its own error bar is not a movement."
+      },
+      {
+        "id": "hayhoe",
+        "note": "The spread across model runs is reported next to the number for exactly this reason: so that a wiggle is not read as a trend."
+      },
+      {
+        "id": "thompson",
+        "note": "One layer in an ice core is noise. The signal is what survives across the whole record."
+      }
+    ]
   },
   {
     "id": "nature_already_tested_it",
@@ -177,6 +423,20 @@
     "claim": "The compound occurs in living things, so there's nothing left to test — nature already ran the safety trial over millions of years.",
     "tell": "Where a substance came from is treated as a finished safety result, which lets the speaker skip the step where anything is actually measured.",
     "debunk": "DOUBT asks what the uncertainty is and what would change the conclusion, and this claim is built to have neither. Occurring in nature is a fact about origin, not a measurement of effect: plenty of natural compounds are hazardous and plenty of made ones are inert. An honest version says what has been tested and what hasn't.",
-    "domain": "chemistry"
+    "domain": "chemistry",
+    "counters": [
+      {
+        "id": "tu",
+        "note": "Sweet wormwood had been used for sixteen centuries and still needed extraction, purification, dosing and trials before it was a medicine."
+      },
+      {
+        "id": "curie",
+        "note": "Radium is entirely natural. Curie's notebooks are still radioactive after a century and are kept in lead-lined boxes."
+      },
+      {
+        "id": "kariko",
+        "note": "Pseudouridine is a natural nucleoside, and the entire point was that a natural molecule behaves very differently once you put it somewhere new."
+      }
+    ]
   }
 ]

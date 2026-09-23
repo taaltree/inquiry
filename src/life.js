@@ -9,9 +9,10 @@
    technique, so combat is a knowledge check, never a reflex check.
    ============================================================ */
 
-const STUDENT_COUNT = 22;
+const STUDENT_COUNT = 26;
 const SUMMIT_STUDENTS = 14;
 const DRONE_MAX = 4;
+const DRONE_MAX_UNARMED = 2;    // before you can answer back, the feed only works the crowd
 
 /* Education is the win condition, so it has to be legible at a glance.
    Each tier adds an unmistakable silhouette cue and more agency in a fight. */
@@ -235,10 +236,11 @@ class Life {
 
   /* ---------- students ---------- */
   spawnStudent(i, home) {
-    const p = home ? this.randomPoint(home.cx, home.cz, 24) : this.randomPoint();
+    // the homeless ones loiter in the atrium, which is otherwise an empty hub
+    const p = home ? this.randomPoint(home.cx, home.cz, 24) : this.randomPoint(0, 0, 18);
     return {
       id: i, home: home ? home.id : null,
-      hx: home ? home.cx : 0, hz: home ? home.cz : 0, roam: home ? 26 : 20,
+      hx: home ? home.cx : 0, hz: home ? home.cz : 0, roam: home ? 26 : 22,
       x: p.x, z: p.z, yaw: this.rnd() * TAU,
       tx: p.x, tz: p.z,
       mesh: this.studentMeshes[i % this.studentMeshes.length],
@@ -334,8 +336,9 @@ class Life {
   }
 
   spawnDrone(forceDistrict) {
-    if (this.drones.length >= DRONE_MAX) return null;
     const G = this.game;
+    const armed = G.unlockedTypes().length > 0;
+    if (this.drones.length >= (armed ? DRONE_MAX : DRONE_MAX_UNARMED)) return null;
 
     if (this.mode === 'ride') {
       if ((G.feedCleared.summit || 0) >= SUMMIT_DRONES) return null;
@@ -543,18 +546,32 @@ class Life {
       }
     }
 
-    /* drones — only once the player has something to fight back with */
-    if (G.unlockedTypes().length > 0) {
-      this.spawnTimer -= dt;
-      if (this.spawnTimer <= 0) {
-        this.spawnTimer = 9 + this.rnd() * 9;
-        const born = this.spawnDrone();
-        if (born && !G.feedIntroduced) {
-          G.feedIntroduced = true;
+    /* Drones are in the world from the first minute. Until you can answer one
+       they ignore you and work on the students, which is both the honest version
+       of the metaphor and the reason to go and ask somebody something. */
+    const armed = G.unlockedTypes().length > 0;
+    this.spawnTimer -= dt;
+    if (this.spawnTimer <= 0) {
+      this.spawnTimer = (armed ? 9 : 14) + this.rnd() * 9;
+      const born = this.spawnDrone();
+      if (born && !G.feedIntroduced) {
+        G.feedIntroduced = true;
+        if (armed) {
           HUD.banner('THE FEED HAS FOUND YOU',
             'A drone is circling. Aim at it to read its technique.', '#ff3fa8');
-          Sfx.deny();
+        } else {
+          HUD.banner('THE FEED IS ALREADY HERE',
+            'It is working on the students, not on you — you have nothing to answer it with yet. Go and ask a scientist a question.', '#ff3fa8');
+          HUD.log('<b>FEED DRONE</b> — it is pushing claims at the students. Interview someone and that question becomes your counter.');
         }
+        Sfx.deny();
+      }
+    }
+    if (armed && !G.feedNoticedYou && this.drones.some((d) => !d.dead)) {
+      G.feedNoticedYou = true;
+      if (G.feedIntroduced) {
+        HUD.banner('THE FEED HAS NOTICED YOU',
+          'Now it aims at you as well. A claim that reaches you stops the world until you answer it.', '#ff3fa8');
       }
     }
 
@@ -565,10 +582,20 @@ class Life {
       // leash: a drone the player has walked away from gives up its slot, so the
       // global cap can never deadlock a district that still owes you kills
       const far = Math.hypot(cam.x - d.x, cam.z - d.z);
-      d.away = far > 95 ? (d.away || 0) + dt : 0;
+      d.away = far > (armed ? 95 : 150) ? (d.away || 0) + dt : 0;
       if (d.away > 20) { d.despawn = true; continue; }
       // drift toward the player but keep an uneasy distance
-      const dx = cam.x - d.x, dz = cam.z - d.z;
+      let ax = cam.x, az = cam.z;
+      if (!armed) {
+        // it has no interest in you yet: it goes where the crowd is
+        let bs = null, bd = 1e9;
+        for (const s of this.students) {
+          const sd = Math.hypot(s.x - d.x, s.z - d.z);
+          if (sd < bd) { bd = sd; bs = s; }
+        }
+        if (bs && bd > 12) { ax = bs.x; az = bs.z; }
+      }
+      const dx = ax - d.x, dz = az - d.z;
       const dist = Math.hypot(dx, dz);
       const want = dist > (d.boss ? 22 : 16) ? 1 : dist < (d.boss ? 12 : 9) ? -0.7 : 0;
       if (want) {
@@ -586,8 +613,8 @@ class Life {
       d.yaw = Math.atan2(dx, dz);
 
       d.cooldown -= dt;
-      if (d.cooldown <= 0 && dist < 34) {
-        d.cooldown = d.boss ? 5.0 + this.rnd() * 3.0 : 6.5 + this.rnd() * 5.0;
+      if (d.cooldown <= 0 && (dist < 34 || !armed)) {
+        d.cooldown = d.boss ? 5.0 + this.rnd() * 3.0 : (armed ? 6.5 : 9.0) + this.rnd() * 5.0;
         if (d.boss && d.shields && d.shields.length) {
           // its claims are always ones the next shield's question dismantles
           const pool = MISINFO.filter((m) => m.weakness === d.shields[0]);
@@ -598,13 +625,13 @@ class Life {
         const grace = t < (G.graceUntil || 0);
         const incoming = this.bolts.some((b) => b.kind === 'misinfo' && b.atPlayer);
         let target = null;
-        if (grace || incoming || this.rnd() > 0.5) {
+        if (!armed || grace || incoming || this.rnd() > 0.5) {
           const near = this.students.filter((s) =>
-            Math.hypot(s.x - d.x, s.z - d.z) < 26 && s.confused <= 0);
+            Math.hypot(s.x - d.x, s.z - d.z) < (armed ? 26 : 46) && s.confused <= 0);
           if (near.length) target = near[(this.rnd() * near.length) | 0];
         }
         if (target) this.fireMisinfo(d, target.x, 1.3, target.z);
-        else if (!grace && !incoming) this.fireMisinfo(d, cam.x, cam.y - 0.1, cam.z, true);
+        else if (armed && !grace && !incoming) this.fireMisinfo(d, cam.x, cam.y - 0.1, cam.z, true);
         else d.cooldown = 2.5;
       }
     }

@@ -931,3 +931,37 @@ figure.portrait figcaption {
 .bb-pips i { display: block; width: 24px; height: 7px; background: var(--c); box-shadow: 0 0 8px var(--c); }
 .bb-pips i.gone { opacity: .16; box-shadow: none; }
 .bb-next { font-size: 10px; color: #fff; }
+
+/* ---- citation card ---- */
+#citation {
+  position: absolute; left: 50%; bottom: 168px; transform: translate(-50%, 14px);
+  width: min(660px, 78vw); padding: 14px 20px; display: flex; gap: 16px; align-items: flex-start;
+  background: rgba(26,20,8,.96); border: 1px solid rgba(255,217,138,.6); border-left: 3px solid #ffd98a;
+  opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+#citation.on { opacity: 1; transform: translate(-50%, 0); }
+.ci-face { width: 66px; height: 82px; object-fit: cover; flex: none;
+           border: 1px solid rgba(255,217,138,.45); filter: saturate(.85); }
+.ci-main { flex: 1; }
+.ci-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.ci-tag { font-family: var(--mono); font-size: 13px; letter-spacing: .22em; color: #ffd98a;
+          text-shadow: 0 0 14px rgba(255,217,138,.5); }
+.ci-who { font-family: var(--mono); font-size: 10px; letter-spacing: .13em; color: #d8c79c; }
+.ci-vs { font-family: var(--mono); font-size: 9.5px; letter-spacing: .13em; color: #b3a179; margin-top: 3px; }
+.ci-note { font-family: var(--sans); font-size: 14px; line-height: 1.58; color: #f6ecd6; margin-top: 8px; }
+.ic-cite { margin-top: 16px; padding: 10px 14px; border: 1px solid rgba(255,217,138,.5);
+  background: rgba(255,217,138,.09); font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: #ffd98a; }
+.ic-cite b { color: #fff3d4; }
+.ic-cite.done { border-color: rgba(127,240,174,.6); background: rgba(127,240,174,.1); color: #7df0ae; }
+.ic-cite kbd { border: 1px solid rgba(255,217,138,.55); padding: 1px 6px; border-radius: 3px; }
+@media (max-width: 900px) { #citation { bottom: 128px; width: 92vw; } }
+
+.ic-cite.done { display: flex; gap: 14px; align-items: flex-start; }
+.ic-cite.done .ci-face { width: 54px; height: 67px; object-fit: cover; flex: none;
+  border: 1px solid rgba(127,240,174,.4); filter: saturate(.85); }
+.ic-c-head { font-family: var(--mono); font-size: 11px; letter-spacing: .13em; color: #7df0ae; }
+.ic-c-head b { color: #d7ffe9; }
+.ic-c-note { font-family: var(--sans); font-size: 13.5px; line-height: 1.55; color: #dff3e7;
+  letter-spacing: 0; margin-top: 7px; text-transform: none; }
+.ic-c-foot { font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em; color: #8fbfa5; margin-top: 7px; }

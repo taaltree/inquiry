@@ -206,8 +206,46 @@ const HUD = {
     if (t) t.textContent = String(s.taught || 0);
     if (db) db.textContent = String(s.debunked || 0);
     if (mg) mg.textContent = `${s.marginalia || 0}/${s.marginaliaMax || 0}`;
-    const en = $('#st-end');
+    const en = $('#st-end'), ct = $('#st-cite');
     if (en) en.textContent = `${s.endorsements || 0}/${s.endorsementsMax || 0}`;
+    if (ct) ct.textContent = String(s.citations || 0);
+  },
+
+  /* the source you brought to a claim, with the face of whoever told you */
+  citationCard(card, counter, person, district) {
+    const el = $('#citation');
+    el.innerHTML = `
+      <img class="ci-face" src="${getPortrait(person, district)}" alt="">
+      <div class="ci-main">
+        <div class="ci-head"><span class="ci-tag">CITED</span>
+          <span class="ci-who">${esc(person.name)} · ${esc(person.field)}</span></div>
+        <div class="ci-vs">against ${esc(card.technique)}</div>
+        <div class="ci-note">${esc(counter.note)}</div>
+      </div>`;
+    el.classList.add('on');
+    clearTimeout(this._ciT);
+    this._ciT = setTimeout(() => el.classList.remove('on'), 22000);
+  },
+
+  interceptCiteHint(name) {
+    const b = $('#intercept-body');
+    if (!b || $('#ic-cite')) return;
+    b.insertAdjacentHTML('beforeend',
+      `<div id="ic-cite" class="ic-cite"><kbd>C</kbd> cite <b>${esc(name)}</b> — you interviewed someone whose own work settles this</div>`);
+  },
+
+  /* inside the intercept the note goes in the panel itself, not on a card over it */
+  markCited(person, counter, district) {
+    const el = $('#ic-cite');
+    if (!el) return;
+    el.classList.add('done');
+    el.innerHTML = `
+      <img class="ci-face" src="${getPortrait(person, district)}" alt="">
+      <div>
+        <div class="ic-c-head">CITED — <b>${esc(person.name)}</b> · ${esc(person.field)}</div>
+        <div class="ic-c-note">${esc(counter.note)}</div>
+        <div class="ic-c-foot">Everyone in earshot picked it up.</div>
+      </div>`;
   },
 
   dialogueHint(text) { $('#dlg-hint').textContent = text; },
@@ -563,6 +601,8 @@ const HUD = {
   /* ---------- intercept: the world stops, you read, you choose ---------- */
   openIntercept(it) {
     this.renderIntercept(it);
+    const src = this.game.citeSources(it.card);
+    if (src.length) this.interceptCiteHint((this.game.byId[src[0].id] || {}).name);
     $('#intercept').classList.add('on');
     document.getElementById('hud').classList.add('halted');
   },

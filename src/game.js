@@ -196,6 +196,7 @@ class Game {
     this.found = this.found || {};            // marginalia collected, by id
     this.challenged = this.challenged || {};  // the scientists' own questions, answered
     this.bossDone = this.bossDone || {};      // districts whose Peer Review has been passed
+    this.citations = this.citations || 0; this.citeCd = 0;
     this.challenge = null; this.pendingChallenge = null;
     this.pageMark = buildPageMark(gl);
     this.pickups = [];
@@ -312,6 +313,7 @@ class Game {
         taught: this.taught || 0, rescued: this.rescued || 0, debunked: this.debunked || 0,
         feed: this.feedCleared, secured: this.secured, found: this.found || {},
         challenged: this.challenged || {}, bossDone: this.bossDone || {},
+        citations: this.citations || 0,
       }));
     } catch (e) { /* private browsing — play on without saving */ }
   }
@@ -333,6 +335,7 @@ class Game {
         this.found = s.found || {};
         this.challenged = s.challenged || {};
         this.bossDone = s.bossDone || {};
+        this.citations = s.citations || 0;
       }
     } catch (e) { /* ignore corrupt saves */ }
   }
@@ -467,6 +470,7 @@ class Game {
         else this.fire();
         return;
       }
+      if (k === 'c') { e.preventDefault(); this.cite(); return; }
       if (k === 'q') { this.cycleSlot(-1); return; }
       if (k === 'r') { this.cycleSlot(1); return; }
       if (k === 'm') { this.route(); return; }
@@ -833,6 +837,111 @@ class Game {
     Sfx.tone(620 + this.selSlot * 90, 0.13, 'triangle', 0.032, 1400);
   }
 
+  /* ================= citations =================
+     The right question type beats a claim generically. Somebody's actual work
+     beats it specifically — and you only hold that work if you went and asked
+     them about it. Citing also spreads: a sourced refutation is the kind that
+     other people can repeat, so the students nearby learn it too. */
+  citeSources(card) {
+    if (!card || !card.counters) return [];
+    return card.counters.filter((c) => (this.progress[c.id] || []).length > 0 && this.byId[c.id]);
+  }
+
+  cite() {
+    if (this.anyScreenOpen()) return;
+    const inIntercept = this.mode === 'intercept' && this.intercept;
+    if (!inIntercept && this.mode !== 'play') return;
+    const drone = inIntercept ? this.intercept.drone : this.aimDrone();
+    const card = inIntercept ? this.intercept.card : (drone && drone.card);
+    if (!card) { HUD.toast('NOTHING TO CITE', 'Put a feed drone under the crosshair.'); return; }
+    if (inIntercept && this.intercept.cited) return;
+    if (!inIntercept && (this.citeCd || 0) > 0) {
+      HUD.toast('STILL FINDING THE PAGE', `${this.citeCd.toFixed(1)} s`);
+      return;
+    }
+    const src = this.citeSources(card);
+    if (!src.length) {
+      // naming who *would* answer it turns the feed into a reading list
+      const who = (card.counters || []).map((c) => (this.byId[c.id] || {}).name).filter(Boolean);
+      HUD.banner('NO SOURCE IN HAND', who.length
+        ? `Nobody you have interviewed speaks to this one. ${who[0]} would.`
+        : 'Nothing you have learned touches this claim yet.', '#ffab6a');
+      Sfx.deny();
+      return;
+    }
+    const s = src[(Math.random() * src.length) | 0];
+    const person = this.byId[s.id];
+    this.citations = (this.citations || 0) + 1;
+    const district = this.districtById[person.district];
+    Sfx.complete();
+    this.fx.pulse = 1; this.fx.pulseHue = 0;
+
+    if (inIntercept) {
+      this.intercept.cited = true;
+      HUD.markCited(person, s, district);
+      this.spreadCitation(this.cam.x, this.cam.z, person, 22);
+    } else {
+      HUD.citationCard(card, s, person, district);
+      this.citeCd = 9;
+      this.citeBeam(drone);
+      if (drone.boss && !drone.dead) this.onBossShieldBroken(drone, drone.shields[0], null);
+      else if (!drone.dead) this.killDroneByCitation(drone, person);
+      this.spreadCitation(drone.x, drone.z, person, 20);
+    }
+    this.refreshStats();
+    this.save();
+  }
+
+  /* a line of gold from the Codex to the thing being answered */
+  citeBeam(drone) {
+    const bs = this.basis || this.camBasis(), c = this.cam;
+    const ox = c.x + bs.right[0] * 0.5 - bs.up[0] * 0.4, oy = c.y + bs.right[1] * 0.5 - bs.up[1] * 0.4,
+          oz = c.z + bs.right[2] * 0.5 - bs.up[2] * 0.4;
+    const n = 26;
+    for (let i = 0; i <= n; i++) {
+      const u = i / n;
+      this.particles.burst(ox + (drone.x - ox) * u, oy + (drone.y - oy) * u, oz + (drone.z - oz) * u, 1,
+        { cols: [[1, 0.88, 0.55], [1, 1, 1]], speed: 0.6, life: 0.5 + u * 0.3, size: 0.13, grav: 0, drag: 2, alpha: 0.95 });
+    }
+    this.shake = Math.max(this.shake, 0.25);
+  }
+
+  killDroneByCitation(d, person) {
+    d.dying = 0.5; d.dead = true;
+    this.particles.burst(d.x, d.y, d.z, 90, { cols: [[1, 0.88, 0.55], [1, 1, 1], [0.62, 0.23, 1]],
+      speed: 10, life: 1.2, size: 0.28, grav: -6, drag: 1.3, streak: true });
+    this.debunked = (this.debunked || 0) + 1;
+    if (d.district) this.feedCleared[d.district] = (this.feedCleared[d.district] || 0) + 1;
+    this.noise = Math.max(0, (this.noise || 0) - 0.42);
+    HUD.resolveClutter(d, d.card);
+    HUD.log(`<b>CITED</b> — ${esc(person.name)} settles “${esc(d.card.technique)}”.`);
+    this.refreshSecured();
+  }
+
+  /* everyone in earshot picks up a sourced answer */
+  spreadCitation(x, z, person, radius) {
+    const col = hex2rgb('#ffd98a');
+    let n = 0, grads = 0;
+    for (const s of this.life.students) {
+      if (Math.hypot(s.x - x, s.z - z) > radius) continue;
+      const before = this.life.tier(s);
+      const rescued = this.life.teach(s, col, `${person.name} showed that, apparently.`, false);
+      this.life.addMote(s.x, 2.0, s.z, '+1', '#ffd98a');
+      this.particles.burst(s.x, (s.y || 0) + 1.4, s.z, 16,
+        { cols: [col, [1, 1, 1]], speed: 3.0, life: 0.8, size: 0.15, grav: 1.4, drag: 1.8 });
+      this.taught = (this.taught || 0) + 1;
+      if (rescued) this.rescued = (this.rescued || 0) + 1;
+      if (this.life.tier(s) >= 3 && before < 3) grads++;
+      n++;
+    }
+    if (n) {
+      HUD.banner('THE CITATION SPREADS',
+        `${n} student${n > 1 ? 's' : ''} in earshot picked it up${grads ? ` · ${grads} graduated` : ''}`, '#ffd98a');
+      this.refreshSecured();
+    }
+    return n;
+  }
+
   /* ---------- Peer Review: the district's last drone ---------- */
   onBossSpawn(d) {
     HUD.banner('PEER REVIEW', 'A claim with five layers. Strip them in the order of an argument: PROBE, METHOD, EVIDENCE, IMPACT, DOUBT.', '#ff5fb0');
@@ -1160,6 +1269,7 @@ class Game {
       debunked: this.debunked || 0,
       marginalia: Object.keys(this.found || {}).length, marginaliaMax: MARGINALIA.length,
       endorsements: this.countEndorsements(), endorsementsMax: Object.keys(CHALLENGES).length,
+      citations: this.citations || 0,
     });
   }
 
@@ -1664,6 +1774,7 @@ class Game {
     if (this.mode !== 'title' && !paused) this.life.update(dt, this.time);
     if (!paused) this.updateParticles(dt);
     this.fireCd = Math.max(0, this.fireCd - dt);
+    this.citeCd = Math.max(0, (this.citeCd || 0) - dt);
     this.noise = Math.max(0, this.noise - dt * 0.040);
     this.shake = Math.max(0, this.shake - dt * 2.2);
     HUD.setNoise(this.noise);
@@ -1717,10 +1828,19 @@ class Game {
     const drone = this.aimDrone();
     if (drone && (!this.target || this.target.dist > 6)) {
       const w = QTYPES.find((q) => q.key === drone.card.weakness);
-      HUD.setReticle('lock', 1, 'FEED DRONE',
+      const src = this.citeSources(drone.card);
+      const who = src.length ? (this.byId[src[0].id] || {}).name : null;
+      const ready = (this.citeCd || 0) <= 0;
+      HUD.setReticle('lock', 1, drone.boss ? 'PEER REVIEW' : 'FEED DRONE',
         drone.scanned ? `${drone.card.technique} · COUNTER WITH ${w.name}`
                       : 'UNIDENTIFIED TECHNIQUE · FIRE TO PROBE');
-      HUD.prompt(`<kbd>Click</kbd> fire ${QTYPES[this.selSlot].name}`);
+      HUD.prompt(`<kbd>Click</kbd> fire ${QTYPES[this.selSlot].name}`
+        + (who ? `&nbsp; · &nbsp;<kbd>C</kbd> cite ${esc(who)}${ready ? '' : ' (reloading)'}` : ''));
+      if (who && !this.citeTaught) {
+        this.citeTaught = true;
+        HUD.banner('YOU HAVE A SOURCE FOR THIS',
+          `${who} answered this kind of claim with their own work. Press C to cite them — a sourced answer also spreads to every student in earshot.`, '#ffd98a');
+      }
       return;
     }
     // a student under the crosshair spells out exactly what they still need
