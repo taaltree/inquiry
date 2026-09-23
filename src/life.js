@@ -162,26 +162,32 @@ function buildSpark(gl) {
   return b.upload(gl);
 }
 
-/* Feed Drone: a hovering slab with a too-bright screen and restless shards */
+/* Feed Drone: a quadcopter carrying a too-bright phone screen full of posts */
 function buildDroneMesh(gl) {
   const b = new Builder();
-  const shell = hex2rgb('#1a1620');
-  const edge = hex2rgb('#4a3350');
-  b.add(BOX, xform([0, 0, 0], [0, 0, 0], [1.85, 2.35, 0.42]), shell, 0.02);
-  b.add(BOX, xform([0, 0, -0.24], [0, 0, 0], [1.62, 2.06, 0.05]), hex2rgb('#ff3fa8'), 1.05);
-  // scrolling "post" bars — the screen always has something to say
+  const shell = mat(0, [0.03, 0.03, 0.035], { rough: 0.35, metal: 0.4 });
+  const trim = mat(0, [0.12, 0.12, 0.14], { rough: 0.4, metal: 0.6 });
+  const pink = mat(0, [1.0, 0.25, 0.66], { glow: 1.1, rough: 0.3 });
+  const white = mat(0, [1.0, 0.9, 0.96], { glow: 1.5, rough: 0.3 });
+  const rotor = mat(0, [0.08, 0.08, 0.09], { rough: 0.5, metal: 0.3 });
+  b.add(pCyl(16, true, true, 0.42, 0.5), xform([0, 0.1, 0], [0, 0, 0], [0.9, 0.22, 0.7]), shell);
+  b.add(SPHERE, xform([0, 0.2, 0], [0, 0, 0], [0.62, 0.22, 0.5]), shell);
+  b.add(BOX, xform([0, 0.1, 0.34], [0, 0, 0], [0.6, 0.04, 0.02]), pink);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const hx = sx * 0.78, hz = sz * 0.6;
+    strut(b, [sx * 0.25, 0.12, sz * 0.18], [hx, 0.16, hz], 0.07, trim);
+    b.add(pCyl(12), xform([hx, 0.2, hz], [0, 0, 0], [0.13, 0.14, 0.13]), trim);
+    b.add(pCyl(24, true, true), xform([hx, 0.28, hz], [0, 0, 0], [0.74, 0.012, 0.74]), rotor);
+    b.add(SPHERE_LO, xform([hx, 0.12, hz], [0, 0, 0], [0.06, 0.06, 0.06]), sz > 0 ? pink : mat(0, [0.2, 0.9, 1.0], { glow: 1.2 }));
+  }
+  // the screen, hung below on a gimbal, facing forward
+  strut(b, [0, 0.0, 0.1], [0, -0.25, 0.2], 0.05, trim);
+  b.add(BOX, xform([0, -0.68, 0.22], [0.12, 0, 0], [1.05, 0.72, 0.06]), shell);
+  b.add(BOX, xform([0, -0.68, 0.26], [0.12, 0, 0], [0.95, 0.62, 0.02]), pink);
   for (let i = 0; i < 5; i++) {
-    b.add(BOX, xform([-0.10 + (i % 2) * 0.12, 0.74 - i * 0.36, -0.28], [0, 0, 0],
-      [1.05 - (i % 3) * 0.24, 0.11, 0.04]), hex2rgb('#ffe8f6'), 1.7);
+    b.add(BOX, xform([-0.08 + (i % 2) * 0.1, -0.44 - i * 0.11, 0.278 + i * 0.013], [0.12, 0, 0], [0.7 - (i % 3) * 0.15, 0.05, 0.01]), white);
   }
-  for (const s of [-1, 1]) {
-    b.add(BOX, xform([s * 1.00, 0, 0], [0, 0, 0], [0.18, 2.4, 0.48]), edge, 0.1);
-    b.add(pPrism(3), xform([s * 1.38, 0.88, 0], [0, 0, s * 0.5], [0.46, 0.46, 0.46]), hex2rgb('#a13aff'), 1.25);
-    b.add(pPrism(3), xform([s * 1.30, -0.92, 0], [0, 0, -s * 0.4], [0.34, 0.34, 0.34]), hex2rgb('#a13aff'), 1.1);
-  }
-  b.add(BOX, xform([0, 1.34, 0], [0, 0, 0], [2.00, 0.18, 0.56]), edge, 0.12);
-  b.add(BOX, xform([0, -1.34, 0], [0, 0, 0], [2.00, 0.18, 0.56]), edge, 0.12);
-  b.add(pTorus(0.05, 26, 6), xform([0, 0, 0.26], [0, 0, 0], [2.5, 2.5, 2.5]), hex2rgb('#ff3fa8'), 1.15);
+  b.add(SPHERE_LO, xform([0, -0.02, 0.33], [0, 0, 0], [0.12, 0.12, 0.12]), mat(0, [0.9, 0.1, 0.2], { glow: 1.6 }));
   return b.upload(gl);
 }
 
@@ -202,8 +208,7 @@ class Life {
     this.mode = mode || 'walk';         // 'walk' = station, 'ride' = mountain
     this.rnd = mulberry(mode === 'ride' ? 5150 : 4242);
 
-    this.studentMeshes = [];
-    for (let i = 0; i < 8; i++) this.studentMeshes.push(buildStudentMesh(gl, 900 + i * 137));
+    this.studentMeshes = [];      // superseded by rigged characters, built per student below
     this.sparkMesh = buildSpark(gl);
     this.marks = buildStudentMarks(gl);
     this.boardMesh = buildSnowboard(gl);
@@ -226,6 +231,11 @@ class Life {
       }
     }
 
+    for (const s of this.students) {
+      s.ch = buildCharacter(gl, studentLook(900 + s.id * 137 + (this.mode === 'ride' ? 5000 : 0)));
+      s.bones = newBones();
+      s.sit = false;
+    }
     this.gainPlates = {};        // "+1" / "+2" motes, built lazily
     this.drones = [];
     this.bolts = [];
@@ -243,8 +253,7 @@ class Life {
       hx: home ? home.cx : 0, hz: home ? home.cz : 0, roam: home ? 26 : 22,
       x: p.x, z: p.z, yaw: this.rnd() * TAU,
       tx: p.x, tz: p.z,
-      mesh: this.studentMeshes[i % this.studentMeshes.length],
-      speed: 1.5 + this.rnd() * 1.1,
+      speed: 1.2 + this.rnd() * 0.6,
       state: 'idle', timer: this.rnd() * 4,
       taught: 0, confused: 0, sparkT: 0, sparkCol: [1, 1, 1],
       phase: this.rnd() * TAU, bob: 0, fireCd: 3 + this.rnd() * 5,
@@ -260,7 +269,6 @@ class Life {
     return {
       id: i, home: 'summit', hx: x, hz: z, roam: 0,
       x, z, y: mtnHeight(x, z), yaw: 0,
-      mesh: this.studentMeshes[i % this.studentMeshes.length],
       speed: 9 + this.rnd() * 6, drift: this.rnd() * TAU, band,
       state: 'ride', timer: 0,
       taught: 0, confused: 0, sparkT: 0, sparkCol: [1, 1, 1],
@@ -487,6 +495,7 @@ class Life {
       }
 
       if (s.state === 'idle' && s.timer <= 0) {
+        s.sit = false;
         const p = this.randomPoint(s.hx, s.hz, s.roam);
         s.tx = p.x; s.tz = p.z;
         s.state = 'walk';
@@ -494,7 +503,10 @@ class Life {
       if (s.state === 'walk') {
         const dx = s.tx - s.x, dz = s.tz - s.z;
         const d = Math.hypot(dx, dz);
-        if (d < 0.6) { s.state = 'idle'; s.timer = 1.5 + this.rnd() * 5; }
+        if (d < 0.6) {
+          s.state = 'idle'; s.timer = 1.5 + this.rnd() * 5;
+          if (this.rnd() < 0.28) { s.sit = true; s.timer = 10 + this.rnd() * 18; }
+        }
         else {
           const sp = s.speed * (s.confused > 0 ? 0.55 : 1);
           const nx = s.x + (dx / d) * sp * dt, nz = s.z + (dz / d) * sp * dt;
@@ -530,12 +542,13 @@ class Life {
           if (best) {
             s.fireCd = tier.fire * (0.7 + this.rnd() * 0.6);
             s.yaw = Math.atan2(best.x - s.x, best.z - s.z);
-            const dx = best.x - s.x, dy = best.y - 1.5, dz = best.z - s.z;
+            const gy = groundH(s.x, s.z);
+            const dx = best.x - s.x, dy = best.y - (gy + 1.5), dz = best.z - s.z;
             const L = Math.hypot(dx, dy, dz) || 1;
             const spread = this.tier(s) === 3 ? 0.02 : 0.075;   // graduates aim better
             this.bolts.push({
               kind: 'student', chip: tier.chip, byTier: this.tier(s),
-              x: s.x, y: 1.5, z: s.z,
+              x: s.x, y: gy + 1.5, z: s.z,
               vx: (dx / L + (this.rnd() - 0.5) * spread) * 30,
               vy: (dy / L + (this.rnd() - 0.5) * spread) * 30,
               vz: (dz / L + (this.rnd() - 0.5) * spread) * 30,
@@ -609,7 +622,7 @@ class Life {
       if (d.hover) {
         const g = mtnHeight(d.x, d.z) + 8.5;
         d.y += (g - d.y) * (1 - Math.exp(-2.4 * dt));
-      } else d.y = clamp(d.y, d.boss ? 4.0 : 2.3, d.boss ? 6.5 : 5.2);
+      } else { const gy = groundH(d.x, d.z); d.y = clamp(d.y, gy + (d.boss ? 4.0 : 2.3), gy + (d.boss ? 6.5 : 5.2)); }
       d.yaw = Math.atan2(dx, dz);
 
       d.cooldown -= dt;
@@ -630,7 +643,7 @@ class Life {
             Math.hypot(s.x - d.x, s.z - d.z) < (armed ? 26 : 46) && s.confused <= 0);
           if (near.length) target = near[(this.rnd() * near.length) | 0];
         }
-        if (target) this.fireMisinfo(d, target.x, 1.3, target.z);
+        if (target) this.fireMisinfo(d, target.x, (this.mode === 'ride' ? target.y : groundH(target.x, target.z)) + 1.3, target.z);
         else if (armed && !grace && !incoming) this.fireMisinfo(d, cam.x, cam.y - 0.1, cam.z, true);
         else d.cooldown = 2.5;
       }
@@ -667,7 +680,7 @@ class Life {
         }
         if (b.life > 0) {
           for (const s of this.students) {
-            const hy = 1.15;
+            const hy = (this.mode === 'ride' ? s.y : groundH(s.x, s.z)) + 1.15;
             if ((b.x - s.x) ** 2 + (b.y - hy) ** 2 + (b.z - s.z) ** 2 < 1.15 * 1.15) {
               G.onInsightHitsStudent(s, b.qtype);
               b.life = 0;
@@ -683,7 +696,8 @@ class Life {
         } else {
           for (const s of this.students) {
             if (s.confused > 0) continue;
-            if ((b.x - s.x) ** 2 + (b.y - 1.15) ** 2 + (b.z - s.z) ** 2 < 1.0 * 1.0) {
+            const sy = (this.mode === 'ride' ? s.y : groundH(s.x, s.z)) + 1.15;
+            if ((b.x - s.x) ** 2 + (b.y - sy) ** 2 + (b.z - s.z) ** 2 < 1.0 * 1.0) {
               if (s.taught > 0) { s.taught = Math.max(0, s.taught - 1); s.sparkT = 0.5; s.sparkCol = [0.6, 0.9, 1]; }
               else { s.confused = 26 + this.rnd() * 20; s.line = pick(STUDENT_LINES.confused, this.rnd); s.lineT = 4; }
               b.life = 0;
@@ -707,52 +721,44 @@ class Life {
       const idleBob = Math.sin(time * 1.1 + s.phase) * 0.012;
       const y = this.mode === 'ride'
         ? s.y + Math.abs(Math.sin(s.bob)) * 0.06
-        : walkBob + idleBob;
+        : groundH(s.x, s.z) + walkBob + idleBob;
       const t = this.tier(s);
-      M4.trs(this.model, s.x, y, s.z, s.yaw, 1, 1, 1);
-      if (this.mode === 'ride') {
-        R.drawMesh(this.boardMesh, this.model, { tint: [1, 1, 1] });
-      }
-      const tint = s.confused > 0
-        ? [1.40, 0.60, 1.05]
-        : [1 + t * 0.10, 1 + t * 0.13, 1 + t * 0.16];
-      R.drawMesh(s.mesh.body, this.model, { tint });
-      // limbs: legs and arms swing in opposition while walking; riders crouch with arms out
       const ride = this.mode === 'ride';
-      const sw = ride ? 0 : (s.state === 'walk' ? Math.sin(s.bob) * 0.62 : Math.sin(time * 1.1 + s.phase) * 0.04);
-      const limbM = this.limbM || (this.limbM = M4.create());
-      const limb = (mesh, py, rx, rz) => {
-        M4.mul(limbM, this.model, xform([0, py, 0], [rx, 0, rz], [1, 1, 1]));
-        R.drawMesh(mesh, limbM, { tint });
-      };
-      limb(s.mesh.legL, s.mesh.hipY, ride ? 0.50 : sw, 0);
-      limb(s.mesh.legR, s.mesh.hipY, ride ? 0.50 : -sw, 0);
-      limb(s.mesh.armL, s.mesh.shY, ride ? -0.35 : -sw * 0.8, ride ? 0.85 : 0);
-      limb(s.mesh.armR, s.mesh.shY, ride ? -0.35 : sw * 0.8, ride ? -0.85 : 0);
+      M4.trs(this.model, s.x, y, s.z, s.yaw, 1, 1, 1);
+      if (ride) R.drawMesh(this.boardMesh, this.model, { tint: [1, 1, 1] });
+      const tint = s.confused > 0 ? [1.35, 0.7, 1.1] : WHITE3;
+      // pose: walking, standing, sitting in the grass, riding a board
+      const walking = s.state === 'walk';
+      const P = this._pose || (this._pose = {});
+      P.state = ride ? 'board' : walking ? 'walk' : (s.sit ? 'sitGround' : 'idle');
+      P.phase = s.bob * 1.15; P.speed = 0; P.t = time; P.seed = s.phase; P.lean = 0; P.aim = 0; P.hold = false; P.talk = 0;
+      P.lookYaw = 0; P.lookPitch = 0;
+      poseCharacter(s.ch, P, s.bones);
+      const bm = this.bodyM || (this.bodyM = M4.create());
+      if (ride) M4.mul(bm, this.model, xformTo(this.tmpX || (this.tmpX = M4.create()), 0, 0.07, 0, 0, Math.PI / 2, 0));
+      else bm.set(this.model);
+      R.drawMesh(s.ch.mesh, bm, { bones: s.bones, tint });
+      if (R.shadowPass && (s.x - cam.x) ** 2 + (s.z - cam.z) ** 2 > 60 * 60) continue;
 
       // worn marks of education — the whole win condition has to be readable
-      if (t >= 2) {
-        M4.trs(this.model, s.x, y + 1.20, s.z, s.yaw, 1, 1, 1);
-        R.drawMesh(this.marks.scarf, this.model, {});
-      }
+      const boneM = (i, ox, oy, oz, ry = 0, sc = 1) => {
+        const o = this.markM || (this.markM = M4.create());
+        M4.mul(o, bm, s.bones.subarray(i * 16, i * 16 + 16));
+        return M4.mul(this.markM2 || (this.markM2 = M4.create()), o, xform([ox, oy, oz], [0, ry, 0], [sc, sc, sc]));
+      };
+      const J = s.ch.J;
+      if (t >= 2) R.drawMesh(this.marks.scarf, boneM(BONE.CHEST, 0, J.neck - 0.1, 0.01, 0, 0.62), {});
       if (t >= 3) {
-        M4.trs(this.model, s.x, y + 1.12, s.z, s.yaw, 1, 1, 1);
-        R.drawMesh(this.marks.gown, this.model, {});
-        M4.trs(this.model, s.x, y + 1.64, s.z, s.yaw + 0.2, 1, 1, 1);
-        R.drawMesh(this.marks.cap, this.model, {});
+        R.drawMesh(this.marks.gown, boneM(BONE.CHEST, 0, J.neck - 0.34, -0.02, 0, 0.95), {});
+        R.drawMesh(this.marks.cap, boneM(BONE.HEAD, 0, 0.36, 0, 0.2, 0.85), {});
       }
-      if (t >= 1) {
-        const bx = s.x + Math.cos(s.yaw) * 0.40, bz = s.z - Math.sin(s.yaw) * 0.40;
-        M4.trs(this.model, bx, y + 1.02 + Math.sin(time * 1.6 + s.phase) * 0.045, bz,
-          s.yaw + Math.sin(time * 0.6 + s.phase) * 0.3, 1, 1, 1);
-        R.drawMesh(this.marks.book, this.model, {});
-      }
+      if (t >= 1) R.drawMesh(this.marks.book, boneM(BONE.HAND_R, 0, -0.02, 0.08, 0, 0.8), {});
     }
 
     for (const d of this.drones) {
       const k = d.dying > 0 ? Math.max(0.02, d.dying / 0.5) : 1;
       const spin = d.dying > 0 ? (1 - k) * 6 : 0;
-      const sc = k * (d.boss ? 1.9 : 1);
+      const sc = k * (d.boss ? 2.4 : 1.35);
       M4.trs(this.model, d.x, d.y, d.z, d.yaw + spin, sc, sc, sc);
       const flick = 0.9 + 0.35 * Math.sin(time * 21 + d.phase) * Math.sin(time * 7.3);
       R.drawMesh(this.droneMesh, this.model, { tint: [flick, flick * 0.9, flick] });

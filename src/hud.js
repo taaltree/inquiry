@@ -59,6 +59,7 @@ const HUD = {
 
     installCampusBackdrop();
     this.buildCompass();
+    this.initRadar(game);
     this.mapCtx = $('#mapc').getContext('2d');
 
     $$('[data-close]').forEach((b) => b.addEventListener('click', () => game.closeScreen(b.dataset.close)));
@@ -442,8 +443,91 @@ const HUD = {
     }
   },
 
-  /* ---------- minimap ---------- */
+  /* ---------- radar, area names, the full map ---------- */
+  initRadar(g) {
+    this.radarCtx = $('#radarc').getContext('2d');
+    this.mapImg = renderCampusMap(g.world);
+    const cv = $('#mapscreen-c');
+    this.msCtx = cv.getContext('2d');
+    this.ms = { cx: 0, cz: 0, zoom: 1.4, drag: null };
+    cv.addEventListener('pointerdown', (e) => { this.ms.drag = { x: e.clientX, y: e.clientY, cx: this.ms.cx, cz: this.ms.cz, moved: 0, btn: e.button }; cv.setPointerCapture(e.pointerId); });
+    cv.addEventListener('pointermove', (e) => {
+      const d = this.ms.drag; if (!d) return;
+      const dx = e.clientX - d.x, dy = e.clientY - d.y; d.moved = Math.abs(dx) + Math.abs(dy);
+      const s = this.ms.zoom * (cv.width / cv.clientWidth);
+      this.ms.cx = d.cx - dx / s * (cv.width / cv.clientWidth) * (cv.clientWidth / cv.width); this.ms.cz = d.cz - dy / s * (cv.width / cv.clientWidth) * (cv.clientWidth / cv.width);
+      this.drawMapScreen(g);
+    });
+    cv.addEventListener('pointerup', (e) => {
+      const d = this.ms.drag; this.ms.drag = null;
+      if (!d || d.moved > 6) return;
+      if (e.button === 2 || d.btn === 2) { g.userWaypoint = null; g.navTick = 99; this.drawMapScreen(g); return; }
+      const r = cv.getBoundingClientRect();
+      const sx = (e.clientX - r.left) * (cv.width / r.width), sy = (e.clientY - r.top) * (cv.height / r.height);
+      const x = this.ms.cx + (sx - cv.width / 2) / this.ms.zoom, z = this.ms.cz + (sy - cv.height / 2) / this.ms.zoom;
+      g.userWaypoint = { x, z, waypoint: true };
+      g.navTick = 99;
+      Sfx.blip();
+      this.drawMapScreen(g);
+    });
+    cv.addEventListener('contextmenu', (e) => e.preventDefault());
+    cv.addEventListener('wheel', (e) => { e.preventDefault(); this.ms.zoom = clamp(this.ms.zoom * (e.deltaY > 0 ? 0.87 : 1.15), 0.6, 6); this.drawMapScreen(g); }, { passive: false });
+  },
+
+  drawRadarHUD(g) {
+    if (!this.radarCtx) return;
+    const show = g.level === 'colloquium';
+    $('#radar').style.display = show ? '' : 'none';
+    if (!show) return;
+    drawRadar(this.radarCtx, 560 / 2 * 2, 360, g, this.mapImg, g.route);
+    const clarity = 1 - clamp(g.noise || 0, 0, 1);
+    $('#bar-clarity').style.setProperty('--v', `${(clarity * 100).toFixed(0)}%`);
+    $('#bar-clarity').style.setProperty('--c', clarity < 0.4 ? '#ff5f7a' : '#5fd07a');
+    $('#bar-cite').style.setProperty('--v', `${((1 - clamp((g.citeCd || 0) / 9, 0, 1)) * 100).toFixed(0)}%`);
+  },
+
+  /* the place you have just walked into, GTA-style, bottom right */
+  areaName(name, sub) {
+    if (this._areaNow === name) return;
+    this._areaNow = name;
+    if (!name) return;
+    $('#area-name').textContent = name; $('#area-sub').textContent = sub || '';
+    const el = $('#area'); el.classList.add('on');
+    clearTimeout(this._areaT); this._areaT = setTimeout(() => el.classList.remove('on'), 4200);
+  },
+
+  openMapScreen(g) {
+    const cv = $('#mapscreen-c');
+    cv.width = Math.round(cv.clientWidth * 1.5) || 1400; cv.height = Math.round(cv.clientHeight * 1.5) || 900;
+    this.ms.cx = g.cam.x; this.ms.cz = g.cam.z;
+    this.screen('mapscreen', true);
+    cv.width = Math.round(cv.clientWidth * 1.5); cv.height = Math.round(cv.clientHeight * 1.5);
+    this.drawMapScreen(g);
+  },
+
+  drawMapScreen(g) {
+    const cv = $('#mapscreen-c'), c = this.msCtx, W = cv.width, Hh = cv.height, z = this.ms.zoom;
+    c.fillStyle = '#44583a'; c.fillRect(0, 0, W, Hh);
+    const k = MAP_PX / MAP_M;
+    c.save();
+    c.translate(W / 2, Hh / 2); c.scale(z / k, z / k);
+    c.drawImage(this.mapImg, -mapX(this.ms.cx), -mapZ(this.ms.cz));
+    c.restore();
+    const S = (x, zz) => [W / 2 + (x - this.ms.cx) * z, Hh / 2 + (zz - this.ms.cz) * z];
+    if (g.route && g.route.length > 1) {
+      c.lineWidth = 6; c.lineJoin = 'round'; c.strokeStyle = g.navTarget && g.navTarget.waypoint ? '#c86bff' : '#ffd23a';
+      c.beginPath(); g.route.forEach(([x, zz], i) => { const [sx, sy] = S(x, zz); if (i) c.lineTo(sx, sy); else c.moveTo(sx, sy); }); c.stroke();
+    }
+    for (const b of collectBlips(g)) { const [sx, sy] = S(b.x, b.z); drawBlip(c, b.kind, sx, sy, b.col, b.label, 1.5); }
+    const [px, py] = S(g.cam.x, g.cam.z);
+    c.save(); c.translate(px, py); c.rotate(-(g.vehicle ? g.vehicle.yaw : g.bodyYaw) + Math.PI);
+    c.beginPath(); c.moveTo(0, -14); c.lineTo(10, 11); c.lineTo(0, 5); c.lineTo(-10, 11); c.closePath();
+    c.fillStyle = '#fff'; c.fill(); c.lineWidth = 2.5; c.strokeStyle = '#111'; c.stroke(); c.restore();
+  },
+
+  /* ---------- minimap (the old station map) ---------- */
   drawMap(g) {
+    if (typeof R_RING === 'undefined') return;       // replaced by the radar
     const c = this.mapCtx, S = 360, mid = S / 2;
     const scale = mid / 158;
     c.clearRect(0, 0, S, S);
@@ -849,9 +933,10 @@ const HUD = {
       const found = MARGINALIA.filter((m) => g.found[m.id]);
       const where = (m) => (DISTRICTS.find((d) => d.id === m.district) || { name: 'THE SUMMIT' }).name;
       body.innerHTML = `
-        <p class="prose" style="margin-bottom:16px">Objects, papers and specimens hidden in the margins
-        of the station — on the lofts, the islands, the balconies, the mezzanine — and beside the
-        session tents on the mountain. <em>${found.length} of ${MARGINALIA.length}</em> found.</p>
+        <p class="prose" style="margin-bottom:16px">Objects, papers and specimens left on lecterns around
+        the campus — by the apple tree, on the hilltop, in the glasshouse, on the green roof, down by the
+        river — and beside the session tents on the mountain. The map shows the ones near you.
+        <em>${found.length} of ${MARGINALIA.length}</em> found.</p>
         <div class="cols">${MARGINALIA.map((m) => g.found[m.id] ? `
           <div class="card"><h3>${esc(m.title)}</h3><p>${esc(m.text)}</p>
           <p style="font-size:10px;color:var(--dim);margin-top:8px;font-family:var(--mono);letter-spacing:.1em">

@@ -965,3 +965,57 @@ figure.portrait figcaption {
 .ic-c-note { font-family: var(--sans); font-size: 13.5px; line-height: 1.55; color: #dff3e7;
   letter-spacing: 0; margin-top: 7px; text-transform: none; }
 .ic-c-foot { font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em; color: #8fbfa5; margin-top: 7px; }
+
+/* ---- GTA-style radar, bottom left ---- */
+#map { display: none !important; }
+#compass { display: none !important; }
+#radar { position: absolute; left: 20px; bottom: 22px; width: 280px; height: 180px; pointer-events: none; }
+#radar canvas { width: 280px; height: 180px; display: block; border-radius: 10px;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.65), 0 6px 22px rgba(0,0,0,.45); }
+#radar-bars { display: flex; gap: 4px; margin-top: 5px; }
+#radar-bars i { display: block; height: 7px; background: rgba(0,0,0,.55); position: relative; overflow: hidden; border-radius: 1px; }
+#radar-bars i::after { content: ''; position: absolute; inset: 0; width: var(--v, 100%); background: var(--c); }
+#bar-clarity { flex: 2; --c: #5fd07a; }
+#bar-cite { flex: 1; --c: #ffd98a; }
+#area { position: absolute; right: calc(-100vw + 320px); bottom: 0; text-align: right; pointer-events: none;
+  opacity: 0; transition: opacity .6s; width: 60vw; }
+#area.on { opacity: 1; }
+#area b { display: block; font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 400; font-size: 34px;
+  color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.85), 0 0 2px #000; letter-spacing: .01em; }
+#area span { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .18em; color: rgba(255,255,255,.8);
+  text-shadow: 0 1px 6px rgba(0,0,0,.9); margin-top: 4px; }
+#log { left: 20px !important; bottom: auto !important; top: 196px; width: 300px; }
+#noise { display: none !important; }
+#slots { bottom: 16px; }
+
+/* ---- the full map ---- */
+#mapscreen { background: rgba(8,10,12,.94); display: none; }
+#mapscreen.on { display: block; }
+#mapscreen canvas { position: absolute; left: 3vw; top: 64px; width: 72vw; height: calc(100vh - 96px); border-radius: 8px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15); cursor: grab; }
+.ms-head { position: absolute; left: 3vw; top: 20px; display: flex; gap: 22px; align-items: baseline; }
+.ms-title { font-family: var(--mono); font-size: 18px; letter-spacing: .3em; color: #fff; }
+.ms-help { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; color: var(--dim); }
+.ms-legend { position: absolute; right: 3vw; top: 64px; width: 20vw; display: grid; gap: 12px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .08em; color: #d8dee8; }
+.ms-legend div { display: flex; align-items: center; gap: 10px; }
+.lg { display: inline-block; width: 14px; height: 14px; border: 2px solid #111; flex: none; }
+.lg.obj { background: #ffd23a; transform: rotate(45deg); }
+.lg.wp { background: #c86bff; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); }
+.lg.sci { background: #ff6a3c; border-radius: 50%; }
+.lg.vault { background: #57d6ff; }
+.lg.lib { background: #ffd98a; }
+.lg.drone { background: #ff3fa8; border-radius: 50%; }
+.lg.note { background: #f1e6c8; border-color: #6a5a3a; }
+.lg.bike { background: transparent; border-color: #e8eef4; border-radius: 50%; }
+
+/* ---- the title sits over the live campus ---- */
+#title { background: transparent !important; }
+#title-bg { background: linear-gradient(180deg, rgba(4,6,10,.55) 0%, rgba(4,6,10,.18) 32%, rgba(4,6,10,.35) 62%, rgba(4,6,10,.88) 100%) !important;
+  background-image: linear-gradient(180deg, rgba(4,6,10,.55) 0%, rgba(4,6,10,.18) 32%, rgba(4,6,10,.35) 62%, rgba(4,6,10,.88) 100%) !important; }
+
+#title { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+
+#stats .stat:nth-child(n+6) { display: none; }
+#stats { min-width: 150px; opacity: .92; }
+#stats .label { font-size: 9px; }

@@ -16,8 +16,8 @@ const QCOLOURS = [
 ];
 const EYE = 1.68;
 const LEVELS = [
-  { id: 'colloquium', n: 1, name: 'THE COLLOQUIUM', sub: 'A research station, on foot',
-    blurb: 'Twenty-four scientists across five discipline districts. Walk, interview, teach, and secure all five.' },
+  { id: 'colloquium', n: 1, name: 'THE COLLOQUIUM', sub: 'A university campus, on foot and on two wheels',
+    blurb: 'Twenty-four scientists across five departments, a Great Court, a river and a town. Walk or ride, interview, teach, and secure all five.' },
   { id: 'summit', n: 2, name: 'THE SUMMIT', sub: 'A mountain conference, on a snowboard',
     blurb: 'A residential meeting at altitude. Six professors hold sessions down the run, grad students ride it with you, and the feed is airborne. Ends at the poster session.' },
 ];
@@ -45,7 +45,7 @@ const ENV = {
 const ENV_SUMMIT = {
   // low winter sun, long shadows down the run
   sunDir: (() => { const v = [-0.48, 0.34, 0.81]; const L = Math.hypot(...v); return v.map((x) => x / L); })(),
-  sunCol: hex2rgb('#ffd9ae').map((c) => c * 1.55),
+  sunCol: hex2rgb('#ffd9ae').map((c) => c * 1.55 * Math.PI),
   sunDisc: hex2rgb('#fff1d6').map((c) => c * 1.0),
   ambSky: hex2rgb('#7fa6d8').map((c) => c * 0.62),
   ambGround: hex2rgb('#9fb8d8').map((c) => c * 0.58),   // light bouncing off snow
@@ -53,8 +53,9 @@ const ENV_SUMMIT = {
   fogDensity: 0.0021,
   skyTop: hex2rgb('#132747'),
   skyHorizon: hex2rgb('#c98f6b'),
-  shadows: true, grid: false, detail: 0.5, stars: 0,
-  post: { ao: 0.70, rays: 0.75, exposure: 1.05, bloomThreshold: 1.15 },
+  shadows: true, grid: false, detail: 0.5, stars: 0, night: 0, cloud: 0.35,
+  cloudLit: [1.0, 0.95, 0.9], cloudShade: [0.55, 0.62, 0.75],
+  post: { ao: 0.70, rays: 0.45, exposure: 0.72, bloomThreshold: 1.3, grade: 1 },
 };
 
 /* --- tiny UI synth: short tones, no music, no external assets --- */
@@ -129,7 +130,9 @@ class Game {
       const p = this.byId[s.id];
       const d = this.districtById[s.district];
       s.person = p;
-      s.mesh = buildFigure(gl, p, d.rgb, d.rgb2);
+      s.ch = buildCharacter(gl, scientistLook(p));
+      s.bones = newBones();
+      s.faceYaw = s.yaw;
       s.plate = makeNameplate(gl, p, d.accent, d.accent2);
       s.model = M4.create();
       s.phase = Math.random() * TAU;
@@ -161,6 +164,7 @@ class Game {
     this.particles = new Particles(2400);
     this.pulseMesh = buildPulseRing(gl);
     this.beaconMesh = buildBeacon(gl);
+    this.markerMesh = buildMissionMarker(gl);
     this.markMesh = buildCompleteMark(gl);
 
     /* ---- player ---- */
@@ -184,6 +188,7 @@ class Game {
     this.pulses = [];
     this.fx = { pulse: 0, pulseHue: 0, fade: 0, aberration: 1, bloom: 0.44, dim: 1 };
     this.time = 0;
+    this.hour = 17.35; this.clockRun = true;     // late afternoon: long light across the courts
     this.camAnim = null;
     this.visited = new Set();
     this.noise = 0; this.shake = 0; this.fireCd = 0;
@@ -201,6 +206,26 @@ class Game {
     this.pageMark = buildPageMark(gl);
     this.pickups = [];
 
+    /* third person: `cam` stays the player's own eye (gameplay); `view` is the
+       orbiting camera that actually renders */
+    this.camMode = 'third';
+    this.view = { x: 0, y: 2, z: 0, yaw: 0, pitch: 0, fov: 1.15, roll: 0, near: 0.2 };
+    this.viewInit = false;
+    this.bodyYaw = 0;
+    this.avatar = buildCharacter(gl, Object.assign(studentLook(4077), {
+      H: 1.76, build: 1.02, top: 'jacket', topCol: '#2e4058', bottom: 'jeans', bottomCol: '#273047',
+      backpack: '#6a4526', hair: 'short', hairCol: '#3a2a1c', skin: '#d6a47e', scarf: '#7a1f24', glasses: false, beard: false }));
+    this.avatarBones = newBones();
+    this.avatarM = M4.create();
+    this.anim = { phase: 0, speed: 0, aim: 0, air: 0 };
+    this.vehicles = (this.world.vehicles || []).map((v, i) => new Vehicle(gl, v, i));
+    this.traffic = new Traffic(gl);
+    this.vehicle = null;
+    this.lastLook = 0;
+    this.aimHeld = false; this.aimTimer = 0;
+
+    this.nav = new NavGraph(this.world);
+    this.route = null; this.navTarget = null; this.userWaypoint = null; this.navTick = 99;
     HUD.init(this);
     HUD.addCompassDistricts(DISTRICTS);
     this.bindInput();
@@ -219,7 +244,9 @@ class Game {
     for (const s of w.stations) {
       const p = this.byId[s.id];
       s.person = p;
-      s.mesh = buildFigure(gl, p, hex2rgb('#7fd4ff'), hex2rgb('#bfe6ff'));
+      s.ch = buildCharacter(gl, scientistLook(p));
+      s.bones = newBones();
+      s.faceYaw = s.yaw;
       s.plate = makeNameplate(gl, p, '#7fd4ff', '#cfe9ff');
       s.model = M4.create();
       s.phase = Math.random() * TAU;
@@ -243,11 +270,14 @@ class Game {
     } else {
       const e = this.worlds.colloquium;
       this.world = e.world; this.colliders = e.colliders;
+      if (this.vehicle) this.dismount(true);
       this.life = this.lives.colloquium;
-      this.cam.x = 12.5; this.cam.z = 12.5; this.cam.y = EYE;
-      this.footY = 0; this.vy = 0; this.grounded = true; this.zip = null;
-      this.lastSafe = { x: 12.5, z: 12.5, y: 0 };
-      this.cam.yaw = Math.PI / 4; this.cam.pitch = 0.10; this.cam.fov = 1.31;
+      const sp = this.world.spawn || { x: 0, z: 30, yaw: 0 };
+      this.cam.x = sp.x; this.cam.z = sp.z;
+      this.footY = groundH(sp.x, sp.z); this.cam.y = this.footY + EYE;
+      this.vy = 0; this.grounded = true; this.zip = null;
+      this.lastSafe = { x: sp.x, z: sp.z, y: this.footY };
+      this.cam.yaw = sp.yaw; this.cam.pitch = 0.04; this.cam.fov = 1.15;
       this.cam.roll = 0; this.rideRoll = 0;
     }
     this.noise = 0; this.target = null; this.talking = null; this.camAnim = null;
@@ -380,7 +410,7 @@ class Game {
     /* ---- look: drag when unlocked, raw delta when locked ---- */
     cv.addEventListener('pointerdown', (e) => {
       if (this.mode === 'title' || this.mode === 'intercept' || this.anyScreenOpen()) return;
-      if (e.button === 2) return;                       // right button handled below
+      if (e.button === 2) { this.aimHeld = true; return; }   // hold to aim over the shoulder
       try { cv.setPointerCapture(e.pointerId); } catch (err) { /* pointer already gone */ }
       L.down = true;
       L.moved = 0;
@@ -391,6 +421,7 @@ class Game {
     });
 
     const applyLook = (dx, dy, sens) => {
+      this.lastLook = performance.now();
       this.cam.yaw -= dx * sens;
       const dp = dy * sens * (L.invert ? -1 : 1);
       this.cam.pitch = clamp(this.cam.pitch - dp, -1.35, 1.35);
@@ -423,15 +454,14 @@ class Game {
     };
     cv.addEventListener('pointerup', endPointer);
     cv.addEventListener('pointercancel', endPointer);
-    cv.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      if (this.mode === 'play' && !this.anyScreenOpen()) this.interact();
-    });
+    cv.addEventListener('contextmenu', (e) => e.preventDefault());
+    window.addEventListener('pointerup', (e) => { if (e.button === 2) this.aimHeld = false; });
 
     /* ---- keyboard ---- */
     window.addEventListener('keydown', (e) => {
       const k = e.key.toLowerCase();
       if (k === 'tab') { e.preventDefault(); this.toggleCodex(); return; }
+      if (k === 'm' && document.getElementById('mapscreen').classList.contains('on')) { HUD.screen('mapscreen', false); return; }
       if (k === 'escape') {
         if (this.mode === 'intercept') { e.preventDefault(); if (this.intercept.done) this.closeIntercept(); }
         else if (this.anyScreenOpen()) { e.preventDefault(); this.closeAllScreens(); }
@@ -471,13 +501,18 @@ class Game {
         return;
       }
       if (k === 'c') { e.preventDefault(); this.cite(); return; }
+      if (k === 'v' && this.level !== 'summit') {
+        this.camMode = this.camMode === 'third' ? 'first' : 'third';
+        HUD.toast(this.camMode === 'third' ? 'THIRD PERSON' : 'FIRST PERSON', 'V to switch');
+        return;
+      }
       if (k === 'q') { this.cycleSlot(-1); return; }
       if (k === 'r') { this.cycleSlot(1); return; }
-      if (k === 'm') { this.route(); return; }
+      if (k === 'm') { this.toggleMap(); return; }
     });
 
     window.addEventListener('keyup', (e) => { this.keys[e.key.toLowerCase()] = false; });
-    window.addEventListener('blur', () => { this.keys = {}; this.look.down = false; });
+    window.addEventListener('blur', () => { this.keys = {}; this.look.down = false; this.aimHeld = false; });
     window.addEventListener('wheel', (e) => {
       if (this.mode !== 'play' || this.anyScreenOpen()) return;
       this.cycleSlot(e.deltaY > 0 ? 1 : -1);
@@ -532,11 +567,11 @@ class Game {
   }
 
   anyScreenOpen() {
-    return ['codex', 'quiz', 'synth', 'endgame', 'win', 'poster', 'levels', 'pause'].some((id) => document.getElementById(id).classList.contains('on'));
+    return ['codex', 'quiz', 'synth', 'endgame', 'win', 'poster', 'levels', 'pause', 'mapscreen'].some((id) => document.getElementById(id).classList.contains('on'));
   }
 
   closeAllScreens() {
-    ['codex', 'quiz', 'synth', 'endgame', 'win', 'poster'].forEach((id) => this.closeScreen(id));
+    ['codex', 'quiz', 'synth', 'endgame', 'win', 'poster', 'mapscreen'].forEach((id) => this.closeScreen(id));
   }
 
   closeScreen(id) {
@@ -562,6 +597,7 @@ class Game {
     HUD.screen('title', false);
     HUD.screen('levels', false);
     this.enterLevel(levelId || 'colloquium');
+    if ((levelId || 'colloquium') === 'colloquium') { this.hour = 17.25; this.clockRun = true; }
     document.getElementById('hud').classList.add('on');
     this.mode = 'play';
     this.fx.fade = 0;
@@ -569,10 +605,10 @@ class Game {
     this.refreshSecured();
     HUD.showSlots(true, [], this.selSlot, this.ammo());
     HUD.controlMode(this.look.locked ? 'lock' : 'drag');
-    HUD.log('<b>ARRIVAL</b> — atrium of the Colloquium. Twenty-four records online.');
+    HUD.log('<b>ARRIVAL</b> — the Great Court. Twenty-four scientists are on campus today.');
     HUD.log('Your Codex carries five questions. All five, on everyone, is the goal.');
     Sfx.open();
-    this.route();
+    this.navTick = 99;
   }
 
   /* ================= interaction ================= */
@@ -594,6 +630,7 @@ class Game {
     };
 
     for (const s of this.world.stations) consider({ kind: 'person', s }, s.x, s.z, 9.5, 0.62);
+    if (!this.vehicle) for (const v of (this.vehicles || [])) consider({ kind: 'vehicle', v }, v.x, v.z, 3.0, -0.2);
     if (this.level === 'summit' && this.world.finish) {
       const f = this.world.finish;
       // the marquee is a place you stand in, not something you aim at
@@ -603,11 +640,14 @@ class Game {
       if (!this.districtDone(v.district)) continue;
       consider({ kind: 'vault', v }, v.x, v.z, 8.0, 0.72);
     }
-    if (this.countInterviews() >= 2 || this.allSecured()) consider({ kind: 'synth' }, 0, 0, 9.0, 0.55);
+    const sy = this.world.synth || { x: 0, z: 0 };
+    if (this.countInterviews() >= 2 || this.allSecured()) consider({ kind: 'synth' }, sy.x, sy.z, 9.0, 0.55);
     return best;
   }
 
   interact() {
+    if (this.vehicle) { this.dismount(); return; }
+    if (this.target && this.target.kind === 'vehicle') { this.mount(this.target.v); return; }
     const nz = this.level !== 'summit' && !this.zip ? this.nearZip() : null;
     if (nz) { this.startZip(nz); return; }
     const t = this.target;
@@ -820,12 +860,20 @@ class Game {
     }
     this.fireCd = 0.26;
     const c = this.cam, bs = this.basis || this.camBasis();
-    const fwd = [-bs.back[0], -bs.back[1], -bs.back[2]];
-    const muzzle = [
+    let fwd = [-bs.back[0], -bs.back[1], -bs.back[2]];
+    let muzzle = [
       c.x + bs.right[0] * 0.50 + bs.up[0] * -0.40 + fwd[0] * 1.0,
       c.y + bs.right[1] * 0.50 + bs.up[1] * -0.40 + fwd[1] * 1.0,
       c.z + bs.right[2] * 0.50 + bs.up[2] * -0.40 + fwd[2] * 1.0,
     ];
+    if (this.camMode === 'third' && this.level !== 'summit') {
+      // from the book in the hand toward whatever the crosshair is on
+      this.aimTimer = 1.4;
+      const hp = this.handWorld ? this.handWorld : [c.x, this.footY + 1.3, c.z];
+      const ap = this.aimPoint();
+      const dx = ap[0] - hp[0], dy = ap[1] - hp[1], dz = ap[2] - hp[2], L = Math.hypot(dx, dy, dz) || 1;
+      muzzle = hp.slice(); fwd = [dx / L, dy / L, dz / L];
+    }
     const col = QCOLOURS[this.selSlot];
     this.life.fireInsight(muzzle, fwd, q.key, col);
     // page-glyph burst off the codex
@@ -1382,13 +1430,59 @@ class Game {
   allSecured() { return DISTRICTS.every((d) => this.secured[d.id]); }
   securedCount() { return DISTRICTS.filter((d) => this.secured[d.id]).length; }
 
-  /* the "recalculate route" key */
-  route() {
-    const next = this.nextObjective();
-    if (next) {
-      HUD.log(`<b>ROUTE</b> — ${esc(next.title)}`);
-      Sfx.blip();
+  toggleMap() {
+    if (this.level !== 'colloquium' || this.mode === 'title') return;
+    const on = document.getElementById('mapscreen').classList.contains('on');
+    if (on) HUD.screen('mapscreen', false);
+    else { document.exitPointerLock(); HUD.openMapScreen(this); Sfx.open(); }
+  }
+
+  /* where the GPS should take you: your own waypoint, or the next thing to do */
+  computeNavTarget() {
+    if (this.userWaypoint) {
+      if (Math.hypot(this.userWaypoint.x - this.cam.x, this.userWaypoint.z - this.cam.z) < 6) {
+        this.userWaypoint = null; HUD.toast('WAYPOINT REACHED', ''); Sfx.blip();
+      } else return this.userWaypoint;
     }
+    const c = this.cam;
+    const byDist = DISTRICTS.slice().sort((a, b) => Math.hypot(a.cx - c.x, a.cz - c.z) - Math.hypot(b.cx - c.x, b.cz - c.z));
+    const here = byDist.find((d) => !this.secured[d.id] && Math.hypot(d.cx - c.x, d.cz - c.z) < R_PLATFORM + 25);
+    const order = here ? [here, ...byDist.filter((d) => d !== here)] : byDist;
+    for (const d of order) {
+      const left = this.world.stations.filter((s) => s.district === d.id && (this.progress[s.id] || []).length < 5);
+      if (left.length) {
+        left.sort((a, b) => Math.hypot(a.x - c.x, a.z - c.z) - Math.hypot(b.x - c.x, b.z - c.z));
+        return { x: left[0].x, z: left[0].z, label: left[0].person.name };
+      }
+      const v = this.vaultAnswers[d.id] || {};
+      if (Object.keys(v).length < VAULTS[d.id].questions.length) {
+        const vt = this.world.vaults.find((x) => x.district === d.id);
+        return { x: vt.x, z: vt.z, label: 'Insight Vault · ' + d.short };
+      }
+    }
+    return { x: this.world.synth.x, z: this.world.synth.z, label: 'The Library' };
+  }
+
+  updateNav(dt) {
+    this.navTick += dt;
+    if (this.level !== 'colloquium') { this.route = null; this.navTarget = null; return; }
+    if (this.navTick < 0.75) return;
+    this.navTick = 0;
+    this.navTarget = this.computeNavTarget();
+    const t = this.navTarget;
+    this.route = t ? this.nav.route(this.cam.x, this.cam.z, t.x, t.z) : null;
+    // the area you are in, GTA-style
+    let area = null;
+    for (const d of DISTRICTS) if (Math.hypot(d.cx - this.cam.x, d.cz - this.cam.z) < 48) area = [d.short, d.sub];
+    if (!area) {
+      const x = this.cam.x, z = this.cam.z;
+      if (Math.abs(x) < 60 && Math.abs(z) < 60) area = ['Great Court', 'The heart of the college'];
+      else if (x < -175) area = ['The Backs', 'Lawns running down to the river'];
+      else if (z > 190) area = ["King's Parade", 'The town street'];
+      else if (z < -180) area = ['The Playing Fields', 'Cricket in summer, mud in winter'];
+      else if (x > 240) area = ['Parkside', 'The east road'];
+    }
+    HUD.areaName(area ? area[0] : null, area ? area[1] : '');
   }
 
   focusDistrict() {
@@ -1448,7 +1542,7 @@ class Game {
      -Infinity means void. */
   groundAt(x, z, footY) {
     let g = -Infinity;
-    if (isWalkable(x, z)) g = 0;
+    if (isWalkable(x, z)) g = this.level === 'summit' ? 0 : groundH(x, z);
     for (const s of (this.world.slabs || [])) {
       if (s.y <= footY + STEP && s.y > g && this.slabHas(s, x, z)) g = s.y;
     }
@@ -1467,6 +1561,12 @@ class Game {
     if (this.groundAt(x, z, this.footY) === -Infinity) return false;
     if (this.wallAt(x, z, this.footY)) return false;
     for (const c of this.colliders) {
+      if (c.obb) {
+        if (this.footY > c.y0 + c.h - 0.2) continue;
+        const dx = x - c.x, dz = z - c.z, co = Math.cos(c.yaw), s = Math.sin(c.yaw);
+        if (Math.abs(dx * co - dz * s) < c.hw + PLAYER_R && Math.abs(dx * s + dz * co) < c.hd + PLAYER_R) return false;
+        continue;
+      }
       const rr = c.r + PLAYER_R;
       if ((x - c.x) ** 2 + (z - c.z) ** 2 < rr * rr) return false;
     }
@@ -1488,9 +1588,24 @@ class Game {
     }
     const preX = px, preZ = pz;
 
-    for (let iter = 0; iter < 3; iter++) {
+    [px, pz] = this.pushOut(px, pz, PLAYER_R, this.footY, null);
+    for (let iter = 0; iter < 0; iter++) {
       let hit = false;
       for (const col of this.colliders) {
+        if (col.obb) {
+          if (this.footY > col.y0 + col.h - 0.2) continue;       // standing on top of it
+          const dx = px - col.x, dz = pz - col.z;
+          if (Math.abs(dx) > col.hw + col.hd + 2 || Math.abs(dz) > col.hw + col.hd + 2) continue;
+          const c = Math.cos(col.yaw), s = Math.sin(col.yaw);
+          const lx = dx * c - dz * s, lz = dx * s + dz * c;
+          const ex = col.hw + PLAYER_R, ez = col.hd + PLAYER_R;
+          if (Math.abs(lx) >= ex || Math.abs(lz) >= ez) continue;
+          let nlx = lx, nlz = lz;
+          if (ex - Math.abs(lx) < ez - Math.abs(lz)) nlx = Math.sign(lx || 1) * ex; else nlz = Math.sign(lz || 1) * ez;
+          px = col.x + nlx * c + nlz * s; pz = col.z - nlx * s + nlz * c;
+          hit = true;
+          continue;
+        }
         const ex = px - col.x, ez = pz - col.z;
         const rr = col.r + PLAYER_R;
         const d2 = ex * ex + ez * ez;
@@ -1633,7 +1748,8 @@ class Game {
     if (mag > 0) { ix /= mag; iz /= mag; }
 
     const sprint = (K['shift'] === true) && mag > 0;
-    const speed = sprint ? 12.2 : 6.4;
+    const tp = this.camMode === 'third';
+    const speed = sprint ? (tp ? 9.6 : 11.5) : (tp ? 5.4 : 6.2);
 
     const fx = -Math.sin(c.yaw), fz = -Math.cos(c.yaw);
     const rx = Math.cos(c.yaw), rz = -Math.sin(c.yaw);
@@ -1652,15 +1768,177 @@ class Game {
     if (Math.abs(c.z - bz) < Math.abs(this.vel.z * dt) * 0.5) this.vel.z *= 0.3;
     this.updateVertical(dt);
 
-    // head bob and lean
+    // the body turns toward where it is going, or toward the aim
     const spd = Math.hypot(this.vel.x, this.vel.z);
+    const aiming = this.aimHeld || this.aimTimer > 0;
+    const faceYaw = aiming ? c.yaw + Math.PI : (spd > 0.6 ? Math.atan2(this.vel.x, this.vel.z) : this.bodyYaw);
+    this.bodyYaw = this.shortestYaw(this.bodyYaw, faceYaw);
+    this.bodyYaw += (faceYaw - this.bodyYaw) * (1 - Math.exp(-(aiming ? 18 : 10) * dt));
+    this.bodyYaw = this.shortestYaw(0, this.bodyYaw);
+    const runK = clamp((spd - 3.2) / 5, 0, 1);
+    this.anim.speed += (runK - this.anim.speed) * (1 - Math.exp(-6 * dt));
+    this.anim.phase += spd * dt * Math.PI / lerp(0.78, 1.2, runK);
+    this.anim.air = this.grounded ? 0 : 1;
+    // head bob and lean (first person)
     this.bobAmt += (Math.min(spd / 6.4, 1.35) - this.bobAmt) * (1 - Math.exp(-9 * dt));
     this.bob += dt * spd * 1.42;
     this.sway += ((ix * -0.022) - this.sway) * (1 - Math.exp(-7 * dt));
     const targetFov = 1.31 + (sprint ? 0.10 : 0) * Math.min(spd / 9, 1);
     c.fov += (targetFov - c.fov) * (1 - Math.exp(-6 * dt));
     const airK = this.grounded ? 1 : 0.15;
-    c.y = this.footY + EYE + Math.sin(this.bob * 2) * 0.036 * this.bobAmt * airK - this.landT * 0.35;
+    const bobK = this.camMode === 'third' ? 0 : 1;
+    c.y = this.footY + EYE + (Math.sin(this.bob * 2) * 0.036 * this.bobAmt * airK - this.landT * 0.35) * bobK;
+  }
+
+  /* ---------- vehicles ---------- */
+  mount(v) {
+    this.vehicle = v;
+    v.speed = 0;
+    this.vel.x = this.vel.z = 0;
+    this.cam.x = v.x; this.cam.z = v.z; this.footY = v.y;
+    this.cam.yaw = v.yaw + Math.PI;
+    Sfx.tone(v.type === 'bike' ? 900 : 160, 0.12, v.type === 'bike' ? 'triangle' : 'sawtooth', 0.02, v.type === 'bike' ? 1200 : 220);
+    HUD.toast(v.type === 'bike' ? 'ON THE BIKE' : 'IN THE CART', 'W / S · A D steer · Shift to pedal hard · E to get off');
+  }
+
+  dismount(silent) {
+    const v = this.vehicle;
+    if (!v) return;
+    this.vehicle = null;
+    let [x, z] = v.dismountPoint();
+    if (!this.canStand(x, z)) { x = v.x - (x - v.x); z = v.z - (z - v.z); }
+    if (!this.canStand(x, z)) { x = v.x; z = v.z; }
+    this.cam.x = x; this.cam.z = z; this.footY = groundH(x, z); this.cam.y = this.footY + EYE;
+    this.vel.x = Math.sin(v.yaw) * v.speed * 0.3; this.vel.z = Math.cos(v.yaw) * v.speed * 0.3;
+    v.speed = 0; v.lean = 0; v.updateModel();
+    this.bodyYaw = v.yaw;
+    this.grounded = true;
+    if (!silent) Sfx.tone(500, 0.1, 'triangle', 0.02, 300);
+  }
+
+  updateVehicle(dt) {
+    const v = this.vehicle, K = this.keys, c = this.cam;
+    let steer = 0;
+    if (K['a'] || K['arrowleft']) steer += 1;
+    if (K['d'] || K['arrowright']) steer -= 1;
+    v.drive({ throttle: !!(K['w'] || K['arrowup']), brake: !!(K['s'] || K['arrowdown']), steer, sprint: !!K['shift'] }, dt, this);
+    c.x = v.x; c.z = v.z; this.footY = v.y; c.y = v.y + 1.6;
+    // like GTA: when you stop steering the camera, it swings back behind you
+    if (performance.now() - this.lastLook > 1400 && Math.abs(v.speed) > 1.5) {
+      const want = this.shortestYaw(c.yaw, v.yaw + Math.PI + v.steer * 0.35);
+      c.yaw += (want - c.yaw) * (1 - Math.exp(-2.2 * dt));
+      c.pitch += (-0.12 - c.pitch) * (1 - Math.exp(-1.5 * dt));
+    }
+    const sp = Math.abs(v.speed);
+    c.fov += (1.15 + Math.min(0.2, sp / 60) - c.fov) * (1 - Math.exp(-3 * dt));
+    this.vel.x = Math.sin(v.yaw) * v.speed; this.vel.z = Math.cos(v.yaw) * v.speed;
+    this.grounded = true;
+  }
+
+  /* push a circle of radius r out of everything solid */
+  pushOut(px, pz, r, footY, skip) {
+    for (let iter = 0; iter < 3; iter++) {
+      let hit = false;
+      for (const col of this.colliders) {
+        if (col.obb) {
+          if (footY > col.y0 + col.h - 0.2) continue;
+          const dx = px - col.x, dz = pz - col.z;
+          if (Math.abs(dx) > col.hw + col.hd + r + 2 || Math.abs(dz) > col.hw + col.hd + r + 2) continue;
+          const c = Math.cos(col.yaw), s = Math.sin(col.yaw);
+          const lx = dx * c - dz * s, lz = dx * s + dz * c;
+          const ex = col.hw + r, ez = col.hd + r;
+          if (Math.abs(lx) >= ex || Math.abs(lz) >= ez) continue;
+          let nlx = lx, nlz = lz;
+          if (ex - Math.abs(lx) < ez - Math.abs(lz)) nlx = Math.sign(lx || 1) * ex; else nlz = Math.sign(lz || 1) * ez;
+          px = col.x + nlx * c + nlz * s; pz = col.z - nlx * s + nlz * c;
+          hit = true;
+          continue;
+        }
+        const ex = px - col.x, ez = pz - col.z, rr = col.r + r, d2 = ex * ex + ez * ez;
+        if (d2 >= rr * rr) continue;
+        const d = Math.sqrt(d2) || 1e-4;
+        px += (ex / d) * (rr - d); pz += (ez / d) * (rr - d);
+        hit = true;
+      }
+      for (const v of (this.vehicles || [])) {
+        if (v === skip || v === this.vehicle) continue;
+        const ex = px - v.x, ez = pz - v.z, rr = v.P.r + r, d2 = ex * ex + ez * ez;
+        if (d2 >= rr * rr) continue;
+        const d = Math.sqrt(d2) || 1e-4;
+        px += (ex / d) * (rr - d); pz += (ez / d) * (rr - d);
+        hit = true;
+      }
+      if (!hit) break;
+    }
+    return [px, pz];
+  }
+
+  /* GTA-style follow camera: over the right shoulder, pulled in by walls,
+     tighter and lower when aiming. In first person, or while talking, it is
+     simply the player's eye. */
+  updateView(dt) {
+    const c = this.cam, V = this.view;
+    const orbit = this.camMode === 'third' && this.level !== 'summit' && this.mode !== 'talk' && !this.camAnim && this.mode !== 'title';
+    this.aimTimer = Math.max(0, this.aimTimer - dt);
+    const aimT = (this.aimHeld || this.aimTimer > 0.6) && orbit ? 1 : 0;
+    this.anim.aim += (aimT - this.anim.aim) * (1 - Math.exp(-10 * dt));
+    if (!orbit) {
+      V.x = c.x; V.y = c.y; V.z = c.z; V.yaw = c.yaw; V.pitch = c.pitch; V.fov = c.fov; V.roll = c.roll || 0; V.near = 0.08;
+      this.viewInit = false;
+      return;
+    }
+    const a = this.anim.aim;
+    const sprint = this.keys['shift'] && Math.hypot(this.vel.x, this.vel.z) > 6;
+    const dist = lerp(this.vehicle ? this.vehicle.camDist : 3.9, 1.9, a) + (sprint ? 0.6 : 0);
+    const shoulder = this.vehicle ? 0 : lerp(0.42, 0.6, a);
+    const cy = Math.cos(c.yaw), sy = Math.sin(c.yaw), cp = Math.cos(c.pitch), sp = Math.sin(c.pitch);
+    const fx = -sy * cp, fy = sp, fz = -cy * cp, rx = cy, rz = -sy;
+    const baseY = this.vehicle ? this.vehicle.y + this.vehicle.camH : this.footY + lerp(1.62, 1.58, a);
+    const px = c.x + rx * shoulder, py = baseY, pz = c.z + rz * shoulder;
+    // pull in against buildings between the pivot and the camera
+    let t = 1;
+    const ex = px - fx * dist, ey = py - fy * dist, ez = pz - fz * dist;
+    for (const o of this.colliders) {
+      if (!o.obb) continue;
+      const dx0 = px - o.x, dz0 = pz - o.z;
+      if (Math.abs(dx0) > o.hw + o.hd + dist + 2 || Math.abs(dz0) > o.hw + o.hd + dist + 2) continue;
+      const co = Math.cos(o.yaw), si = Math.sin(o.yaw);
+      const ax = dx0 * co - dz0 * si, az = dx0 * si + dz0 * co;
+      const dx1 = ex - o.x, dz1 = ez - o.z;
+      const bx = dx1 * co - dz1 * si, bz = dx1 * si + dz1 * co;
+      let t0 = 0, t1 = 1;
+      const slab = (p0, p1, h) => {
+        const d = p1 - p0;
+        if (Math.abs(d) < 1e-6) return p0 > -h && p0 < h;
+        let u0 = (-h - p0) / d, u1 = (h - p0) / d;
+        if (u0 > u1) { const tt = u0; u0 = u1; u1 = tt; }
+        t0 = Math.max(t0, u0); t1 = Math.min(t1, u1);
+        return t0 <= t1;
+      };
+      if (!slab(ax, bx, o.hw + 0.25) || !slab(az, bz, o.hd + 0.25)) continue;
+      const yHit = py + (ey - py) * t0;
+      if (yHit > o.y0 + o.h) continue;
+      t = Math.min(t, Math.max(0, t0));
+    }
+    const d = Math.max(0.5, dist * t - (t < 1 ? 0.25 : 0));
+    let tx = px - fx * d, ty = py - fy * d, tz = pz - fz * d;
+    ty = Math.max(ty, groundH(tx, tz) + 0.35);
+    if (!this.viewInit) { V.x = tx; V.y = ty; V.z = tz; this.viewInit = true; }
+    const k = 1 - Math.exp(-(t < 1 ? 26 : 14) * dt);
+    V.x += (tx - V.x) * k; V.y += (ty - V.y) * k; V.z += (tz - V.z) * k;
+    V.yaw = c.yaw; V.pitch = c.pitch; V.roll = 0; V.near = 0.2;
+    V.fov = lerp(c.fov, 0.92, a);
+  }
+
+  /* the point under the crosshair, for aiming from the hand */
+  aimPoint() {
+    const V = this.view;
+    const fwd = [-Math.sin(V.yaw) * Math.cos(V.pitch), Math.sin(V.pitch), -Math.cos(V.yaw) * Math.cos(V.pitch)];
+    let D = 45;
+    const d = this.aimDrone(), s = this.aimStudent();
+    const hit = d || s;
+    if (hit) D = Math.hypot(hit.x - V.x, (hit.y != null ? hit.y : 1.2) - V.y, hit.z - V.z);
+    return [V.x + fwd[0] * D, V.y + fwd[1] * D, V.z + fwd[2] * D];
   }
 
   applyCamAnim(dt) {
@@ -1725,12 +2003,30 @@ class Game {
       }
     }
 
+    if (this.mode === 'title' && this.level === 'colloquium') {
+      const t = this.time * 0.035;
+      const R = 112, cx = 0, cz = -6;
+      this.hour = 18.2;
+      this.cam.x = cx + Math.cos(t + 2.0) * R; this.cam.z = cz + Math.sin(t + 2.0) * R;
+      this.cam.y = 34 + Math.sin(t * 1.7) * 6;
+      this.cam.yaw = Math.atan2(this.cam.x - cx, this.cam.z - cz);
+      this.cam.pitch = -Math.atan2(this.cam.y - 6, R); this.cam.fov = 0.9;
+      this.view.x = this.cam.x; this.view.y = this.cam.y; this.view.z = this.cam.z;
+      this.view.yaw = this.cam.yaw; this.view.pitch = this.cam.pitch; this.view.fov = this.cam.fov; this.view.near = 0.3;
+      this.fx.fade += (1 - this.fx.fade) * (1 - Math.exp(-1.2 * dt));
+    }
     const paused = this.mode === 'intercept';
     if (this.mode === 'play' && !this.anyScreenOpen() && !this.camAnim && !paused) {
-      if (this.level === 'summit') this.updateRider(dt); else this.updatePlayer(dt);
+      if (this.level === 'summit') this.updateRider(dt);
+      else if (this.vehicle) this.updateVehicle(dt);
+      else this.updatePlayer(dt);
       this.updatePickups(dt);
     }
     this.applyCamAnim(dt);
+    this.updateView(dt);
+    if (this.mode === 'play') this.updateNav(dt);
+    this._radarT = (this._radarT || 0) + dt;
+    if (this._radarT > 0.05 && this.mode !== 'title') { this._radarT = 0; HUD.drawRadarHUD(this); }
     HUD.tickHit();
 
     // targeting
@@ -1764,16 +2060,15 @@ class Game {
       HUD.objectivePanel(this);
       if (this.mode === 'play') HUD.showSlots(true, [], this.selSlot, this.ammo());
       const done = new Set(DISTRICTS.filter((d) => this.districtDone(d.id)).map((d) => d.id));
-      if (this.level === 'colloquium') {
-        HUD.updateCompass(this.cam.yaw, this.cam.x, this.cam.z, done);
-        HUD.drawMap(this);
-      }
+      void done;
     }
 
     // living world + combat
     if (this.mode !== 'title' && !paused) this.life.update(dt, this.time);
+    if (this.level === 'colloquium' && !paused) this.traffic.update(dt, this);
     if (!paused) this.updateParticles(dt);
     this.fireCd = Math.max(0, this.fireCd - dt);
+    if (this.clockRun && this.mode !== 'title') this.hour = (this.hour + dt / 120) % 24;
     this.citeCd = Math.max(0, (this.citeCd || 0) - dt);
     this.noise = Math.max(0, this.noise - dt * 0.040);
     this.shake = Math.max(0, this.shake - dt * 2.2);
@@ -1860,6 +2155,11 @@ class Game {
       HUD.prompt(this.level !== 'summit' && !this.zip && this.nearZip() ? '<kbd>E</kbd> ride the line' : '');
       return;
     }
+    if (t.kind === 'vehicle') {
+      HUD.setReticle('near', 0, t.v.type === 'bike' ? 'BICYCLE' : 'CAMPUS CART', 'BORROWED, NOT STOLEN');
+      HUD.prompt(`<kbd>E</kbd> ${t.v.type === 'bike' ? 'ride the bike' : 'drive the cart'}`);
+      return;
+    }
     if (t.kind === 'poster') {
       const st = this.summitStatus();
       const n = st.tasks.filter((x) => x.n >= x.of).length;
@@ -1895,15 +2195,19 @@ class Game {
      once for real. drawMesh() routes to the depth program while a shadow
      pass is open, so this one function serves both. */
   drawOpaque(R, c) {
+    const gl = this.gl;
+    R.useLeaf(false);
     if (this.world.terrain) R.drawMesh(this.world.terrain, IDENT);
-    R.drawMesh(this.world.mesh, IDENT);
+    if (this.world.chunks) R.drawChunks(this.world.chunks);
+    else if (this.world.mesh) R.drawMesh(this.world.mesh, IDENT);
+    if (this.world.water && !R.shadowPass) R.drawMesh(this.world.water, IDENT);
     for (const p of this.pickups) {
       if (this.found[p.item.id]) continue;
       M4.trs(this.tmpM2, p.x, p.y + Math.sin(this.time * 1.7 + p.x) * 0.08, p.z, this.time * 1.4 + p.z, 1, 1, 1);
       R.drawMesh(this.pageMark, this.tmpM2);
     }
 
-    for (const s of this.world.spinners) {
+    for (const s of (this.world.spinners || [])) {
       const a = this.time * s.speed;
       const m = s.spinZ
         ? xform(s.pivot, [0, s.yawFix || 0, a], [1, 1, 1])
@@ -1914,16 +2218,67 @@ class Game {
     for (const s of this.world.stations) {
       const dx = s.x - c.x, dz = s.z - c.z;
       if (dx * dx + dz * dz > 145 * 145) continue;
-      const bobY = Math.sin(this.time * 0.9 + s.phase) * 0.022;
-      const turn = Math.sin(this.time * 0.32 + s.phase) * 0.10;
-      const isTarget = this.target && this.target.kind === 'person' && this.target.s === s;
+      // they turn toward you as you come close, and talk with their hands
+      const px = this.cam.x - s.x, pz = this.cam.z - s.z, pd = Math.hypot(px, pz);
       const talking = this.talking === s;
-      M4.trs(s.model, s.x, (s.y || 0) + 0.38 + bobY, s.z, s.yaw + turn, 1, 1, 1);
-      const glowUp = talking ? 1.55 : isTarget ? 1.28 : 1;
-      R.drawMesh(s.mesh, s.model, { holo: true, emissive: 0.26 * glowUp, tint: [glowUp, glowUp, glowUp] });
+      const want = pd < 9 ? Math.atan2(px, pz) : s.yaw;
+      s.faceYaw = this.shortestYaw(s.faceYaw, want);
+      if (!R.shadowPass) s.faceYaw += (want - s.faceYaw) * 0.04;
+      const P = this._sPose || (this._sPose = {});
+      P.state = 'idle'; P.t = this.time; P.seed = s.phase; P.talk = talking ? 1 : pd < 7 ? 0.45 : 0.12; P.aim = 0; P.hold = false;
+      P.phase = 0; P.speed = 0; P.lookYaw = 0; P.lookPitch = talking ? 0.05 : 0;
+      poseCharacter(s.ch, P, s.bones);
+      M4.trs(s.model, s.x, (s.y || 0) + (this.level === 'summit' ? 0.3 : 0.08), s.z, s.faceYaw, 1, 1, 1);
+      R.drawMesh(s.ch.mesh, s.model, { bones: s.bones });
     }
 
     this.life.draw(R, c, this.basis, this.time);
+    if (this.level === 'colloquium') {
+      for (const v of this.vehicles) {
+        if ((v.x - c.x) ** 2 + (v.z - c.z) ** 2 > 160 * 160) continue;
+        R.drawMesh(v.mesh, v.model);
+      }
+      this.traffic.draw(R, c);
+    }
+    this.drawAvatar(R);
+    if (this.world.foliage) {
+      R.useLeaf(true);
+      if (!R.shadowPass) gl.disable(gl.CULL_FACE);
+      R.drawChunks(this.world.foliage);
+      if (!R.shadowPass) gl.enable(gl.CULL_FACE);
+      R.useLeaf(false);
+    }
+  }
+
+  drawAvatar(R) {
+    if (this.level === 'summit' || this.mode === 'title') return;
+    const third = this.camMode === 'third' && this.mode !== 'talk';
+    if (!third && !R.shadowPass) return;               // in first person you still cast a shadow
+    const v = this.vehicle;
+    const P = {
+      state: v ? v.pose : (this.grounded ? (Math.hypot(this.vel.x, this.vel.z) > 0.4 ? 'walk' : 'idle') : 'air'),
+      phase: this.anim.phase, speed: this.anim.speed, t: this.time, aim: this.anim.aim, hold: true,
+      crank: v ? v.crank : 0, seat: v ? v.seat : 0,
+    };
+    poseCharacter(this.avatar, P, this.avatarBones);
+    if (v) M4.mul(this.avatarM, v.model, xformTo(this.tmpM2, 0, v.riderY || 0, v.riderZ || 0, 0, 0, 0));
+    else M4.trs(this.avatarM, this.cam.x, this.footY, this.cam.z, this.bodyYaw, 1, 1, 1);
+    R.drawMesh(this.avatar.mesh, this.avatarM, { bones: this.avatarBones });
+    // the Codex in the right hand
+    const hand = this.avatarBones.subarray(BONE.HAND_R * 16, BONE.HAND_R * 16 + 16);
+    const hm = M4.mul(this.tmpM, this.avatarM, hand);
+    this.handWorld = [hm[12], hm[13], hm[14]];
+    const bookM = M4.mul(this.tmpM2, hm, xform([0, -0.02, 0.1], [lerp(-1.3, -0.2, this.anim.aim), 0, lerp(0.2, 0, this.anim.aim)], [0.55, 0.55, 0.55]));
+    R.drawMesh(this.codex.body, bookM);
+    const qc = QCOLOURS[this.selSlot], armed = this.unlockedTypes().includes(QTYPES[this.selSlot].key);
+    const gk = armed ? 1.0 + this.fx.pulse * 1.6 : 0.2;
+    if (!R.shadowPass) R.drawMesh(this.codex.sigil, bookM, { tint: [qc[0] * gk, qc[1] * gk, qc[2] * gk] });
+  }
+
+  envNow() {
+    if (this.level === 'summit') return ENV_SUMMIT;
+    const e = todEnv(this.hour);
+    return e;
   }
 
   draw() {
@@ -1941,20 +2296,29 @@ class Game {
         col: [1.0, 0.96, 0.90], range: 8.5, intensity: 1.6,
       }]);
     }
-    const c = this.cam;
-    const env = this.level === 'summit' ? ENV_SUMMIT : ENV;
+    const c = this.view.yaw === undefined ? this.cam : this.view;
+    if (!this.viewInit && !(this.camMode === 'third')) Object.assign(this.view, { x: this.cam.x, y: this.cam.y, z: this.cam.z, yaw: this.cam.yaw, pitch: this.cam.pitch, fov: this.cam.fov });
+    const env = this.envNow();
+    this.env = env;
     this.basis = this.camBasis();
     const { right, up, back } = this.basis;
-    R.setLights(lightSet, c.x, c.y, c.z);
+    R.setLights(lightSet, c.x, c.y, c.z, env.night || 0);
 
-    /* --- 1. shadow map --- */
-    R.beginShadow(c, env);
-    this.drawOpaque(R, c);
-    R.endShadow();
+    /* --- 1. shadow cascades --- */
+    R.time = this.time;
+    R.renderShadows(c, env, () => this.drawOpaque(R, c));
 
     /* --- 2. scene: sky + opaque --- */
     R.beginScene(c, env, this.time);
     this.drawOpaque(R, c);
+
+    /* --- 2b. glass panes: alpha-blended, both sides --- */
+    if (this.world.glass) {
+      gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.depthMask(false); gl.disable(gl.CULL_FACE); R.gbufWrite(false); R.useSceneProgram();
+      R.drawMesh(this.world.glass, IDENT);
+      gl.enable(gl.CULL_FACE); gl.depthMask(true); gl.disable(gl.BLEND); R.gbufWrite(true);
+    }
 
     /* --- 3. transparent: beacons, glows, particles, billboards --- */
     gl.enable(gl.BLEND);
@@ -1969,14 +2333,12 @@ class Game {
       const asked = (this.progress[s.id] || []).length;
       const d = this.districtById[s.district];
       if (asked < 5) {
-        const fade = clamp((dist - 5) / 10, 0, 1) * (1 - asked / 6.5);
-        if (fade > 0.01) {
-          M4.trs(this.tmpM, s.x, (s.y || 0), s.z, 0, 1, 1, 1);
-          R.drawMesh(this.beaconMesh, this.tmpM,
-            { alpha: 0.055 * fade * (0.8 + 0.2 * Math.sin(this.time * 2 + s.phase)), tint: d.rgb });
-        }
+        const near = clamp((dist - 3) / 6, 0, 1);
+        const pulse = 0.75 + 0.25 * Math.sin(this.time * 2.4 + s.phase);
+        M4.trs(this.tmpM, s.x, (s.y || 0) + 0.02, s.z, this.time * 0.3, 1.25, 1, 1.25);
+        R.drawMesh(this.markerMesh, this.tmpM, { alpha: 0.32 * pulse * near * (1 - asked / 7), tint: d.rgb });
       } else {
-        M4.trs(this.tmpM, s.x, (s.y || 0) + 2.9 + Math.sin(this.time * 1.1 + s.phase) * 0.10, s.z, this.time * 0.5, 1, 1, 1);
+        M4.trs(this.tmpM, s.x, (s.y || 0) + s.ch.J.H + 0.75 + Math.sin(this.time * 1.1 + s.phase) * 0.08, s.z, this.time * 0.5, 0.55, 0.55, 0.55);
         R.drawMesh(this.markMesh, this.tmpM, { alpha: 0.85, tint: d.rgb2 });
       }
     }
@@ -1997,31 +2359,18 @@ class Game {
       const a = clamp((62 - dist) / 18, 0, 1) * clamp((dist - 2.2) / 2, 0, 1);
       if (a < 0.02) continue;
       const sc = 1 + Math.min(dist / 42, 0.55);
-      R.drawBillboard(s.plate, [s.x, (s.y || 0) + 2.62, s.z], 3.0 * sc, 0.875 * sc, [1, 1, 1, a], 0.3, this.basis);
-    }
-    for (const d of (this.level === 'colloquium' ? DISTRICTS : [])) {
-      const dist = Math.hypot(d.cx - c.x, d.cz - c.z);
-      if (dist > 190) continue;
-      const gx = d.cx - Math.cos(d.angle) * (R_PLATFORM - 4);
-      const gz = d.cz - Math.sin(d.angle) * (R_PLATFORM - 4);
-      const gd = Math.hypot(gx - c.x, gz - c.z);
-      const a = clamp((150 - gd) / 40, 0, 1);
-      if (a < 0.02) continue;
-      R.drawBillboard(d.signTex, [gx, 11.5, gz], 26, 8.7, [1, 1, 1, a], 0.25, this.basis);
+      R.drawBillboard(s.plate, [s.x, (s.y || 0) + s.ch.J.H + 0.62, s.z], 2.4 * sc, 0.7 * sc, [1, 1, 1, a], 0.2, this.basis);
     }
     for (const v of this.world.vaults) {
       const dist = Math.hypot(v.x - c.x, v.z - c.z);
-      if (dist > 80) continue;
+      if (dist > 60) continue;
       const ready = this.districtDone(v.district);
-      const a = clamp((80 - dist) / 22, 0, 1) * (ready ? 1 : 0.4);
-      R.drawBillboard(v.tex, [v.x, 10.4, v.z], 13, 3.05, [1, 1, 1, a], ready ? 0.4 : 0, this.basis);
+      const a = clamp((60 - dist) / 18, 0, 1) * (ready ? 1 : 0.5);
+      R.drawBillboard(v.tex, [v.x, (v.y || 0) + 5.2, v.z], 7.5, 1.75, [1, 1, 1, a], ready ? 0.3 : 0, this.basis);
     }
-    if (this.level === 'colloquium') {
-      const dist = Math.hypot(c.x, c.z);
-      if (dist < 70 && dist > 6) {
-        const a = clamp((70 - dist) / 26, 0, 1);
-        R.drawBillboard(this.atriumTex, [0, 13.8, 0], 14, 3.3, [1, 1, 1, a], 0.35, this.basis);
-      }
+    if (this.level === 'colloquium' && this.world.synth) {
+      const S = this.world.synth, dist = Math.hypot(S.x - c.x, S.z - c.z);
+      if (dist < 60 && dist > 4) R.drawBillboard(this.atriumTex, [S.x, 4.6, S.z], 7.5, 1.75, [1, 1, 1, clamp((60 - dist) / 20, 0, 1)], 0.2, this.basis);
     }
 
     gl.depthMask(true);
@@ -2068,6 +2417,7 @@ class Game {
       R.post(postState);
       return;
     }
+    if (this.camMode === 'third' && this.mode !== 'talk') { R.post(postState); return; }
     /* the Codex: a large open tome; the sigil on the right page is the muzzle */
     this.pageTurn = Math.max(0, this.pageTurn - Math.max(0, this.time - this._pt) * 3.4); this._pt = this.time;
     const sel = this.selSlot;

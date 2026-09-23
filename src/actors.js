@@ -487,3 +487,26 @@ function buildPageMark(gl) {
   b.add(BOX, xform([-0.15, 0.20, 0.011], [0, 0, 0.08], [0.06, 0.06, 0.004]), gilt, 1.6, 0.3, 0.9);
   return b.upload(gl);
 }
+
+/* A GTA-style mission marker: a soft cylinder of light standing on a ring,
+   brightest at the ground. Drawn additively, tinted per department. */
+function buildMissionMarker(gl) {
+  const b = new Builder(512);
+  const M = mat(0, [1, 1, 1], { glow: 1.0 });
+  const seg = 36, R0 = 1.05, H = 1.5;
+  b.reserve((seg + 1) * 2, seg * 6);
+  const base = b.n;
+  for (let i = 0; i <= seg; i++) {
+    const a = (i / seg) * TAU, c = Math.cos(a), s = Math.sin(a);
+    b.vert(c * R0, 0, s * R0, c, 0, s, Object.assign({}, M, { glow: 1.4 }), 0, 0);
+    b.vert(c * R0, H, s * R0, c, 0, s, Object.assign({}, M, { glow: 0.0 }), 0, 1);
+  }
+  for (let i = 0; i < seg; i++) {
+    const a = base + i * 2, c2 = a + 2;
+    b.i[b.ni++] = a; b.i[b.ni++] = c2; b.i[b.ni++] = a + 1;
+    b.i[b.ni++] = a + 1; b.i[b.ni++] = c2; b.i[b.ni++] = c2 + 1;
+  }
+  b.add(pRing(0.86, 48), xform([0, 0.03, 0], [0, 0, 0], [R0 * 2.1, 1, R0 * 2.1]), mat(0, [1, 1, 1], { glow: 2.2 }));
+  b.add(pRing(0.9, 48), xform([0, 0.03, 0], [0, 0, 0], [R0 * 1.3, 1, R0 * 1.3]), mat(0, [1, 1, 1], { glow: 1.4 }));
+  return b.upload(gl);
+}

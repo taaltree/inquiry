@@ -154,10 +154,9 @@ function makeProgram(gl, vsSrc, fsSrc, name) {
   return p;
 }
 
-/* Vertex layout shared by every 3D mesh in the game:
-   position(3) normal(3) colour(3) glow(1) roughness(1) metalness(1)
-   = 12 floats / 48 bytes */
-const STRIDE = 12;
+/* Vertex layout shared by every 3D mesh in the game (see geom.js):
+   pos3 nrm3 col3 glow1 rough1 metal1 uv2 layer1 kind1 = 16 floats / 64 bytes */
+const STRIDE = 16;
 
 function uploadMesh(gl, verts, idx) {
   const vao = gl.createVertexArray();
@@ -173,13 +172,15 @@ function uploadMesh(gl, verts, idx) {
   gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, bs, 24);
   gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, bs, 36);
   gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 2, gl.FLOAT, false, bs, 40);
+  gl.enableVertexAttribArray(5); gl.vertexAttribPointer(5, 2, gl.FLOAT, false, bs, 48);
+  gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6, 2, gl.FLOAT, false, bs, 56);
 
   const ebo = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
 
   gl.bindVertexArray(null);
-  return { vao, count: idx.length, u32: idx instanceof Uint32Array };
+  return { vao, vbo, count: idx.length, u32: idx instanceof Uint32Array };
 }
 
 function makeTargetTex(gl, w, h, internal, format, type, filter) {
@@ -246,6 +247,21 @@ function makeFBO(gl, w, h, opts = {}) {
   if (status !== gl.FRAMEBUFFER_COMPLETE) console.warn('FBO incomplete', status, opts);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   return out;
+}
+
+/* a mipmapped 2D texture array, filled later by rendering into its layers */
+function makeArrayTex(gl, size, layers, internal, levels) {
+  const t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D_ARRAY, t);
+  gl.texStorage3D(gl.TEXTURE_2D_ARRAY, levels, internal, size, size, layers);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  const an = gl.getExtension('EXT_texture_filter_anisotropic');
+  if (an) gl.texParameterf(gl.TEXTURE_2D_ARRAY, an.TEXTURE_MAX_ANISOTROPY_EXT,
+    Math.min(8, gl.getParameter(an.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+  return t;
 }
 
 /* canvas2d -> GL texture, used for every piece of world-space text */

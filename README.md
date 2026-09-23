@@ -1,14 +1,15 @@
 # INQUIRY — a first-person science interview
 
-An FPS-shaped exploration game where the weapon is a question. You walk a research station and
-interview thirty historical and contemporary scientists; the goal is to reconstruct how they knew
-what they knew, not to memorise what they found. Then they ask *you* something.
+An open-world game on a university campus where the weapon is a question. You walk — or cycle,
+or drive a campus cart — around a Cambridge-style college and interview thirty historical and
+contemporary scientists; the goal is to reconstruct how they knew what they knew, not to memorise
+what they found. Then they ask *you* something.
 
 **▶ Play it: https://taaltree.github.io/inquiry/**
 
-Built as a single self-contained HTML file. No dependencies, no network calls, no build-time
-assets — the renderer, the world, the figures, the portraits and every piece of text are generated
-in code. Needs a keyboard and mouse.
+Built as a single self-contained HTML file. No dependencies, no network calls, no image or model
+files — the renderer, every texture, the buildings, trees, people and every piece of text are
+generated in code. Needs a keyboard and mouse.
 
 ```bash
 npm run build     # validates the content, then bundles src/ into dist/
@@ -36,10 +37,19 @@ To add a scientist, edit the relevant `src/data/<district>.json` (the schema is 
 
 ## Two levels
 
-**Level 1 — THE COLLOQUIUM.** A research station, on foot. Twenty-four scientists across five
-discipline districts, each secured by interviewing its researchers, sealing its vault, educating
-its students and clearing its feed — the last drone of which is a **Peer Review**. All five opens
-the Convocation.
+**Level 1 — THE COLLOQUIUM.** A university campus, on foot and on two wheels. A Great Court with a
+library, a chapel, a clock tower and a gatehouse; five departments around it (Foundry Hall, the
+Observatory on its hill, the Helix Building and its glasshouse, the Lattice Laboratory, the Engine
+House); the river and the Backs to the west; playing fields to the north; the town street to the
+south. Twenty-four scientists, each department secured by interviewing its researchers, sealing its
+vault, educating its students and clearing its feed — the last drone of which is a **Peer Review**.
+All five opens the Convocation at the library.
+
+**Moving through it, the GTA way.** A third-person camera over your shoulder (V for first person),
+right-click to aim, a rotating radar with blips and a GPS route to your next objective, a full map
+(M) where a click drops a waypoint, area names as you walk into places, bicycles and campus carts
+to borrow (E), traffic on the town roads, and a time-of-day clock that takes the campus from
+golden hour through dusk to a starlit night with lit windows and street lamps.
 
 **Level 2 — THE SUMMIT.** A residential conference at altitude where everyone gets between
 sessions on a snowboard, so the level is one continuous descent. Six professors hold sessions
@@ -73,18 +83,15 @@ around: a short scenario in their own mode of inference, four answers, one right
 explains itself once chosen. A right answer earns their **endorsement**; a wrong one costs nothing
 but is remembered. Thirty such questions, none of which repeat the vault material.
 
-**A world worth climbing.** The atrium has a mezzanine up two staircases with a zipline out to
-every district. Each district has a loft up a flight of stairs, a jump pad that throws you onto a
-floating island over the void, and a balcony off the outer ring reached by zipline from the loft.
-Thirty **marginalia** — objects, papers and specimens from the scientists' real work, each with a
-short note — are hidden on those lofts, islands, balconies, kiosks and the mezzanine, and beside
-the session tents on the mountain. They persist in the Codex. Falling off the station puts you
-back on the deck, nothing worse.
+**A campus worth exploring.** Thirty **marginalia** — objects, papers and specimens from the
+scientists' real work, each with a short note — wait on lecterns around the campus: under Newton's
+apple tree, on the Observatory's hill and its meridian line, inside the glasshouse, on the Engine
+House's green roof (up the outside stair), by the river, at the bus stop, and beside the session
+tents on the mountain. The radar shows the ones near you; they persist in the Codex.
 
-**Structure.** A pentagonal station: a central atrium ringed by five discipline districts
-(Foundry / Observatory / Helix / Lattice / Engine), joined by radial causeways and an outer
-ring walkway. Each district holds 4–6 scientists, a signature megastructure, and an Insight
-Vault that unseals once everyone there has been fully interviewed.
+**Structure.** Each department holds 4–6 scientists standing around its forecourt, marked by a
+glowing ring in the department's colour, and an Insight Vault — its front door — that unseals once
+everyone there has been fully interviewed.
 
 **Assessment is reasoning, not recall.** The 15 vault questions never ask for a name or a date.
 They ask which experimental design would distinguish two hypotheses, what a result does and
@@ -171,22 +178,45 @@ voices are dramatisations. The marginalia describe real objects and papers and a
 accurate about dates, places and what was shown. This is stated on the title screen. It is a
 doorway to the primary literature, not a citable source.
 
+## How it looks the way it does
+
+- **Materials are procedural textures** rendered on the GPU at load into a 28-layer texture array
+  with normal maps: limestone ashlar, red and gault brick, slate, clay tile, lawn, gravel, York
+  stone, granite setts, asphalt, board-marked concrete, timber, sash and gothic tracery windows,
+  curtain walling, shopfronts, leaves, needles, willow strands, bark, hedge, copper, lead.
+- **Buildings come from a kit**: facades are built bay by bay with recessed windows and real
+  reveals, sills, hood moulds, string courses, quoins, cornices, crenellated parapets, gable and hip
+  roofs with dormers and chimneys, turrets, pinnacled buttresses, porticoes, domes and arches.
+- **Trees** are trunks, limbs and crowns of alpha-cut leaf cards whose normals bend toward the
+  crown's centre, so they light like a volume and cast dappled shadows.
+- **The renderer** has two shadow cascades, PBR shading with normal maps, a sky with a cloud deck
+  and a sun, moon and stars, aerial perspective that melts distant buildings into the sky behind
+  them, water, lit windows at night, SSAO, bloom, god rays, filmic tone mapping and FXAA.
+- **People** are skinned: every student, scientist and you are one mesh on a twelve-bone rig,
+  posed procedurally — walking, running, sitting on the grass, cycling, driving, aiming, talking.
+
 ## Layout
 
 ```
 src/
-  core.js      math, GL plumbing, mesh upload, framebuffers, canvas→texture
-  geom.js      primitive generators + transform-baking mesh builder (pos, normal, colour, glow, roughness, metalness)
-  render.js    the frame pipeline: shadow map → PBR scene with g-buffer → SSAO → bloom → god rays → graded composite
-  fx.js        the particle pool (discs and streaks)
-  world.js     procedural station: districts, causeways, landmarks, and the traversal layer (stairs, lofts, islands, pads, ziplines, lecterns)
-  actors.js    scientist figures, nameplates, the Codex viewmodel, floating pages
+  core.js      math, GL plumbing, mesh upload, framebuffers, texture arrays
+  geom.js      primitives, materials, a transform-baking builder with texture-aligned UVs, chunking
+  textures.js  the procedural material library (GPU-generated, mipmapped texture arrays)
+  render.js    shadow cascades → PBR scene + g-buffer → sky → SSAO → bloom → rays → composite → FXAA
+  tod.js       the time-of-day clock: sun, moon, sky, clouds, fog, exposure, lamps and windows
+  arch.js      the architecture kit: facades, roofs, towers, porticoes, domes, chapel, glasshouse
+  flora.js     trees (ten species) and hedges
+  props.js     lamps, benches, bike racks, cars, the fountain, the phone box, punts, café tables
+  world.js     the campus: terrain, river, roads and paths, every building, planting, gameplay anchors
+  rig.js       skinned characters and their procedural animation
+  actors.js    nameplates, the Codex, mission markers
+  vehicles.js  bicycles, campus carts, and traffic on the town roads
+  nav.js       the GPS graph, the pre-drawn campus map, the radar and the full map
   portrait.js  procedural duotone portrait plates
-  campus.js    the title-screen collegiate court, drawn procedurally
   mountain.js  level 2: heightfield terrain, lodge, lift, snowboard physics
-  life.js      articulated student crowd + education tiers, Feed Drones, Peer Review, projectiles
-  hud.js       reticle, waypoints, boss bar, dialogue + challenges, codex, quizzes, synthesis, pause
-  game.js      player physics (jump, ledges, pads, ziplines), input, interaction, main loop, save/load
+  life.js      the student crowd + education tiers, Feed Drones, Peer Review, projectiles
+  hud.js       reticle, radar, waypoints, dialogue + challenges, codex, quizzes, synthesis, pause, map
+  game.js      player, third-person camera, vehicles, input, interaction, main loop, save/load
   style.css    HUD styling
   body.html    markup
   data/        one JSON file per district, plus summit.json (level 2 professors),
@@ -196,13 +226,11 @@ build.mjs      validates the content, then fuses everything into dist/
 
 ## Technical notes
 
-Hand-rolled WebGL2. One static mesh for the whole station in a single draw call, plus animated
-spinners, figures and a crowd. The renderer is a small deferred-ish pipeline: a 2048² shadow map
-with hardware PCF, a physically based scene pass (GGX, hemisphere ambient, the 16 nearest lights)
-that also writes a normal/depth g-buffer, half-resolution SSAO, quarter-resolution bloom and
-god rays, and a single composite with split-tone grading, ACES, vignette, chromatic aberration,
-grain and the mind-pollution distortion. Resolution scales itself down if frame time stays above
-~26 ms. Progress saves to `localStorage`; the codex has a reset button.
+Hand-rolled WebGL2. The campus is about 830,000 vertices of static geometry plus 250,000 of foliage,
+baked into 64-metre chunks that are frustum-culled and drawn front to back, so a typical frame
+draws around 120 chunks and culls the rest; on a recent laptop it renders in a few milliseconds.
+Resolution scales itself down if frame time stays above ~26 ms. Progress saves to `localStorage`;
+the codex has a reset button.
 
 ## Controls, and why they are built the way they are
 
@@ -212,8 +240,10 @@ runs when published. So it is treated as a bonus, never a requirement:
 - **Drag to look** works everywhere — hold the left button and move.
 - **True mouselook** engages automatically if a lock request succeeds.
 - **Arrow keys** turn and walk, so the whole game is playable with no mouse at all.
-- **Space** jumps; **Shift** sprints. **Click / F** fires the Codex; **E / right-click** interviews
-  and grabs ziplines; **1–5, Q R, wheel** choose the question; **Tab** opens the Codex; **Esc** pauses.
+- **Space** jumps; **Shift** sprints (or pedals hard). **Click / F** fires the Codex; **hold right-click**
+  to aim over the shoulder; **V** switches third and first person; **E** interviews, and gets on or off
+  a bike or cart; **1–5, Q R, wheel** choose the question; **C** cites a scientist; **M** opens the map;
+  **Tab** opens the Codex; **Esc** pauses.
 
 Look sensitivity and invert-Y are on the title screen and persist. Needs a keyboard — there is no
 touch scheme, and the title screen says so on a coarse pointer.

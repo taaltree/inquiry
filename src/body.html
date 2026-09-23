@@ -73,8 +73,12 @@
     <div id="ctrl-hint"></div>
 
     <div id="map" class="panel">
-      <div class="label">Station</div>
       <canvas id="mapc" width="360" height="360"></canvas>
+    </div>
+    <div id="radar">
+      <canvas id="radarc" width="560" height="360"></canvas>
+      <div id="radar-bars"><i id="bar-clarity"></i><i id="bar-cite"></i></div>
+      <div id="area"><b id="area-name"></b><span id="area-sub"></span></div>
     </div>
   </div>
 
@@ -121,7 +125,7 @@
             stroke-width="1.6" opacity=".65"/></svg>
         </div>
         <h1 class="title">INQUIRY</h1>
-        <div class="subtitle">The Colloquium · a first-person science interview</div>
+        <div class="subtitle">A science game on a university campus · on foot, by bike, by question</div>
         <p class="pitch">
           A shooter where the weapon is a question. Walk a university campus, interview
           <strong>24 real scientists</strong> about how they actually knew what they knew, then use
@@ -216,11 +220,14 @@
         <div><kbd>Drag</kbd> / mouse</div><div>look</div>
         <div><kbd>W A S D</kbd> / arrows</div><div>move</div>
         <div><kbd>Shift</kbd></div><div>sprint</div>
-        <div><kbd>Space</kbd></div><div>jump — stairs, lofts and islands are all reachable</div>
+        <div><kbd>Space</kbd></div><div>jump</div>
+        <div><kbd>Right-click</kbd> hold</div><div>aim over the shoulder</div>
         <div><kbd>Click</kbd> / <kbd>F</kbd></div><div>fire the Codex</div>
+        <div><kbd>V</kbd></div><div>third / first person</div>
+        <div><kbd>M</kbd></div><div>campus map — click to set a waypoint</div>
         <div><kbd>C</kbd></div><div>cite a scientist you interviewed — beats any claim they have answered</div>
         <div><kbd>1</kbd>–<kbd>5</kbd> · <kbd>Q</kbd> <kbd>R</kbd> · wheel</div><div>choose a question</div>
-        <div><kbd>E</kbd> / right-click</div><div>interview · ride a zipline</div>
+        <div><kbd>E</kbd></div><div>interview · borrow a bike or cart · get off</div>
         <div><kbd>Tab</kbd></div><div>Field Codex</div>
         <div><kbd>Esc</kbd></div><div>pause</div>
       </div>
@@ -229,6 +236,18 @@
         <button class="btn ghost" id="btn-pause-codex">Codex</button>
         <button class="btn ghost" id="btn-pause-levels">Level select</button>
       </div>
+    </div>
+  </div>
+
+  <div class="screen" id="mapscreen">
+    <div class="ms-head"><span class="ms-title">CAMPUS MAP</span>
+      <span class="ms-help">Drag to pan · wheel to zoom · click to set a waypoint · right-click clears · M or Esc to close</span></div>
+    <canvas id="mapscreen-c"></canvas>
+    <div class="ms-legend">
+      <div><i class="lg obj"></i>Next objective</div><div><i class="lg wp"></i>Your waypoint</div>
+      <div><i class="lg sci"></i>Scientist to interview</div><div><i class="lg vault"></i>Insight Vault (unsealed)</div>
+      <div><i class="lg lib"></i>Library — synthesis</div><div><i class="lg drone"></i>Feed drone</div>
+      <div><i class="lg note"></i>Marginalia nearby</div><div><i class="lg bike"></i>Bike to borrow</div>
     </div>
   </div>
 

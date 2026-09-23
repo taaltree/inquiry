@@ -100,7 +100,8 @@ function buildMountain(gl, roster) {
       verts.push(pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2],
                  nrm[v * 3], nrm[v * 3 + 1], nrm[v * 3 + 2],
                  col[v * 3], col[v * 3 + 1], col[v * 3 + 2], glow[v],
-                 0.88, 0.0);                       // snow: rough, dielectric
+                 0.88, 0.0,                        // snow: rough, dielectric
+                 0, 0, 0, 0);                      // no texture layer, standard surface
     }
     // the terrain is its own mesh so it can use a 32-bit index buffer
     var terrainMesh = uploadMesh(gl, new Float32Array(verts), new Uint32Array(idx));
