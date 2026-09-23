@@ -159,6 +159,15 @@ function drawBlip(c, kind, x, y, col, label, s = 1) {
     c.fillStyle = '#f1e6c8'; c.fillRect(-4 * s, -5 * s, 8 * s, 10 * s); c.strokeStyle = '#6a5a3a'; c.lineWidth = 1.2; c.strokeRect(-4 * s, -5 * s, 8 * s, 10 * s);
   } else if (kind === 'bike') {
     c.strokeStyle = '#e8eef4'; c.lineWidth = 1.6; c.beginPath(); c.arc(-4 * s, 2 * s, 3 * s, 0, TAU); c.arc(4 * s, 2 * s, 3 * s, 0, TAU); c.stroke();
+  } else if (kind === 'book') {
+    c.fillStyle = '#b0282a'; c.fillRect(-4 * s, -5.5 * s, 8 * s, 11 * s); c.strokeStyle = '#ffd98a'; c.lineWidth = 1.5; c.strokeRect(-4 * s, -5.5 * s, 8 * s, 11 * s);
+  } else if (kind === 'sbike') {
+    c.shadowColor = '#8fd0ff'; c.shadowBlur = 6; c.strokeStyle = '#bfe6ff'; c.lineWidth = 2; c.beginPath(); c.arc(-4.5 * s, 2 * s, 3.4 * s, 0, TAU); c.arc(4.5 * s, 2 * s, 3.4 * s, 0, TAU); c.stroke(); c.shadowBlur = 0;
+  } else if (kind === 'board') {
+    c.fillStyle = col; c.fillRect(-5 * s, -4 * s, 10 * s, 8 * s); c.lineWidth = 1.6; c.strokeStyle = '#111'; c.strokeRect(-5 * s, -4 * s, 10 * s, 8 * s);
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(0, -2 * s, 1.4 * s, 0, TAU); c.fill();
+  } else if (kind === 'ramp') {
+    c.fillStyle = '#ffd23a'; c.beginPath(); c.moveTo(0, -6 * s); c.lineTo(6 * s, 5 * s); c.lineTo(-6 * s, 5 * s); c.closePath(); c.fill(); c.lineWidth = 1.5; c.strokeStyle = '#111'; c.stroke();
   } else if (kind === 'student') {
     c.beginPath(); c.arc(0, 0, 2.6 * s, 0, TAU); c.fillStyle = col; c.fill();
   }
@@ -182,8 +191,15 @@ function collectBlips(g) {
     out.push({ kind: 'student', x: s.x, z: s.z, col: s.confused > 0 ? '#ff45a6' : t >= 3 ? '#ffd98a' : t >= 2 ? '#7df0ae' : t >= 1 ? '#8fb8d8' : 'rgba(220,225,235,.75)' });
   }
   for (const p of g.pickups) if (!g.found[p.item.id] && Math.hypot(p.x - g.cam.x, p.z - g.cam.z) < 80) out.push({ kind: 'note', x: p.x, z: p.z });
-  for (const v of g.vehicles) if (v !== g.vehicle && v.type === 'bike' && Math.hypot(v.x - g.cam.x, v.z - g.cam.z) < 45) out.push({ kind: 'bike', x: v.x, z: v.z });
+  for (const v of g.vehicles) if (v !== g.vehicle && v.type === 'bike' && !v.hidden && !(v.variant && !g.bikesFound[v.variant]) && Math.hypot(v.x - g.cam.x, v.z - g.cam.z) < 45) out.push({ kind: 'bike', x: v.x, z: v.z });
   for (const d of g.life.drones) if (!d.dead) out.push({ kind: 'drone', x: d.x, z: d.z, edge: true, s: d.boss ? 1.5 : 1 });
+  // things to collect: close by, or everywhere once you have the catalogue
+  const all = g.perk && g.perk('map');
+  const near = (x, z, r) => all || Math.hypot(x - g.cam.x, z - g.cam.z) < r;
+  for (const b of g.bookItems || []) if (!g.booksFound[b.book.id] && near(b.x, b.z, 40)) out.push({ kind: 'book', x: b.x, z: b.z, edge: all });
+  for (const v of g.vehicles) if (v.variant && !v.hidden && !g.bikesFound[v.variant] && v !== g.vehicle && near(v.x, v.z, 70)) out.push({ kind: 'sbike', x: v.x, z: v.z, edge: all });
+  for (const b of g.boards || []) { const mine = !!g.boardsDone[b.where]; if (mine || Math.hypot(b.x - g.cam.x, b.z - g.cam.z) < 160) out.push({ kind: 'board', x: b.x, z: b.z, col: mine ? (g.boardsDone[b.where].hex || '#8fd0ff') : '#ff3fa8', edge: !mine }); }
+  for (const r of g.ramps || []) if (!g.jumpsDone[r.id] && Math.hypot(r.x - g.cam.x, r.z - g.cam.z) < 100) out.push({ kind: 'ramp', x: r.x, z: r.z });
   if (tgt) out.push({ kind: tgt.waypoint ? 'waypoint' : 'objective', x: tgt.x, z: tgt.z, edge: true });
   return out;
 }

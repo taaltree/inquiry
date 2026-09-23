@@ -81,14 +81,15 @@ function bikeRack(b, x, z, y0, yaw, n = 4) {
   }
 }
 
+const TORUS_LO = pTorus(0.08, 12, 4);
 /* a bicycle mesh built around its own origin, facing +z; used static and ridden */
 function bicycleMesh(b, col, o = {}) {
   const frame = mat(0, col, { rough: 0.35, metal: 0.5 });
   const W = 0.34;       // wheel radius
   const ax = [0, W, -0.52], fx = [0, W, 0.52];
   for (const c of [ax, fx]) {
-    b.add(pTorus(0.07, 28, 6), xform(c, [0, 0, Math.PI / 2], [W * 2, W * 2, W * 2]), PM.rubber);
-    for (let s = 0; s < 8; s++) {
+    b.add(o.lod ? TORUS_LO : pTorus(0.07, 28, 6), xform(c, [0, 0, Math.PI / 2], [W * 2, W * 2, W * 2]), PM.rubber);
+    if (!o.lod) for (let s = 0; s < 8; s++) {
       const a = (s / 8) * TAU;
       strut(b, c, [c[0], c[1] + Math.sin(a) * W * 0.92, c[2] + Math.cos(a) * W * 0.92], 0.012, PM.steel);
     }

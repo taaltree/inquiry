@@ -51,6 +51,17 @@ right-click to aim, a rotating radar with blips and a GPS route to your next obj
 to borrow (E), traffic on the town roads, and a time-of-day clock that takes the campus from
 golden hour through dusk to a starlit night with lit windows and street lamps.
 
+**A campus full of people doing things.** About two hundred students, and most of them are
+together: conversation circles that take turns talking and crack up laughing, sunbathers on
+towels (stargazers after dark), beer pong with real turns — makes, misses, the loser drinking the
+cup, a rerack when a side is cleared — frisbee with catches, dives and dropped throws, hacky sack,
+picnics, a guitar circle that sings along and applauds at the end of each song, selfies at the
+fountain, people studying on the grass, on benches and at café tables. Between them, passers-by
+on phones, carrying coffee, walking in pairs and jogging, and students cycling the paths who
+ring their bell and brake for you. They glance at you when you walk up, complain when you bump
+into them, jump out of the way of your bike, look up and film a drone when one flies low. You
+overhear them in speech bubbles, and after dark the evening groups light a lantern.
+
 **Level 2 — THE SUMMIT.** A residential conference at altitude where everyone gets between
 sessions on a snowboard, so the level is one continuous descent. Six professors hold sessions
 down the fall line, fourteen grad students ride it with you, and the feed is airborne. Same five
@@ -133,13 +144,38 @@ desaturates the view — but **you are shown the technique and the correction ei
 shows where the shot came from. Afterwards there is a six-second grace window, and a drone will
 never fire at you while another claim is already in the air, so reading time is always protected.
 
+**Word of mouth.** Teach one member of a group and they turn and tell the rest: the idea travels
+from head to head and everyone in earshot moves up a tier (second-hand knowledge can take someone
+as far as Informed, but graduating takes you). Groups are worth far more than people on their own,
+so you go looking for the pong table and the picnic. **Reach** — how many people on campus have
+heard an idea from you, directly or not — is the headline stat, with milestones along the way.
+
+**Things to find, and things to do.** Between interviews, GTA-style side content that still feeds
+the main goal:
+
+- **24 overdue library books** hidden around campus — on the bridge, in the glasshouse, on the
+  Engine House roof, under Newton's apple tree. Each is a real classic of science (Euclid,
+  al-Khwarizmi, Ibn al-Haytham, Copernicus, Hooke, Lovelace, Darwin, Snow, Nightingale, Mendel,
+  Curie, Leavitt, Payne, Turing, Carson…) with a line on why it mattered. Every six returned
+  unlocks something: you run faster, then insights splash to a second student, then the rest are
+  marked on your map, and finally a golden bicycle appears on the library steps.
+- **The bicycle collection.** Almost every bike on a rack can be borrowed now (over ninety), and
+  five odd ones are parked somewhere worth riding to — a penny-farthing, a tandem, a racer, a BMX
+  and a Dutch cargo bike — each with its own handling and a line of history. Space bunny-hops.
+- **Twelve noticeboards** the feed has plastered with flyers. Press E to tear them down and pin
+  up the last thing a scientist told you; anyone who walks past reads it, and your Reach grows.
+- **Five stunt ramps.** Hit one at full speed and time slows while you are in the air; clear the
+  distance to complete it.
+
+The Codex's Progress tab lists what you have found and what is still out there.
+
 **Educated students defend themselves.** Each student has four tiers — Unaware, Curious, Informed,
 Graduate — with an unmistakable silhouette at each: a floating book, then an academic scarf, then a
 gown and mortarboard with a halo. From Informed they return fire on drones; Graduates aim better and
 hit harder. That is the thesis of the whole game made mechanical: education is herd immunity.
 
-**You can always see what a student needs.** Every student carries a persistent status plate —
-tier, progress, and the one question type that will help them most, with the key to press.
+**You can always see what a student needs.** Put the crosshair on anyone and their status plate
+appears — tier, progress, and the one question type that will help them most, with the key to press.
 Waypoints in the world show the next researcher, the vault when it is ready, nearby drones and
 marginalia, with distances; the objective panel tracks the four tasks of the district you are in.
 
@@ -151,7 +187,7 @@ Each district is a level with four tasks, tracked live on the objective panel:
 SECURE THE FOUNDRY
   ✓ Interview the researchers   4/4
   ✓ Seal the Insight Vault      3/3
-  ▢ Educate the students        2/4     (to Informed or better)
+  ▢ Educate the students        2/6     (to Informed or better — the groups near the department)
   ▢ Clear the feed              1/5     (the fifth is a Peer Review)
 ```
 
@@ -198,8 +234,12 @@ doorway to the primary literature, not a citable source.
 - **The renderer** has two shadow cascades, PBR shading with normal maps, a sky with a cloud deck
   and a sun, moon and stars, aerial perspective that melts distant buildings into the sky behind
   them, water, lit windows at night, SSAO, bloom, god rays, filmic tone mapping and FXAA.
-- **People** are skinned: every student, scientist and you are one mesh on a twelve-bone rig,
-  posed procedurally — walking, running, sitting on the grass, cycling, driving, aiming, talking.
+- **People** are skinned: every student, scientist and you are one smooth mesh on a twelve-bone
+  rig, with joints that blend into their parent so elbows, knees, shoulders and hips bend without
+  seams. Poses are procedural and blend into one another — walking, running, sitting, lying on a
+  towel, cross-legged, squatting, cycling, driving, aiming — with overlays for talking, laughing,
+  nodding, clapping, cheering, drinking, eating and phones, and two-bone IK for hands that have
+  somewhere to be. Distant people and all shadows use a coarser mesh.
 
 ## Layout
 
@@ -220,13 +260,16 @@ src/
   nav.js       the GPS graph, the pre-drawn campus map, the radar and the full map
   portrait.js  procedural duotone portrait plates
   mountain.js  level 2: heightfield terrain, lodge, lift, snowboard physics
-  life.js      the student crowd + education tiers, Feed Drones, Peer Review, projectiles
+  crowd.js     groups and their routines, props, speech bubbles, synthesized laughter and guitar
+  life.js      the student crowd, word of mouth, education tiers, Feed Drones, Peer Review, projectiles
   hud.js       reticle, radar, waypoints, dialogue + challenges, codex, quizzes, synthesis, pause, map
   game.js      player, third-person camera, vehicles, input, interaction, main loop, save/load
+  collect.js   library books and their rewards, the bicycle collection, noticeboards, stunt jumps
   style.css    HUD styling
   body.html    markup
   data/        one JSON file per district, plus summit.json (level 2 professors),
-               connections / vaults / misinfo (20 technique cards) / students / marginalia / challenges
+               connections / vaults / misinfo (20 technique cards) / students / marginalia / challenges /
+               books (the 24 overdue library books)
 build.mjs      validates the content, then fuses everything into dist/
 ```
 
@@ -246,9 +289,9 @@ runs when published. So it is treated as a bonus, never a requirement:
 - **Drag to look** works everywhere — hold the left button and move.
 - **True mouselook** engages automatically if a lock request succeeds.
 - **Arrow keys** turn and walk, so the whole game is playable with no mouse at all.
-- **Space** jumps; **Shift** sprints (or pedals hard). **Click / F** fires the Codex; **hold right-click**
-  to aim over the shoulder; **V** switches third and first person; **E** interviews, and gets on or off
-  a bike or cart; **1–5, Q R, wheel** choose the question; **C** cites a scientist; **M** opens the map;
+- **Space** jumps (or bunny-hops a bike); **Shift** sprints (or pedals hard). **Click / F** fires the Codex; **hold right-click**
+  to aim over the shoulder; **V** switches third and first person; **E** interviews, gets on or off
+  a bike or cart, and reclaims a noticeboard; **1–5, Q R, wheel** choose the question; **C** cites a scientist; **M** opens the map;
   **Tab** opens the Codex; **Esc** pauses.
 
 Look sensitivity and invert-Y are on the title screen and persist. Needs a keyboard — there is no

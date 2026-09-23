@@ -75,6 +75,9 @@ try {
 let marginalia, challenges, EXTRAS_STUBBED = false;
 try { marginalia = data('marginalia.json'); } catch (e) { EXTRAS_STUBBED = true; marginalia = []; }
 try { challenges = data('challenges.json'); } catch (e) { EXTRAS_STUBBED = true; challenges = {}; }
+/* overdue library books, hidden around the campus */
+let books = [];
+try { books = data('books.json'); } catch (e) { EXTRAS_STUBBED = true; }
 
 /* ---------- validation ---------- */
 const KEYS = ['question', 'method', 'evidence', 'impact', 'doubt'];
@@ -173,6 +176,13 @@ if (!EXTRAS_STUBBED) {
   }
 }
 if (!Array.isArray(students.confused) || !students.confused.length) problems.push('students: no confused lines');
+const bookIds = new Set();
+for (const [i, bk] of books.entries()) {
+  for (const f of ['id', 'title', 'author', 'year', 'text']) if (!bk[f]) problems.push(`book ${i}: missing "${f}"`);
+  if (bookIds.has(bk.id)) problems.push(`book ${i}: duplicate id "${bk.id}"`);
+  bookIds.add(bk.id);
+  if (bk.owner && !ids.has(bk.owner)) problems.push(`book ${i}: unknown owner "${bk.owner}"`);
+}
 
 if (problems.length) {
   console.error('\n  CONTENT VALIDATION FAILED\n');
@@ -183,7 +193,7 @@ if (problems.length) {
 
 /* ---------- assemble ---------- */
 const SCRIPTS = ['core.js', 'geom.js', 'textures.js', 'render.js', 'tod.js', 'arch.js', 'flora.js', 'props.js', 'world.js',
-  'rig.js', 'actors.js', 'portrait.js', 'campus.js', 'mountain.js', 'fx.js', 'vehicles.js', 'nav.js', 'crowd.js', 'life.js', 'hud.js', 'game.js'];
+  'rig.js', 'actors.js', 'portrait.js', 'campus.js', 'mountain.js', 'fx.js', 'vehicles.js', 'nav.js', 'crowd.js', 'life.js', 'hud.js', 'game.js', 'collect.js'];
 
 const dataBlock = `/* content data — see the on-screen notice: all dialogue is written for this game */
 const ROSTER = ${JSON.stringify(roster)};
@@ -193,6 +203,7 @@ const MISINFO = ${JSON.stringify(misinfo)};
 const STUDENT_LINES = ${JSON.stringify(students)};
 const MARGINALIA = ${JSON.stringify(marginalia)};
 const CHALLENGES = ${JSON.stringify(challenges)};
+const BOOKS = ${JSON.stringify(books)};
 `;
 
 const js = [dataBlock, ...SCRIPTS.map((f) => `\n/* ==== ${f} ==== */\n` + src(f))].join('\n');
@@ -237,4 +248,4 @@ console.log(`  built  dist/artifact.html  ${kb(inner)}`);
 console.log(`  ${roster.length} scientists · ${roster.length * 5} answers · ${connections.length} connections · ` +
   `${Object.values(vaults).reduce((n, v) => n + v.questions.length, 0)} vault questions · ` +
   `${misinfo.length} misinformation cards · ${misinfo.reduce((n, m) => n + (m.counters || []).length, 0)} citations · ` +
-  `${marginalia.length} marginalia · ${Object.keys(challenges).length} challenges`);
+  `${marginalia.length} marginalia · ${Object.keys(challenges).length} challenges · ${books.length} library books`);

@@ -1008,6 +1008,12 @@ figure.portrait figcaption {
 .lg.drone { background: #ff3fa8; border-radius: 50%; }
 .lg.note { background: #f1e6c8; border-color: #6a5a3a; }
 .lg.bike { background: transparent; border-color: #e8eef4; border-radius: 50%; }
+.lg.book { background: #b0282a; border-color: #ffd98a; width: 11px; }
+.lg.sbike { background: transparent; border-color: #8fd0ff; border-radius: 50%; box-shadow: 0 0 6px #8fd0ff; }
+.lg.board { background: #ff3fa8; }
+.lg.ramp { width: 0; height: 0; border: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 14px solid #ffd23a; }
+.collectline { display: flex; gap: 12px; margin-top: 7px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.1);
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: #cfd8e6; opacity: .88; }
 
 /* ---- the title sits over the live campus ---- */
 #title { background: transparent !important; }
@@ -1027,3 +1033,7 @@ figure.portrait figcaption {
 #heat i { width: 13px; height: 13px; transform: rotate(45deg); border: 2px solid rgba(255,143,203,.6); background: rgba(0,0,0,.45); }
 #heat i.hot { background: #ff3fa8; border-color: #ffd0e8; box-shadow: 0 0 10px #ff3fa8; animation: heatPulse 1s ease-in-out infinite; }
 @keyframes heatPulse { 50% { box-shadow: 0 0 2px #ff3fa8; } }
+
+/* the campus collection in the Codex */
+.card.coll.missing { opacity: .45; }
+.card.coll.missing h3 { font-style: italic; }

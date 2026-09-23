@@ -12,7 +12,7 @@
 const SUMMIT_STUDENTS = 14;
 const DRONE_MAX = 4;
 const DRONE_MAX_UNARMED = 2;
-const WALKERS = 26;      // passers-by on the paths: some on phones, some with coffee, some in pairs
+const WALKERS = 34;      // passers-by on the paths: some on phones, some with coffee, some in pairs
 const CYCLISTS = 7;      // students riding the paths and the lane
 const WALKER_STYLES = ['plain', 'phone', 'coffee', 'pair', 'pockets', 'straps', 'jog', 'plain', 'phone', 'pair', 'straps', 'coffee', 'pockets', 'pair'];
 
@@ -253,7 +253,7 @@ class Life {
         }
       }
       this.bikeMeshes = [[0.08, 0.1, 0.12], [0.45, 0.06, 0.05], [0.08, 0.22, 0.4], [0.75, 0.74, 0.7], [0.12, 0.3, 0.16]]
-        .map((c, i) => buildBikeMesh(gl, c, i % 2 === 0));
+        .map((c, i) => ({ full: buildBikeMesh(gl, c, i % 2 === 0), lod: buildBikeMesh(gl, c, i % 2 === 0, true) }));
       for (let i = 0; i < CYCLISTS; i++) {
         const s = this.spawnStudent(this.students.length, null);
         s.cyclist = true; s.path = null; s.pi = 0; s.speed = 4.2 + this.rnd() * 1.8; s.v0 = s.speed;
@@ -336,7 +336,7 @@ class Life {
 
   /* heard it from a friend: half as good as hearing it from you, and it
      can take someone as far as Informed but not to Graduate */
-  hear(m, from, col, hex, concept) {
+  hear(m, from, col, hex, concept, via) {
     const before = this.tier(m);
     const wasConfused = m.confused > 0;
     m.confused = 0;
@@ -354,7 +354,7 @@ class Life {
           r: col ? col[0] : 0.6, g: col ? col[1] : 1, b: col ? col[2] : 0.8, a0: 0.9, grav: 0, drag: 2 });
       }
     }
-    if (this.game.onHeard) this.game.onHeard(m, before, wasConfused);
+    if (this.game.onHeard) this.game.onHeard(m, before, wasConfused, via);
   }
 
   /* you walked into someone: you stop, they react */
@@ -468,8 +468,14 @@ class Life {
       s.yaw = L.yaw; s.moving = L.moving !== false; s.bob = L.bob + 0.45; s.state = 'walk';
     } else {
       if (!s.path || s.pi >= s.path.length) {
-        if (!s.path) { const n0 = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0]; s.x = n0.x; s.z = n0.z; }
-        const n = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0];
+        // most trips start or end somewhere central: the court, the avenue, the Backs
+        const pickNode = () => {
+          const N = G.nav.nodes;
+          for (let k = 0; k < 8; k++) { const n = N[(this.rnd() * N.length) | 0]; if (this.rnd() < 0.35 || Math.hypot(n.x + 40, n.z) < 150) return n; }
+          return N[(this.rnd() * N.length) | 0];
+        };
+        if (!s.path) { const n0 = pickNode(); s.x = n0.x; s.z = n0.z; }
+        const n = pickNode();
         s.path = G.nav.route(s.x, s.z, n.x, n.z); s.pi = 1;
         s.side = (this.rnd() - 0.5) * 1.6;
       }
@@ -1098,6 +1104,7 @@ class Life {
     }
 
     if (this.crowd) this.crowd.tickHearing(dt);
+    if (G.mode === 'title') { this.bolts.length = 0; return; }
     if (this.mode === 'ride') this.updateRideDrones(dt, t);
     else this.updateFeed(dt, t);
 
@@ -1207,8 +1214,8 @@ class Life {
       const vis = R.visible(bmin, bmax);
       if (!vis && (d2 > 25 * 25 || s.posedAt === time)) continue;
       if (s.cyclist) {
-        xformTo(this.model, s.x, by, s.z, 0, s.yaw, -s.lean);
-        if (vis) R.drawMesh(s.bikeMesh, this.model);
+        xformTo(this.model, s.x, by - SURF_LIFT + 0.06, s.z, 0, s.yaw, -s.lean);
+        if (vis) R.drawMesh(R.shadowPass || d2 > 30 * 30 ? s.bikeMesh.lod : s.bikeMesh.full, this.model);
         M4.mul(bm, this.model, xformTo(tmpX, 0, 0, -0.08, 0, 0, 0));
       } else if (ride) {
         M4.trs(this.model, s.x, by + Math.abs(Math.sin(s.bob)) * 0.06, s.z, s.yaw, 1, 1, 1);
@@ -1273,13 +1280,10 @@ class Life {
     const e = G.cam, fx = -Math.sin(e.yaw) * Math.cos(e.pitch), fy = Math.sin(e.pitch), fz = -Math.cos(e.yaw) * Math.cos(e.pitch);
     for (const s of this.students) {
       const dist = Math.hypot(s.x - cam.x, s.z - cam.z);
+      // the one under the crosshair; groups stand too close for more than one plate
       let lim = ride ? 62 : 0;
       if (s === aimed) lim = 48;
-      else if (aiming && !ride) {
-        // while aiming, the people near the crosshair
-        const dx = s.x - e.x, dy = (s.hw ? s.hw[1] : 1.5) - e.y, dz = s.z - e.z, L = Math.hypot(dx, dy, dz) || 1;
-        if ((dx * fx + dy * fy + dz * fz) / L > 0.94) lim = 40;
-      }
+      void aiming; void fx; void fy; void fz;
       if (dist > lim || dist < 1.2) continue;
       const t = this.tier(s);
       const q = QTYPES[s.wants];

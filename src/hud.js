@@ -144,7 +144,7 @@ const HUD = {
     this._acc = null;
     document.getElementById('hud').classList.toggle('summit', g.level === 'summit');
     const station = g.level !== 'summit';
-    for (const id of ['st-con-row', 'st-vau-row']) {
+    for (const id of ['st-con-row', 'st-vau-row', 'st-reach-row']) {
       const el = document.getElementById(id);
       if (el) el.style.display = station ? '' : 'none';
     }
@@ -179,12 +179,15 @@ const HUD = {
     const st = g.districtStatus(d);
     $('#obj-title').textContent = `Secure ${d.name}`;
     $('#obj-where').textContent = `${g.securedCount()}/5 districts secured`;
+    const cs = this._collect;
     box.innerHTML = st.tasks.map((t) => {
       const done = t.n >= t.of;
       return `<div class="task ${done ? 'done' : ''} ${t.locked && !done ? 'locked' : ''}">
         <i>${done ? '✓' : '▢'}</i><span>${esc(t.label)}</span>
         <b>${t.n}/${t.of}</b></div>`;
-    }).join('');
+    }).join('') + (cs ? `<div class="collectline"><span title="Overdue library books">📕 ${cs.books}/${cs.booksMax}</span>
+        <span title="Bicycle collection">🚲 ${cs.bikes}/${cs.bikesMax}</span><span title="Noticeboards reclaimed">📌 ${cs.boards}/${cs.boardsMax}</span>
+        <span title="Stunt jumps">⤴ ${cs.jumps}/${cs.jumpsMax}</span></div>` : '');
     document.documentElement.style.setProperty('--obj-c', d.accent);
   },
 
@@ -209,6 +212,10 @@ const HUD = {
     if (t) t.textContent = String(s.taught || 0);
     if (db) db.textContent = String(s.debunked || 0);
     if (mg) mg.textContent = `${s.marginalia || 0}/${s.marginaliaMax || 0}`;
+    const set = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+    set('#st-books', `${s.books || 0}/${s.booksMax || 0}`); set('#st-bikes', `${s.bikes || 0}/${s.bikesMax || 0}`);
+    set('#st-boards', `${s.boards || 0}/${s.boardsMax || 0}`); set('#st-jumps', `${s.jumps || 0}/${s.jumpsMax || 0}`);
+    this._collect = s;
     const en = $('#st-end'), ct = $('#st-cite');
     if (en) en.textContent = `${s.endorsements || 0}/${s.endorsementsMax || 0}`;
     if (ct) ct.textContent = String(s.citations || 0);
@@ -366,6 +373,22 @@ const HUD = {
     el.onclick = () => el.classList.remove('on');
     clearTimeout(this._mgT);
     this._mgT = setTimeout(() => el.classList.remove('on'), 24000);
+  },
+
+  /* the card for a collected book or bicycle */
+  itemCard(tag, title, sub, text, foot, hex) {
+    const el = $('#marginalia');
+    el.style.setProperty('--mgc', hex || '#d8b464');
+    el.innerHTML = `
+      <div class="mg-head"><span class="mg-tag" style="color:${hex || '#e9c877'}">${esc(tag)}</span>
+        <span class="mg-owner">${esc(sub || '')}</span></div>
+      <div class="mg-title">${esc(title)}</div>
+      <div class="mg-text">${esc(text)}</div>
+      <div class="mg-foot">${esc(foot || '')} · click to close</div>`;
+    el.classList.add('on');
+    el.onclick = () => el.classList.remove('on');
+    clearTimeout(this._mgT);
+    this._mgT = setTimeout(() => el.classList.remove('on'), 16000);
   },
 
   /* Big, centred, holds long enough to actually read. Toasts were too small
@@ -980,6 +1003,7 @@ const HUD = {
             <div class="bar"><i style="width:${Math.round(o.pct * 100)}%"></i></div>
             <p style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;margin-top:7px;
                color:var(--acc)">${Math.round(o.pct * 100)}%</p></div>`).join('')}</div>
+        ${this.collectionHTML(g)}
         <h2 class="sec">Session <span>saved to this browser</span></h2>
         <div class="center"><button class="btn ghost" id="btn-reset"
           style="border-color:#ff8a7a;color:#ff8a7a">Erase progress and restart</button></div>`;
@@ -988,6 +1012,36 @@ const HUD = {
         if (confirm('Erase all progress in this browser and reload?')) g.resetSave();
       });
     }
+  },
+
+  /* the campus collection: books, bicycles, noticeboards, stunt jumps */
+  collectionHTML(g) {
+    if (!g.bookItems) return '';
+    const r = g.reach(), nb = g.booksCount();
+    const next = BOOK_REWARDS.find((q) => q.at > nb);
+    const books = g.bookItems.map((b) => {
+      const got = g.booksFound[b.book.id];
+      return `<div class="card coll ${got ? '' : 'missing'}"><h3>${got ? esc(b.book.title) : '— missing —'}</h3>
+        <p>${got ? `${esc(b.book.author)} · ${esc(b.book.year)}<br>${esc(b.book.text)}` : 'Somewhere on campus. Look for a warm glow.'}</p></div>`;
+    }).join('');
+    const bikes = Object.entries(SPECIAL_BIKES).map(([k, s]) => `<div class="card coll ${g.bikesFound[k] ? '' : 'missing'}">
+        <h3>${g.bikesFound[k] ? esc(s.name) : '— not yet found —'}</h3><p>${g.bikesFound[k] ? esc(s.fact) : (k === 'golden' ? 'Return every overdue book.' : 'Parked somewhere worth the ride. It glows blue.')}</p></div>`).join('');
+    const boards = g.boards.map((b) => { const d = g.boardsDone[b.where]; return `<div class="card coll ${d ? '' : 'missing'}"><h3>${esc(b.where)}</h3>
+        <p>${d ? `“${esc(d.concept)}” — ${esc(d.who)}` : 'Still covered in the feed\'s flyers. Press E at the board.'}</p></div>`; }).join('');
+    const jumps = g.ramps.map((q) => `<div class="card coll ${g.jumpsDone[q.id] ? '' : 'missing'}"><h3>${esc(q.name)}</h3>
+        <p>${g.jumpsDone[q.id] ? 'Cleared.' : `Clear ${q.target} m. Hit it at full speed (Shift).`}</p></div>`).join('');
+    return `
+      <h2 class="sec">Reach <span>${r.n} of ${r.of} people on campus have heard an idea from you</span></h2>
+      <p class="prose">Teach one person in a group and they tell the rest. Reclaimed noticeboards teach whoever walks past.
+        ${g.spreadCount ? `So far <em>${g.spreadCount}</em> people heard something second-hand.` : ''}</p>
+      <h2 class="sec">Overdue library books <span>${nb} of ${g.bookItems.length}${next ? ` · next reward at ${next.at}: ${esc(next.title.toLowerCase())}` : ' · all returned'}</span></h2>
+      <div class="cols">${books}</div>
+      <h2 class="sec">The bicycle collection <span>${Object.keys(g.bikesFound).length} of ${Object.keys(SPECIAL_BIKES).length}</span></h2>
+      <div class="cols">${bikes}</div>
+      <h2 class="sec">Noticeboards <span>${Object.keys(g.boardsDone).length} of ${g.boards.length} taken back from the feed</span></h2>
+      <div class="cols">${boards}</div>
+      <h2 class="sec">Stunt jumps <span>${Object.keys(g.jumpsDone).length} of ${g.ramps.length}</span></h2>
+      <div class="cols">${jumps}</div>`;
   },
 
   connCard(cn) {

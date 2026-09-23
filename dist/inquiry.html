@@ -1018,6 +1018,12 @@ figure.portrait figcaption {
 .lg.drone { background: #ff3fa8; border-radius: 50%; }
 .lg.note { background: #f1e6c8; border-color: #6a5a3a; }
 .lg.bike { background: transparent; border-color: #e8eef4; border-radius: 50%; }
+.lg.book { background: #b0282a; border-color: #ffd98a; width: 11px; }
+.lg.sbike { background: transparent; border-color: #8fd0ff; border-radius: 50%; box-shadow: 0 0 6px #8fd0ff; }
+.lg.board { background: #ff3fa8; }
+.lg.ramp { width: 0; height: 0; border: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 14px solid #ffd23a; }
+.collectline { display: flex; gap: 12px; margin-top: 7px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.1);
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: #cfd8e6; opacity: .88; }
 
 /* ---- the title sits over the live campus ---- */
 #title { background: transparent !important; }
@@ -1037,6 +1043,10 @@ figure.portrait figcaption {
 #heat i { width: 13px; height: 13px; transform: rotate(45deg); border: 2px solid rgba(255,143,203,.6); background: rgba(0,0,0,.45); }
 #heat i.hot { background: #ff3fa8; border-color: #ffd0e8; box-shadow: 0 0 10px #ff3fa8; animation: heatPulse 1s ease-in-out infinite; }
 @keyframes heatPulse { 50% { box-shadow: 0 0 2px #ff3fa8; } }
+
+/* the campus collection in the Codex */
+.card.coll.missing { opacity: .45; }
+.card.coll.missing h3 { font-style: italic; }
 
 </style>
 <div id="app">
@@ -1087,6 +1097,10 @@ figure.portrait figcaption {
         <div class="stat"><span>Marginalia</span><span id="st-marg">0/0</span></div>
         <div class="stat"><span>Endorsements</span><span id="st-end">0/0</span></div>
         <div class="stat"><span>Citations</span><span id="st-cite">0</span></div>
+        <div class="stat"><span>Library books</span><span id="st-books">0/0</span></div>
+        <div class="stat"><span>Bicycles</span><span id="st-bikes">0/0</span></div>
+        <div class="stat"><span>Noticeboards</span><span id="st-boards">0/0</span></div>
+        <div class="stat"><span>Stunt jumps</span><span id="st-jumps">0/0</span></div>
       </div>
     </div>
 
@@ -1173,7 +1187,8 @@ figure.portrait figcaption {
           A shooter where the weapon is a question. Walk a university campus, interview
           <strong>24 real scientists</strong> about how they actually knew what they knew, then use
           what you learn as ammunition — teaching the students around you and dismantling the
-          misinformation hunting them.
+          misinformation hunting them. Between interviews: beer pong on the lawns, a guitar circle,
+          24 overdue library books, five odd bicycles, twelve noticeboards to take back and five stunt ramps.
         </p>
         <div class="center hero-cta">
           <button class="btn" id="btn-start">Begin</button>
@@ -1183,8 +1198,8 @@ figure.portrait figcaption {
       <div class="loop">
         <div class="loop-step"><b>1</b><h4>Ask</h4><p>Five questions, one instrument. Ask all five of
           a researcher and you have reconstructed their reasoning, not memorised their result.</p></div>
-        <div class="loop-step"><b>2</b><h4>Teach</h4><p>Fire an insight at a student and they take it.
-          Educated students visibly change — and start defending themselves.</p></div>
+        <div class="loop-step"><b>2</b><h4>Teach</h4><p>Fire an insight at a student and they take it —
+          then turn and tell their friends. Teach a group and the idea spreads without you.</p></div>
         <div class="loop-step"><b>3</b><h4>Dismantle</h4><p>When a claim reaches you the world stops.
           No timer. Read it, name the technique, pick the one question that breaks it.</p></div>
         <div class="loop-step"><b>4</b><h4>Secure</h4><p>Finish a district's researchers, vault,
@@ -1263,14 +1278,14 @@ figure.portrait figcaption {
         <div><kbd>Drag</kbd> / mouse</div><div>look</div>
         <div><kbd>W A S D</kbd> / arrows</div><div>move</div>
         <div><kbd>Shift</kbd></div><div>sprint</div>
-        <div><kbd>Space</kbd></div><div>jump</div>
+        <div><kbd>Space</kbd></div><div>jump · bunny-hop on a bike</div>
         <div><kbd>Right-click</kbd> hold</div><div>aim over the shoulder</div>
         <div><kbd>Click</kbd> / <kbd>F</kbd></div><div>fire the Codex</div>
         <div><kbd>V</kbd></div><div>third / first person</div>
         <div><kbd>M</kbd></div><div>campus map — click to set a waypoint</div>
         <div><kbd>C</kbd></div><div>cite a scientist you interviewed — beats any claim they have answered</div>
         <div><kbd>1</kbd>–<kbd>5</kbd> · <kbd>Q</kbd> <kbd>R</kbd> · wheel</div><div>choose a question</div>
-        <div><kbd>E</kbd></div><div>interview · borrow a bike or cart · get off</div>
+        <div><kbd>E</kbd></div><div>interview · borrow a bike or cart · get off · reclaim a noticeboard</div>
         <div><kbd>Tab</kbd></div><div>Field Codex</div>
         <div><kbd>Esc</kbd></div><div>pause</div>
       </div>
@@ -1291,6 +1306,8 @@ figure.portrait figcaption {
       <div><i class="lg sci"></i>Scientist to interview</div><div><i class="lg vault"></i>Insight Vault (unsealed)</div>
       <div><i class="lg lib"></i>Library — synthesis</div><div><i class="lg drone"></i>Feed drone</div>
       <div><i class="lg note"></i>Marginalia nearby</div><div><i class="lg bike"></i>Bike to borrow</div>
+      <div><i class="lg book"></i>Overdue library book</div><div><i class="lg sbike"></i>Bike for your collection</div>
+      <div><i class="lg board"></i>Noticeboard the feed holds</div><div><i class="lg ramp"></i>Stunt ramp</div>
     </div>
   </div>
 
@@ -1403,6 +1420,7 @@ const MISINFO = [{"id":"unfalsifiable_shield","technique":"UNFALSIFIABLE CLAIM",
 const STUDENT_LINES = {"taught":["Wait — so the measurement came first?","Huh. I never thought to ask who funded it.","One study is a start, not an answer.","I was arguing with a headline, not a paper.","Okay, so what would have proved them wrong?","Where's the rest of that graph?","So 'natural' tells me nothing about whether it's safe.","The spread matters more than the average. Noted.","I would have shared that. I actually would have.","Nobody ever shows the denominator, do they.","Expert in one thing isn't expert in everything.","Different labs, same number — that's the whole point.","I've been treating 'unproven' as 'disproven' this entire time.","That's uncomfortable. Useful uncomfortable, though."],"confused":["I read something about this. It seemed solid?","Everyone in my feed is saying the same thing.","It had a chart. Charts don't usually lie.","I can't tell which part of that is the claim.","Someone with a doctorate said it, so...","There must be something to it, right?","I don't know enough to argue, honestly.","It sounded careful. That's what got me."]};
 const MARGINALIA = [{"id":"newton_prism","owner":"newton","district":"foundry","title":"A glass prism","object":"lens","text":"A triangular glass prism of the sort Isaac Newton bought at a fair in the mid-1660s and used in a darkened room. Letting sunlight through a hole in the shutter, he found that the prism spread it into a spectrum, and that a second prism could not split a single color further. White light, he argued, is a mixture, not a pure substance. He reported the experiments to the Royal Society in 1672.","look":"triangular glass prism"},{"id":"curie_notebook","owner":"curie","district":"foundry","title":"A radioactive notebook","object":"book","text":"Marie Curie's laboratory notebooks from the late 1890s record the work, with Pierre Curie, that identified polonium and radium in 1898. They are held at the Bibliothèque nationale de France in lead-lined boxes, because the pages remain contaminated with radium-226, whose half-life is about 1,600 years. Readers must sign a liability waiver and wear protective clothing to consult them. They will remain hazardous for many centuries.","look":"worn bound notebook in a lead box"},{"id":"wu_cryostat","owner":"wu","district":"foundry","title":"A cryostat for cobalt-60","object":"instrument","text":"In late 1956 Chien-Shiung Wu and colleagues at the National Bureau of Standards cooled cobalt-60 nuclei in a crystal to within a hundredth of a degree of absolute zero and aligned their spins with a magnet. Beta electrons flew out preferentially opposite the spin direction: nature distinguishes left from right. Each cold run lasted minutes before the crystal warmed. Lee and Yang, who proposed the test, shared the 1957 Nobel Prize; Wu did not.","look":"squat metal cryostat with glass dewar"},{"id":"strickland_gratings","owner":"strickland","district":"foundry","title":"A grating pair","object":"instrument","text":"A pair of diffraction gratings like those Donna Strickland used as a graduate student at the University of Rochester. In 1985 she and Gérard Mourou stretched a short laser pulse through about 1.4 kilometers of optical fiber, amplified the lengthened pulse without wrecking the amplifier, then used gratings to squeeze it back down. Chirped pulse amplification was the subject of her first paper; it now underlies laser eye surgery and petawatt lasers.","look":"two ruled gratings on a metal rail"},{"id":"einstein_eclipse_plate","owner":"einstein","district":"observatory","title":"An eclipse plate","object":"plate","text":"A glass photographic plate of the kind exposed during the total solar eclipse of 29 May 1919. Expeditions to Príncipe, led by Arthur Eddington, and Sobral in Brazil photographed stars near the darkened Sun, then measured how far their images shifted compared with night plates of the same field. General relativity predicted a deflection of 1.75 arcseconds at the Sun's edge, twice the Newtonian value. The Sobral plates gave about 1.98, Príncipe about 1.61.","look":"glass photographic plate in a paper sleeve"},{"id":"payne_thesis","owner":"payne","district":"observatory","title":"A 1925 thesis","object":"book","text":"Cecilia Payne's doctoral thesis, Stellar Atmospheres, printed in 1925, was the first PhD in astronomy earned at Harvard's observatory, awarded through Radcliffe College because Harvard did not grant doctorates to women. Applying Meghnad Saha's ionization theory to stellar spectra, she found hydrogen and helium overwhelmingly more abundant in stars than on Earth. Pressed by Henry Norris Russell, she added a line calling the hydrogen result probably spurious. Russell published the same conclusion in 1929.","look":"slim printed monograph"},{"id":"chandrasekhar_calculations","owner":"chandrasekhar","district":"observatory","title":"Shipboard calculations","object":"letter","text":"Sheets of calculation like those Subrahmanyan Chandrasekhar filled during his 1930 voyage from Bombay to England, aged nineteen, bound for graduate study at Cambridge. Combining special relativity with the quantum statistics of electrons, he found that a white dwarf above a certain mass cannot support itself. His first estimate was revised upward; the accepted limit is about 1.4 solar masses. Arthur Eddington ridiculed the idea in 1935. The Chandrasekhar limit is now textbook physics.","look":"loose handwritten sheets"},{"id":"rubin_spectrograph","owner":"rubin","district":"observatory","title":"An image-tube spectrograph","object":"instrument","text":"Kent Ford built this image-tube spectrograph at the Carnegie Institution in Washington in the 1960s. An image intensifier made faint galaxy light recordable in hours instead of nights. Vera Rubin used it to measure how fast stars and gas orbit at different distances from a galaxy's center. In Andromeda and other spirals the speed did not fall off with distance, implying unseen mass. The instrument is now in the Smithsonian's National Air and Space Museum.","look":"boxy metal spectrograph with a tube"},{"id":"bouman_drives","owner":"bouman","district":"observatory","title":"A crate of data drives","object":"card","text":"Hard drives like these carried the Event Horizon Telescope's April 2017 observations, about five petabytes, from radio dishes around the world to correlator centers at MIT Haystack Observatory and in Bonn. No network could move that volume, so the drives flew by plane; the South Pole Telescope's drives waited until Antarctic flights resumed months later. Katie Bouman co-led an imaging team that turned the data into the first picture of the black hole M87*, released in 2019.","look":"rack of sealed hard drives"},{"id":"darwin_barnacle","owner":"darwin","district":"helix","title":"A barnacle specimen jar","object":"specimen","text":"Between 1846 and 1854 Charles Darwin put his theory aside to dissect and classify barnacles, publishing four volumes on living and fossil species. The work taught him how much variation exists within a species, a point his argument would need. His barnacle collection is now at the Natural History Museum in London. It began with a minute burrowing barnacle collected in Chile in 1835 that fit no known group.","look":"small glass specimen jar"},{"id":"franklin_photo51","owner":"franklin","district":"helix","title":"Photo 51","object":"plate","text":"Photo 51 is an X-ray diffraction photograph of the B form of DNA, exposed in May 1952 by Raymond Gosling, Rosalind Franklin's doctoral student at King's College London. The X-shaped pattern of spots is the signature of a helix, and the strong spots at top and bottom mark the 3.4 angstrom spacing between stacked bases. Maurice Wilkins showed the image to James Watson in January 1953 without Franklin's knowledge. Franklin died in 1958.","look":"glass X-ray plate with a dark X pattern"},{"id":"mcclintock_maize","owner":"mcclintock","district":"helix","title":"A speckled ear of maize","object":"specimen","text":"An ear of maize with speckled, streaked kernels like those Barbara McClintock grew in her plots at Cold Spring Harbor from the 1940s. Each spot marks a cell lineage in which a mobile piece of DNA jumped out of a pigment gene and switched it back on. She named the elements Activator and Dissociation, described them in 1950 and 1951, and found acceptance slow to come. She received the 1983 Nobel Prize, unshared.","look":"dried ear of corn with mottled kernels"},{"id":"tu_extract","owner":"tu","district":"helix","title":"Extract number 191","object":"flask","text":"A flask of the low-temperature ether extract of sweet wormwood, Artemisia annua, that Tu Youyou's group prepared in 1971 during Project 523, China's secret antimalarial program. Earlier hot-water extracts had failed. A fourth-century handbook by Ge Hong, which advised wringing the fresh herb in cold water, prompted her to avoid heat. Sample number 191 wiped out malaria parasites in infected mice, leading to artemisinin. She was among the first volunteers to take it.","look":"round-bottom flask of pale extract"},{"id":"doudna_guide_rna","owner":"doudna","district":"helix","title":"A tube of guide RNA","object":"flask","text":"A tube of single-guide RNA, described in the 2012 Science paper by Martin Jinek, Jennifer Doudna, Emmanuelle Charpentier and colleagues. In bacteria the Cas9 enzyme needs two RNAs to find its target; the team fused them into one strand whose first twenty letters can be rewritten to match any chosen DNA sequence. In vitro, Cas9 loaded with a guide cut plasmid DNA where programmed. Doudna and Charpentier shared the 2020 Nobel Prize in Chemistry.","look":"small capped tube in a rack"},{"id":"kariko_mrna","owner":"kariko","district":"helix","title":"A vial of modified mRNA","object":"flask","text":"A vial of synthetic messenger RNA in which every uridine has been swapped for pseudouridine, a natural variant. In 2005 Katalin Karikó and Drew Weissman at the University of Pennsylvania reported that this substitution stopped the RNA from triggering the inflammatory alarm that had stymied earlier mRNA therapies; a 2008 paper showed it translated into more protein. Karikó had been demoted in 1995 for failing to win grants. They shared the 2023 Nobel Prize.","look":"frosted vial on dry ice"},{"id":"mendeleev_draft","owner":"mendeleev","district":"lattice","title":"A table with holes in it","object":"letter","text":"A draft of the periodic system, dated 17 February 1869 in the old Russian calendar, in Dmitri Mendeleev's hand. He arranged the sixty-three known elements by atomic weight and chemical family, leaving blank spaces where the pattern demanded an element nobody had found. He predicted properties for three of them, matched by gallium in 1875, scandium in 1879 and germanium in 1886. The draft survives in the Mendeleev Museum at St Petersburg State University.","look":"creased handwritten sheet"},{"id":"hodgkin_insulin_crystal","owner":"hodgkin","district":"lattice","title":"An insulin crystal","object":"crystal","text":"A rhombohedral crystal of insulin, the kind Dorothy Hodgkin first placed in an X-ray beam in the mid-1930s. The diffraction photograph was among the earliest for any protein, but the molecule was too complex for the methods of the day. She returned to it repeatedly and published the three-dimensional structure in 1969, thirty-five years later, using heavy-atom replacement and electronic computers. Her 1964 Nobel Prize had already been awarded for penicillin and vitamin B12.","look":"tiny faceted crystal on a mount"},{"id":"molina_chlorine_chart","owner":"molina","district":"lattice","title":"A chlorine-cycle chart","object":"card","text":"A chart of the chlorine cycle drawn from the 1974 paper by Mario Molina, a postdoc with Sherwood Rowland at the University of California, Irvine. They argued in Nature that chlorofluorocarbons, inert enough to survive for decades, drift into the stratosphere, where ultraviolet light splits off chlorine atoms; each atom can then destroy thousands of ozone molecules. Industry disputed the claim. The 1987 Montreal Protocol phased CFCs out; the 1995 Nobel Prize followed.","look":"creased printed diagram"},{"id":"arnold_well_plate","owner":"arnold","district":"lattice","title":"A 96-well plate","object":"plate","text":"A 96-well plate, the workhorse of Frances Arnold's directed evolution at Caltech. In 1993 she and Keqin Chen reported evolving the enzyme subtilisin E to work in the solvent dimethylformamide. The gene was randomly mutated, thousands of variants were screened in plates like these, the best performers were picked, and the cycle repeated. Three rounds gave an enzyme hundreds of times more active in solvent. Arnold received half the 2018 Nobel Prize in Chemistry.","look":"clear plastic plate with 96 wells"},{"id":"lovelace_note_g","owner":"lovelace","district":"engine","title":"The Note G table","object":"book","text":"A foldout table from Note G, the last of seven notes Ada Lovelace attached to her 1843 translation of Luigi Menabrea's account of Charles Babbage's Analytical Engine. Operation by operation, it shows how the unbuilt machine could compute the Bernoulli numbers, with columns tracking each variable as it changes. Often called the first published program, it contains an error in one entry. The notes, signed only A.A.L., ran longer than the article they accompanied.","look":"folded printed sheet of columns"},{"id":"noether_offprint","owner":"noether","district":"engine","title":"A 1918 offprint","object":"book","text":"An offprint of Emmy Noether's paper Invariante Variationsprobleme, presented to the Göttingen scientific society in July 1918. It proves that every continuous symmetry of a physical system's laws corresponds to a conserved quantity: symmetry in time gives conservation of energy, symmetry in space gives momentum. Hilbert and Klein had brought her to Göttingen in 1915 to help with energy in general relativity, but the university would not let a woman lecture under her own name until 1919. She was dismissed in 1933 and died at Bryn Mawr in 1935.","look":"stapled offprint with a pencilled dedication"},{"id":"turing_tape","owner":"turing","district":"engine","title":"A coil of paper tape","object":"card","text":"A coil of paper tape marked off in squares, the way Alan Turing imagined it in On Computable Numbers, received by the London Mathematical Society in May 1936. His imaginary machine reads one square at a time, writes or erases a symbol, moves left or right, and changes state according to a finite table. He showed that one such machine can imitate any other given a description of it, and that no machine can decide in general whether another will ever halt. Alonzo Church reached a related result the same year by a different route.","look":"coil of punched paper tape"},{"id":"cajal_slide","owner":"cajal","district":"engine","title":"A Golgi-stained slide","object":"specimen","text":"A microscope slide prepared with Camillo Golgi's black reaction, which stains only a few cells in a piece of nervous tissue but stains them entire, in silver chromate. Santiago Ramón y Cajal first saw such preparations in Madrid in 1887, improved the method, and applied it to young animals whose nerve fibres were not yet sheathed. He concluded that nerve cells are separate units that touch without fusing. He and Golgi shared the 1906 Nobel Prize, and Golgi used his Nobel lecture to disagree.","look":"glass slide with a single dark branching cell"},{"id":"li_index_card","owner":"li","district":"engine","title":"A labelled index card","object":"card","text":"An index card from the labelling of ImageNet, the dataset Fei-Fei Li began at Princeton in 2007 and presented in 2009. Rather than teach machines better rules, her group gathered examples: about fourteen million photographs sorted into more than twenty thousand categories from the WordNet dictionary, labelled by tens of thousands of workers on Amazon Mechanical Turk. The annual ImageNet challenge began in 2010; in 2012 a deep convolutional network cut the error rate so sharply that the field changed direction.","look":"index card with a pinned photograph"},{"id":"thompson_core","owner":"thompson","district":"summit","title":"An ice core section","object":"specimen","text":"A section of ice core in a foil sleeve, like those Lonnie Thompson's team drilled to bedrock on the Quelccaya ice cap in Peru in 1983. No helicopter could lift a drill to 5,670 metres, so they built a lightweight, solar-powered one and carried it up. The two cores held about fifteen hundred years of annual layers: dust from droughts, ash, and the chemistry of past temperatures. As the ice cap has since retreated, its edge has exposed plants that had been buried for around five thousand years.","look":"cylinder of cloudy ice in a foil sleeve"},{"id":"hayhoe_map","owner":"hayhoe","district":"summit","title":"A downscaled projection","object":"card","text":"A map of California shaded by projected summer temperature, of the kind Katharine Hayhoe and colleagues published in 2004. Global climate models work on grid cells hundreds of kilometres across; her contribution was statistical downscaling, translating their output to the scale of a valley or a city under different emissions pathways. Two futures were drawn side by side: more heat waves and a large loss of Sierra Nevada snowpack, with the losses much larger under the higher-emissions path. The choice between them was the point.","look":"folded map shaded in reds"},{"id":"simard_seedlings","owner":"simard","district":"summit","title":"A bag of labelled seedlings","object":"specimen","text":"Paper birch and Douglas fir seedlings, tagged and bagged, like those Suzanne Simard planted in a British Columbia forest for a study published in Nature in 1997. She fed the trees carbon dioxide made with different carbon isotopes and traced where the carbon went: it moved between the two species through the fungal threads joining their roots, with more flowing toward fir seedlings kept in shade. A 2023 review argued that later claims about such networks have outrun the evidence; the isotope result itself still stands.","look":"sealed bag of seedlings with tags"},{"id":"bertozzi_cyclooctyne","owner":"bertozzi","district":"summit","title":"A flask of a strained ring","object":"flask","text":"A flask of cyclooctyne, an eight-carbon ring bent so tightly that it reacts eagerly with azides and with almost nothing else. Carolyn Bertozzi's group reported in 2004 that the strain does the work that a toxic copper catalyst had done before, so the reaction can run inside living cells without harming them. Feed a cell a sugar carrying an azide, let it build the sugar into its surface, then click on a fluorescent tag. Her lab imaged sugars on living zebrafish embryos this way in 2008.","look":"small flask with a ring sketched on the label"},{"id":"yamanaka_four_genes","owner":"yamanaka","district":"summit","title":"Four genes on a card","object":"card","text":"An index card listing four genes: Oct3/4, Sox2, Klf4 and c-Myc. In 2006 Kazutoshi Takahashi and Shinya Yamanaka reported in Cell that these four, delivered into adult mouse skin cells by retroviruses, turned them back into cells resembling embryonic stem cells. They had started from twenty-four candidates and removed them one at a time until the effect vanished. Human cells followed in 2007. Yamanaka shared the 2012 Nobel Prize with John Gurdon, whose frog experiments half a century earlier had shown the clock could run backward.","look":"index card with four gene names"},{"id":"charpentier_gel","owner":"charpentier","district":"summit","title":"A gel with an extra band","object":"plate","text":"A photograph of an electrophoresis gel, the kind that showed Emmanuelle Charpentier's group an RNA nobody had been looking for. Studying the bacterium Streptococcus pyogenes, they found in 2011 that a small RNA, tracrRNA, pairs with the immune system's guide RNAs and helps mature them, with the enzyme now called Cas9. That detail became the key: in 2012, with Jennifer Doudna's laboratory, she showed the two RNAs could be fused into one programmable guide. She shared the 2020 Nobel Prize in Chemistry.","look":"gel photograph with dark bands"}];
 const CHALLENGES = {"newton":{"lead":"I stated how much gravity pulls and refused to say why. Consider a case of my own kind: a rule that fits every measurement and explains nothing.","prompt":"A researcher finds that the rate of a chemical process follows a simple power law across five orders of magnitude. No mechanism is proposed, and no candidate mechanism is in sight. What is the scientific standing of the result?","options":["It is not yet a scientific result: with no mechanism, there is nothing to test.","It is strong as it stands, and the missing mechanism is a philosophical worry rather than a scientific one.","It is a legitimate and useful result: a precisely stated law makes quantitative predictions that can fail, and the absent cause is a real open problem rather than a defect in the measurement.","It is provisional at best, since a power law holding over five decades is the kind of pattern that usually turns out to be a coincidence of scaling."],"correct":2,"why":["Testability comes from the law's predictions, not from a mechanism. A fixed power law can be falsified by a single point that falls off it, mechanism or no mechanism.","Half right and half complacent. The predictions do stand on their own, but the missing cause is a genuine scientific problem — exactly the sort that later theories get built to solve.","Correct. Newton gave the inverse-square dependence and openly declined to say how one body reaches across empty space to move another. Huygens and Leibniz were right that the gap was real, and it stayed open until curved spacetime filled it two centuries later. A law can be trustworthy and unexplained at the same time.","Scaling coincidences do happen, but the objection here concerns mechanism, not whether the fit is real. Ruling out coincidence is a job for more data, and it is a separate job."],"praise":"That is the position I took, and I took it knowing what my critics would say about it.","console":"You went looking for the cause, which is the right instinct — but notice that the law can earn its keep while the cause stays missing."},"curie":{"lead":"Every mineral I could beg or buy went under the electrometer. Suppose someone handed you a sample giving off heat with no chemical reaction to account for it.","prompt":"A mineral releases measurable heat with no reaction underway. Which programme of measurements would best establish that the heat is a property of the atoms of one particular element in the sample, rather than of the compound or the sample's physical state?","options":["Prepare several different chemical compounds of the suspect element, vary temperature, hydration and illumination, and check whether the heat output tracks only the mass of that element.","Measure the heat output very precisely and compare it against the value predicted from the compound's known bonds.","Purify the mineral until a single compound remains, then confirm that the output is reproducible from batch to batch.","Heat the sample across a range of temperatures and show the output rises smoothly, as it would for a process driven from inside the material."],"correct":0,"why":["Correct. Curie's electrometer readings tracked the amount of uranium present and nothing else — not the compound, not wet or dry, not hot or cold, not lit or dark. Making the chemistry and the physical state vary while the signal refuses to change is what moves the source out of the molecule and into the atom.","There is no predicted value to compare against if no reaction is running. Precision on a single number does not tell you which part of the sample the number belongs to.","Reproducibility is necessary and nowhere near sufficient. A perfectly reproducible signal from one pure compound leaves the compound and the element as equally good explanations.","A smooth rise with temperature would point the other way, toward an ordinary thermal process. The striking thing about radioactivity was its indifference to temperature."],"praise":"Vary everything you can reach and watch what refuses to change. That is nearly the whole of my method.","console":"Not quite, but hold on to the instinct to measure. The trick is to make the chemistry change while the signal stays put."},"wu":{"lead":"My counters disagreed when I reversed the field. A number like that is worth nothing until you can show the apparatus did not invent it.","prompt":"A group reports that a detector count differs between two settings of an applied magnetic field and attributes the difference to a genuine physical asymmetry. A referee suspects the field itself is disturbing the detector electronics. Which additional evidence answers that objection most directly?","options":["Repeat the measurement many times at both settings and show the difference is far larger than the run-to-run scatter.","Swap in a second detector of a completely different design and reproduce the same difference.","Shield the electronics heavily, remeasure, and show the difference survives the shielding unchanged.","Show that the effect rises and falls in step with an independently measured quantity supposed to cause it, and disappears when that quantity does."],"correct":3,"why":["Statistical significance is not the issue here. A systematic disturbance from the field would be perfectly repeatable and would clear any significance threshold you cared to set.","A real and useful check, but a second detector sits in the same field, so a field-induced artifact could show up in both. The alternative explanation survives.","The best of the wrong answers, since it attacks one specific route by which the field could interfere. It cannot cover the routes nobody has thought of yet.","Correct. Wu's cobalt nuclei lost their alignment as the salt crystal warmed over a few minutes, and the electron asymmetry faded exactly in step with the gamma-ray signal that measured that alignment. Tying an effect to the physical variable meant to control it is harder to fake than blocking any single artifact, because an artifact has no reason to keep that schedule."],"praise":"Yes. The effect had to keep the schedule of the thing supposed to be causing it.","console":"A fair answer, but ask what an artifact would have to do to imitate it. Tying the signal to its supposed cause is the test that is hardest to pass by accident."},"strickland":{"lead":"The amplifier did not care how much energy we sent through it. It cared how much arrived at once. Here is that same constraint in a different machine.","prompt":"An engineer must deliver a large pulse of energy through a component that fails whenever the instantaneous power crossing it exceeds a fixed threshold. The total energy the application needs is not negotiable. Which approach follows the logic of chirped pulse amplification?","options":["Find or develop a component with a higher damage threshold, so the pulse can pass through intact.","Spread the energy over a much longer interval before it reaches the component, then recompress it into a short pulse afterwards.","Split the pulse across many identical components in parallel, so each one carries only a fraction of the power.","Lower the peak by reducing the total energy per pulse, and compensate by firing many pulses in quick succession."],"correct":1,"why":["This is what the field tried for roughly a decade, and it is why peak laser power sat on a plateau. Chasing better glass treats the threshold as the thing to beat rather than the thing to route around.","Correct. Stretching in time lowers instantaneous power without touching total energy, because power is energy divided by duration. Strickland and Mourou sent the pulse through 1.4 kilometres of fibre to smear its colours out in time, amplified it while it was harmless, then used a pair of diffraction gratings to stack it back together. The fragile stage never saw a damaging intensity.","A genuine engineering strategy that does reduce the load on each part. But it multiplies hardware instead of exploiting the time axis, and it leaves you having to recombine beams that must arrive in step.","Many small pulses is a different application, not a solution to this one. The requirement was a large pulse, and you have quietly changed the specification."],"praise":"That is it. The threshold is on intensity, and intensity has a denominator you are allowed to move.","console":"Reasonable, but look again at the units the threshold is written in. Energy per unit time gives you two things to change, not one."},"einstein":{"lead":"Mercury's extra precession and the bending of starlight both agreed with my equations. Historians treat the second as the more telling test, and I think they are right.","prompt":"Both Mercury's perihelion precession and the 1919 measurement of starlight deflection matched general relativity. Why is the deflection usually treated as the stronger test of the theory?","options":["Because it was measured by an independent team, rather than being computed from tables the theorist already had.","Because an eclipse measurement is far more precise than nineteenth-century observations of Mercury.","Because the deflection was an unmeasured quantity for which the theory named a specific number in advance, with a rival value already on the table — so there was a definite way for the theory to fail.","Because the precession could in principle be explained by an undiscovered planet, whereas nothing but curved spacetime could bend starlight."],"correct":2,"why":["Independence matters, but it is not the difference here. Mercury's precession was also measured by astronomers with no stake in general relativity, decades before the theory existed.","The 1919 plates were difficult, the uncertainties were substantial, and one problematic set was set aside during the analysis. Precision is not what carried the result.","Correct. Mercury's forty-three arcseconds per century was known in advance, so agreement with it — however impressive, and nothing was tuned to get it — could not rule out a theory built to reproduce it. The 1.75 arcseconds of deflection was a novel prediction competing against the Newtonian half-value, and the observation had a clear way to come out against Einstein.","The extra planet, Vulcan, was genuinely proposed and searched for. But the existence of an alternative does not by itself weaken the precession result — what weakens it as a test is that the number was already in hand when the theory was built."],"praise":"The value of a prediction lies in how easily it could have embarrassed me.","console":"Close. Ask which of the two results could have gone against me, and you will find what separates them."},"payne":{"lead":"A dark line on a plate tells you that atoms absorbed light. It does not tell you how many atoms were there. That distinction is my whole thesis.","prompt":"Two interstellar gas clouds are observed. One shows strong sodium absorption lines; the other shows very weak ones. What does that comparison, on its own, license you to conclude about their sodium content?","options":["Very little, because line strength depends on how many atoms sit in the right state to absorb at that wavelength, and that fraction varies enormously with temperature and pressure.","That the first cloud contains substantially more sodium than the second.","That the clouds differ in either sodium content or temperature, and no spectroscopic method can separate the two.","That the first cloud is denser, since line strength scales with the number of absorbers along the line of sight."],"correct":0,"why":["Correct. Payne used Saha's ionisation theory to work backwards from line strength to abundance, and the stellar spectral sequence turned out to be a temperature ladder rather than a chemistry ladder. The same element produces wildly different lines from atmospheres at different temperatures.","This is the inference the field made before ionisation theory was trusted, and it is why stars were thought to resemble the Earth's crust. It reads line strength as a headcount and skips the physics in between.","The first half is right; the second is too pessimistic. Spectroscopy can separate them — you use lines from several elements and ionisation states, plus the physics of excitation, to solve for temperature and abundance together.","Column density is one factor among several. Two clouds with identical sodium columns can show very different sodium lines if their temperatures differ, because the population of the absorbing state differs."],"praise":"The physics between the atom and the plate is where the answer lives.","console":"That is the reading almost everyone starts from. Put the ionisation state in between the atoms and the line, and the conclusion changes."},"chandrasekhar":{"lead":"I read my calculation to the Royal Astronomical Society, and Eddington rose afterwards and called the relativistic treatment absurd. Look closely at the shape of his objection.","prompt":"Eddington rejected the relativistic treatment of degenerate matter on the grounds that a star could not possibly behave the way it implied, without identifying an error in the derivation. What is the specific logical problem with that response?","options":["It appealed to authority, and authority is never a legitimate consideration in scientific judgement.","It ran backwards from an unwelcome conclusion to a faulty premise without saying which premise was faulty — a move that only works if you can point at the flaw.","It rejected a mathematical result on physical grounds, and mathematics cannot be overturned by physical argument.","It relied on intuition about how stars behave, and intuition has no place in physics."],"correct":1,"why":["Eddington's standing is why the objection stuck, but it is not what made the objection bad. He did offer reasons; the trouble is that his reasons never located a mistake.","Correct. Rejecting a conclusion is legitimate, but it creates an obligation — to find the bad step. Chandrasekhar's calculation was short and fully checkable, physicists agreed with him privately, and for years almost none said so in print.","Physical argument can and should overturn a physical model, since the model's assumptions are physical claims about the world. The problem is that Eddington never said which assumption he was rejecting.","Intuition is indispensable for deciding what to work on and what to distrust. It is simply not a substitute for finding the error, which is what was owed here."],"praise":"A conclusion you dislike is a reason to hunt for the mistake, not a substitute for finding it.","console":"Not quite. His instinct was permitted; what he owed me was a line number."},"rubin":{"lead":"Every velocity I ever measured was only the part of the motion pointed at me. That sounds like a technicality until someone hands you a galaxy seen face-on.","prompt":"A student measures a spiral galaxy lying almost face-on to us, records only small Doppler shifts across its disc, and concludes that this galaxy rotates far more slowly than the ones in published rotation curves. Where does the reasoning fail?","options":["Face-on galaxies genuinely do rotate more slowly, because their angular momentum is distributed differently.","Emission lines from a face-on disc are too faint to measure, so the small shifts are just noise.","The student should have used absorption lines from stars rather than emission lines from ionised gas.","A Doppler shift records only motion along the line of sight, so a face-on disc hides nearly all of its rotation and every curve must be corrected for the galaxy's inclination."],"correct":3,"why":["No such relationship exists. Orientation is an accident of where we happen to sit and cannot affect how a galaxy actually turns.","Brightness is not the problem. Even with excellent signal, a disc turning in the plane of the sky produces almost no shift along our line of sight.","Both tracers are used and both are subject to the same geometry. Changing which spectral line you measure does not change the projection.","Correct. Rubin laid the spectrograph slit along the major axis and corrected every curve for inclination before plotting velocity against radius. The measured shift is the true orbital velocity multiplied by a geometric factor, and for a nearly face-on disc that factor approaches zero."],"praise":"Geometry first. You cannot read a velocity off a plate without knowing how the galaxy is tilted.","console":"Have another look at what a Doppler shift can and cannot see. Motion across your field of view leaves no trace in the wavelength."},"bouman":{"lead":"People say we built a telescope the size of the Earth. That is true of exactly one property of the array, and badly false of the others.","prompt":"The Event Horizon Telescope combined eight radio telescopes at six sites. In what sense does that array behave like a single Earth-sized dish, and in what sense does it not?","options":["Its angular resolution is set by the longest separation between stations, so it resolves like a dish that wide — but its collecting area and its coverage of spatial scales are those of eight small dishes, so most of what a real Earth-sized dish would gather is simply missing.","It matches an Earth-sized dish in both resolution and sensitivity, and falls short only in how quickly it can survey the sky.","It behaves like an Earth-sized dish in every respect, which is why the reconstructed ring can be treated as a direct image.","It has the collecting area of an Earth-sized dish spread across many sites, and its resolution is limited instead by the recording electronics."],"correct":0,"why":["Correct. Each pair of stations recovers one Fourier component of the sky brightness, fixed by the vector between them, and Earth's rotation sweeps out a few more. The team ended up with a handful of samples where a filled aperture would supply millions, which is why the image had to be fitted rather than read off.","Sensitivity comes from collecting area, and eight dishes have the area of eight dishes. The array is sharp and starved of photons at the same time.","This is the misreading that turns a reconstruction into a photograph. The gaps in coverage are precisely why four teams reconstructed the data independently and why every pipeline was first run on synthetic data containing no ring.","The relationship runs the other way. Separation sets resolution and area sets sensitivity. The hydrogen maser clocks and the hard drives were demanding engineering, but they were not what limited the image."],"praise":"Sharpness and completeness are different properties, and the array only bought us one of them.","console":"Worth another look. Resolution comes from how far apart the dishes sit; everything else comes from the dishes themselves."},"darwin":{"lead":"I bred fancy pigeons for years and boiled their skeletons down. Let me ask what those birds actually proved, because I was careful never to claim too much for them.","prompt":"Darwin's argument from domestic pigeons — that fantails, pouters and tumblers all descend from the wild rock pigeon — was central to the Origin. What does that evidence establish?","options":["That natural selection produced the differences between wild species, since the same process is at work in both cases.","Nothing about nature, because artificial breeding involves a human chooser and natural selection does not.","That selection acting on heritable variation can produce divergence large enough to look like separate genera within a few centuries — which shows the mechanism has sufficient power, but not that nature supplies the selecting.","That variation within a species is essentially unlimited, so given enough time any form can arise from any other."],"correct":2,"why":["This is the step the pigeons cannot make on their own. Darwin needed a separate argument, from the struggle for existence and from differential survival, to show that nature does the choosing.","Too dismissive. The disanalogy is real and Darwin discussed it at length, but the domestic case still establishes that the mechanism has enough power to matter — which was exactly what his critics doubted.","Correct. The pigeons are an existence proof about the strength of selection on heritable variation, bounded by the fact that a breeder supplies the selection. Note the extra detail Darwin drew out: crossing two fancy breeds brings back the wild bird's blue wing bars and dark tail-band, which is evidence of the shared ancestor.","Unlimited variation is not what the breeds show, and Darwin did not claim it. Breeders work within the variation a species actually throws up, which is why some traits move easily under selection and others barely budge."],"praise":"An analogy is a loan, not a gift. It shows the mechanism has force; the rest had to be argued separately.","console":"You have granted me more than I asked for. The birds show what selection can do — who does the selecting in the wild is a different chapter."},"franklin":{"lead":"The camera was the easy part. Getting a fibre to diffract truthfully took control over something nobody thought worth reporting: the water around it.","prompt":"Two laboratories publish different diffraction patterns from what they believe is the same fibrous biological molecule, and each is confident of its own camera and exposures. Which explanation should be tested first, and how?","options":["One laboratory's sample is contaminated; test by repeating the preparation from fresh material and checking chemical purity.","The specimens were in different physical states; identify the environmental variable — humidity is the usual culprit — and show that the pattern switches back and forth reproducibly as that variable is set.","The molecule has no single fixed structure, and both patterns are correct averages over a flexible population.","One pattern was misindexed during analysis; test by having a third group re-measure the spot positions from the original films."],"correct":1,"why":["Worth checking, and cheap. But contamination usually adds features or degrades a pattern rather than substituting a different well-ordered one, so it does not account for two clean and distinct patterns.","Correct. Franklin controlled hydration by bubbling hydrogen through salt solutions, and DNA gave one crystalline form when dry and a quite different one above roughly ninety percent humidity. Being able to drive the pattern back and forth on demand turns a contradiction into a measurement: the specimen's state is part of the experiment, not background.","A real possibility for some molecules, and the hardest position to climb back out of once adopted. It belongs last, because it explains the disagreement by giving up on structure altogether.","Indexing errors happen and are worth ruling out, but they change how a pattern is interpreted rather than what the film recorded. Two genuinely different sets of spots point at the specimens instead."],"praise":"The specimen is part of the apparatus. Control its state and the contradiction turns into data.","console":"Understandable, but look upstream of the analysis. What the molecule was doing while you photographed it is the variable nobody writes down."},"mcclintock":{"lead":"In autumn I sit down and read the ears. A kernel's pattern is a record of when something happened, not merely whether it happened.","prompt":"Two maize kernels each show colourless patches on a coloured background. The first has three large sectors; the second has dozens of tiny specks. What does that difference most directly indicate?","options":["The first kernel underwent a more complete change, since a larger area of pigment was affected.","The second kernel has a higher rate of change per cell, since more separate events are visible.","The first kernel carries more copies of the element, so each event silenced a larger region.","The events happened at different times during the kernel's development: an early event leaves a large clone of descendant cells, a late one leaves only a few."],"correct":3,"why":["Patch size measures the number of descendant cells, not the completeness of the change. The very same event produces a broad sector early in development and a fine speck late.","Tempting, and the reading most students reach for first. But a speckled kernel is equally consistent with the same per-cell rate acting late, when the affected cells have only a few divisions left. Counting spots without accounting for timing confuses rate with schedule.","Copy number is a separate question that would have to be settled by crosses. Nothing about the size of a patch reports on how many elements are present in the genome.","Correct. Each patch is the descendant clone of the single cell in which the change occurred, so patch size works as a clock. McClintock read spot geometry this way and paired it with controlled crosses and chromosome preparations from the same plants."],"praise":"The kernel is a lineage map. Size tells you when, and that was the clue I could not put down.","console":"Look at a patch as a family rather than as a measure of severity. A cell that changes early has a great many descendants."},"tu":{"lead":"We began by reading — old texts, folk prescriptions, anything written down — and then carried each candidate into the laboratory. People misunderstand which half of that was the evidence.","prompt":"A team reads a nineteenth-century regional herbal describing a root preparation given for dysentery. What role can that text legitimately play in a modern research programme?","options":["It supplies a candidate hypothesis worth screening, and can suggest how to prepare the material — but whether the preparation does anything is settled only by controlled test.","It counts as accumulated clinical evidence, since a remedy that persisted for generations was presumably observed to work.","It has no scientific role, because traditional accounts are anecdotal and cannot support any conclusion.","It becomes evidence once a laboratory confirms activity, which retrospectively validates the tradition it came from."],"correct":0,"why":["Correct. Tu's group assembled roughly two thousand candidate remedies and tested a few hundred extracts against a rodent malaria parasite; sweet wormwood was one entry among them. The text earned its place twice — as a hypothesis, and as a procedural hint, since a fourth-century handbook describing a cold-water preparation is what prompted the switch to low-temperature extraction.","Persistence is a weak signal. Remedies survive for reasons unrelated to efficacy — availability, ritual, and the fact that most illnesses resolve on their own — and the great majority of the candidates Tu screened did nothing measurable at all.","Wrong in the opposite direction. Where to look is a scientific decision, and a written record of long use is a better-than-random reason to look somewhere. Refusing to read the texts would have cost the world artemisinin.","One hit does not validate a corpus. Roughly two thousand candidates yielded one drug, which is a statement about that compound rather than an endorsement of everything the tradition contains."],"praise":"The text told us where to look. The mice told us what was true.","console":"Notice where the evidence actually enters. Reading is how you choose a candidate; the assay is what settles it."},"doudna":{"lead":"Cas9 cutting DNA is interesting biology on its own. Something more specific had to be true before it could become a tool anyone could point at anything.","prompt":"Which finding about Cas9 was the essential step in turning a bacterial defence system into a general laboratory tool?","options":["That Cas9 makes a clean double-strand break rather than nicking only one strand.","That the cutting site is specified by a short guide RNA which can be synthesised to any sequence, so targeting lives in a cheap interchangeable part rather than in the protein.","That Cas9 requires a short adjacent motif, the PAM, beside any site it will cut.","That Cas9 functions inside human cells as well as in bacteria."],"correct":1,"why":["A double-strand break is what the cell's repair machinery responds to, so this does matter for editing. But many enzymes cut DNA, and cutting alone gives you no way to choose where.","Correct. Doudna's and Charpentier's groups fused the two natural RNAs into a single synthetic guide and it still worked, which means about twenty letters of RNA now select the target. Programmable in the ordinary engineering sense means exactly this: the specificity sits in a component you can order by mail.","The PAM is real and consequential, and it is a constraint rather than an enabler — it limits which sites you can target at all, and it exists so a bacterium does not shred its own stored records.","Necessary for applications, and demonstrated soon afterwards largely by Feng Zhang's and George Church's groups. It made the tool useful in mammals, but the reprogrammability had already been established in the tube."],"praise":"Put the specificity into the part you can synthesise, and the enzyme becomes an instrument.","console":"Each of those is true of Cas9. Ask which one lets a stranger aim the enzyme at a target nobody has tested."},"kariko":{"lead":"Our RNA made human immune cells scream. The temptation is to quiet the screaming. We wanted to know which atom was doing it.","prompt":"A therapeutic protein made in the laboratory triggers a strong inflammatory response in cultured immune cells, while the same protein purified from human tissue does not. Which experimental design is most likely to identify the cause?","options":["Titrate the laboratory preparation down until the inflammatory response falls to background, and adopt that as the working dose.","Co-administer an anti-inflammatory agent and confirm that the response is suppressed.","Produce the same protein repeatedly, changing one chemical feature at a time toward the natural version, and measure the immune readout after each change.","Screen several cell types and identify one that mounts no response to the laboratory preparation."],"correct":2,"why":["This manages the symptom and abandons the question. A dose quiet enough to tolerate may be too low to do anything useful, and you still do not know what the immune sensors are detecting.","Blocking the response confirms that the response exists. It cannot tell you which feature of your preparation is being recognised, and it commits you to shipping a second drug alongside the first.","Correct. Karikó and Weissman noticed that transfer RNA, which the cell decorates with dozens of chemical modifications, provoked almost nothing — so they rebuilt the same message swapping one nucleoside at a time and measured cytokine release from human dendritic cells. Replacing uridine with pseudouridine collapsed the signal to near background, and the modified RNA also turned out to be translated more efficiently.","Choosing a cell type that does not react hides the problem instead of solving it, and a patient contains all the cell types you excluded."],"praise":"One variable at a time is slow, and it is the only way to name the culprit.","console":"Those would all quiet the response. None of them would tell you what the cell was objecting to."},"mendeleev":{"lead":"Tellurium is heavier than iodine, and yet iodine plainly belongs with chlorine and bromine. I placed tellurium first and declared its weight mismeasured.","prompt":"Mendeleev overrode a measured atomic weight because it conflicted with his arrangement. Under what conditions is that kind of move defensible rather than special pleading?","options":["It is never defensible: a measurement outranks a theoretical pattern, since the pattern is the thing being tested.","It is defensible whenever the theoretical scheme is simpler and more elegant than the alternative.","It is defensible for chemical properties but not for physical quantities such as mass, which are measured far more directly.","It is defensible when the pattern already has independent support and the override is stated as a specific, checkable claim — here, that a particular weight would be found to be wrong — so that the move can be shown to have failed."],"correct":3,"why":["This rule would forbid a great deal of successful science. Measurements carry error, and a strong pattern can legitimately flag one as suspect, provided the suspicion is made testable rather than merely asserted.","Elegance is not evidence. It suggests where to look and has no power to settle what is true, and a scheme that gets adjusted whenever it is inconvenient has stopped being a scheme.","The distinction does not hold up. Mendeleev's chemical assignments rested on measurements too — oxide formulas, valences, reactivity — every one of which could have been wrong in the same way.","Correct. He made the bet explicit and left it open to refutation; he even wrote to Lecoq de Boisbaudran insisting a measured gallium density was too low, and repurification proved him right. On tellurium he was right that the ordering was wrong and wrong about why — the real answer was isotopes, not sloppy weighing, and nobody could have proposed that for decades."],"praise":"Make the override a wager anyone can collect on, and it stays science.","console":"Not quite. The question is not whether you may doubt a number, but whether your doubt commits you to something checkable."},"hodgkin":{"lead":"Half the information in a diffraction experiment is missing — the phases. Where you get them from decides how much you should trust the picture at the end.","prompt":"A crystallographer estimates the missing phases from a preliminary atomic model, computes an electron density map, and finds that the map shows the very feature the model contained. What is the correct reading of that agreement?","options":["It is weak evidence at best, because the map inherits the model used to phase it; the feature has to be tested with phases that do not depend on the model, or by omitting that region and seeing whether density returns.","It confirms the model, since a wrong model would not produce a map consistent with the measured intensities.","It is meaningless, because a map built partly from a model can carry no information about the real structure.","It can be settled by collecting data to higher resolution, which will reveal whether the feature is genuine."],"correct":0,"why":["Correct. Hodgkin's own warning was that a map is only as good as its phases, and a wrong starting model will politely show you what you expected. The standard remedies are experimental phasing — the heavy-atom method, using the cobalt at the centre of vitamin B12 or heavy atoms soaked in elsewhere — and omit maps, which leave a region out of the model and ask whether the density comes back anyway.","This is model bias, and it is among the most common self-deceptions in structural work. The measured intensities constrain the map, but the phases you supplied also shape it, so partial agreement is expected whether the feature is there or not.","Too strong. Model phasing is a legitimate and universal technique and the maps do carry real information. What they cannot do is confirm the part of the model that generated them.","Higher resolution sharpens a biased map just as readily as an unbiased one. Resolution and independence are different problems."],"praise":"A map will show you what you asked it for. That is why we omit a region and ask again.","console":"Careful — you have let the model vouch for itself. The check has to come from phases that know nothing about the feature."},"molina":{"lead":"Our 1974 chemistry was sound and our geography was wrong. When Farman's team reported the Antarctic loss, it was far deeper than anything our model allowed.","prompt":"The observed Antarctic ozone loss was much larger and far more localised than the 1974 chlorine calculations predicted. What is the best characterisation of that discrepancy?","options":["The chlorine mechanism was falsified, and the observed hole required a different explanation.","The model was incomplete rather than wrong: its gas-phase reactions held up, but it omitted chemistry occurring on the surfaces of polar stratospheric cloud particles, which activates chlorine far faster.","The prediction was confirmed, since ozone loss was indeed found where loss had been predicted.","The episode shows that atmospheric models are too uncertain to support policy, since the central quantity was off by a large factor."],"correct":1,"why":["The opposite happened. The hole turned out to be driven by chlorine, and the measurements that followed traced it to the chlorine monoxide the mechanism had predicted. The mechanism was vindicated; the accounting was found to be missing a pathway.","Correct. Reactions on ice particles in the extreme cold of the Antarctic winter convert chlorine reservoirs into forms that ultraviolet light frees immediately, concentrating the loss in polar spring. Nothing in the 1974 paper anticipated that, which is a failure of completeness rather than of the reaction chemistry the paper did contain.","Too generous, and this is how a prediction gets credited for more than it earned. Molina and Rowland expected slow, roughly even thinning worldwide; a seasonal hole over one pole was not their prediction.","The depletion estimates did swing by large factors through the early 1980s, and critics were right to point at that. But the direction of the effect and the catalytic mechanism were robust, and those are what the Montreal Protocol rested on — the surprise was worse than predicted, not milder."],"praise":"A model can be right about the mechanism it contains and still be missing a room in the house.","console":"Have another look at what actually failed. The reactions in the model held up; the ones left out of it did not."},"arnold":{"lead":"That freezer is full of tens of thousands of variants that did nothing. Sometimes the failure is not in the variants — it is in where you started climbing.","prompt":"A directed evolution campaign improves an enzyme's activity for four rounds and then stops: further rounds of mutation and screening yield nothing better. What does the plateau most likely mean, and what follows from it?","options":["The property has hit a physical ceiling for this class of enzyme, so further effort belongs on a different reaction.","The mutation rate is too low, and raising it substantially will resume progress.","The population may be sitting on a local peak, so escaping it needs a bigger jump than single mutations allow — recombination, a different starting scaffold, or a changed screen — and the plateau is not evidence that the target is unreachable.","The screen has become too easy, so the surviving variants are no longer being distinguished from one another."],"correct":2,"why":["Directed evolution climbs to local peaks rather than global optima, so a plateau is a statement about the path taken, not about what is possible. Reading a ceiling off a stalled climb overreads it badly.","Mutation rate is a real knob, and pushing it too high is the standard way to destroy a protein population, since most mutations are neutral or harmful and everything eventually unfolds. Worth trying, but it is a tactic rather than an explanation.","Correct. This is why practitioners recombine improved variants, revisit the starting sequence, or switch parents altogether. Arnold's subtilisin E work took four rounds of mutation and screening in dimethylformamide to reach roughly 250 times the parent's activity, and the useful mutations sat in positions no designer would have chosen — the landscape is not navigable by intuition.","Worth checking, since a saturated assay genuinely can hide improvements. But that shows up as variants piling up at the top of the readout, which is a diagnosis you make from the data rather than an assumption you start with."],"praise":"A plateau describes your route, not the mountain.","console":"Reasonable, but a stalled climb is ambiguous. Ask what a local peak would look like from inside the experiment."},"lovelace":{"lead":"The engine was conceived for numbers, and in Note A I argued it need not stay there. The argument does not run the way most readers assume.","prompt":"Lovelace argued that a machine designed to combine numbers could in principle compose elaborate music. What is the structure of that argument?","options":["Music is mathematical at bottom, since pitches are frequency ratios, so a machine that handles numbers already handles music.","The Analytical Engine had capacity well beyond arithmetic, so it could take on additional tasks alongside its calculations.","Any sufficiently complex mechanism will eventually produce novel output, music included.","The engine operates on symbols according to rules, and numbers are only one thing symbols can stand for — so any domain whose relations can be encoded as symbols and rules falls within reach of the same mechanism."],"correct":3,"why":["The most tempting answer, because its premise is true. But it makes the case depend on a special property of music, whereas Lovelace's point was about the machine: what it manipulates are marks, whatever those marks are taken to mean.","Spare capacity is a claim about size, not about kind. A larger adding machine is still an adding machine unless you have an argument about what its operations are performed on.","Lovelace argued the reverse about novelty. She insisted the engine could bring nothing genuinely new into being, and stated that as settled fact about a machine nobody had built. Turing took the claim up a century later and argued against it.","Correct. This is the general-purpose idea, and it is the assumption underneath every computer since: one mechanism, any subject matter, with the interpretation supplied from outside. Roughly a century passed before a machine existed that could put it to the test."],"praise":"It is an argument about representation, not about music.","console":"Close, and the premise you chose is true. But her claim was about what the engine acts on, which makes it far more general."},"noether":{"lead":"My theorem tells you what follows from a symmetry. Which symmetries your system actually has is not a question algebra can answer for you.","prompt":"A modeller studying a crystal assumes the system is invariant under rotations about any axis, applies Noether's theorem, and concludes that total angular momentum is conserved. Measurements show it is not. Where is the failure?","options":["In the physical input. A crystal lattice picks out preferred axes, so full rotational symmetry does not hold, and the theorem returns nothing for a symmetry the system does not have.","In the theorem, which applies to continuous media rather than to systems built on a discrete lattice.","In the measurement, since angular momentum is conserved in any closed system regardless of its internal structure.","In the conclusion's strength: a lattice has discrete rotational symmetry, so the theorem yields an approximately conserved angular momentum rather than an exactly conserved one."],"correct":0,"why":["Correct. The theorem is a conditional — given a continuous symmetry of the action, here is the conserved current. Assert a symmetry the system lacks and you get a beautiful conservation law for a world that does not exist, which is precisely the failure mode Noether warned about.","The theorem is mathematics and cares only about variational structure, not about whether matter is continuous or discrete. Crystals have perfectly good Lagrangians.","The angular momentum of the whole isolated system, lattice included, is conserved. The modeller's claim was about the system as they had defined it, with the lattice treated as a fixed background that can quietly absorb angular momentum.","The most instructive wrong answer. Noether's theorem requires a continuous symmetry; a discrete one gives you selection rules and allowed transitions, not a conserved quantity, approximate or otherwise."],"praise":"The theorem never promised you a symmetry. It only tells you what one buys.","console":"The algebra is not what broke here. Look at the premise that was fed into it."},"turing":{"lead":"Before I could show that no procedure decides the question, I had to say what a procedure is. That sounds like housekeeping, and it is the whole difficulty.","prompt":"Turing's 1936 result shows that no procedure can decide, for every program and input, whether that program halts. Why did establishing this require first defining what counts as a procedure?","options":["Because Hilbert's problem was posed in formal terms, and an answer had to be given inside the same formalism to be admissible.","Because the claim quantifies over every possible procedure, so it can only be proved with a definition general enough to cover any of them — otherwise you can report that particular attempts failed, and nothing more.","Because impossibility can only be shown by exhibiting a counterexample, and a counterexample must be constructed within a specified system.","Because a definition precise enough to reason about was also precise enough to build, and the machine was needed to run the argument."],"correct":1,"why":["Turing did answer Hilbert, but his machine model was a new construction rather than a move inside Hilbert's formalism — and Church reached the same conclusion using a quite different formalism, which is part of why the definition was accepted as capturing the right notion.","Correct. A universal negative claim needs a definition with the right scope. Turing got one by watching what a human computer actually does with paper and a rule, then stripping the description down to a tape, a finite set of states, and a table of instructions — general enough that anything we would call a procedure is covered by it.","This inverts how the proof works. The halting argument runs by contradiction: assume the deciding machine exists, then feed it a program built to consult it and do the opposite. No counterexample is exhibited, because the object in question is shown not to exist at all.","Buildability is beside the point, and the universal machine was a mathematical object defined years before any electronic computer existed. Its unlimited tape means no physical machine is quite one."],"praise":"You cannot rule out all methods until you have said what a method is.","console":"Not the reason. Think about the scope of the claim — every procedure, not merely the ones anyone had tried."},"cajal":{"lead":"Golgi's stain blackens perhaps one cell in a hundred and leaves the rest invisible. Students always ask why I did not want a stain that showed everything.","prompt":"The Golgi stain fills a small, apparently random fraction of neurons completely and leaves neighbouring cells unstained. Why was that partial staining an advantage for settling whether nerve cells are separate individuals?","options":["A random subset is an unbiased sample, so proportions measured within it can be generalised to the whole tissue.","Staining fewer cells uses less reagent and reduces the chemical artifacts that heavy impregnation introduces.","The claim under test required following one cell's process all the way to its end, and that is possible only when the cell stands alone against an empty field — a stain filling every cell would give a black mass in which no individual could be traced.","Partially stained tissue preserves the surrounding cells for other techniques, allowing several methods on one preparation."],"correct":2,"why":["A genuine virtue of random sampling, and the wrong virtue here. The question was structural — does a fibre end or continue — and no proportion measured across cells answers it.","Reagent economy was not the issue, and Cajal in fact ran the dichromate and silver steps twice to strengthen the impregnation. He wanted more complete filling of the few cells that took the stain, not less.","Correct. In the cerebellum of a young bird Cajal could follow a single axon until it broke into a spray of terminals wrapping the next cell's body, and stopped. That inference needs figure against ground, which is exactly what a complete stain destroys: less coverage, more information.","Running several techniques on one block is useful in modern work but is not what made this decisive, and the unstained cells here are simply invisible rather than held in reserve."],"praise":"One cell against an empty field is what an ending looks like. Stain everything and you see nothing.","console":"Think about what you must see in order to claim a fibre ends. Following it requires that nothing else is in the way."},"li":{"lead":"A benchmark decides what counts as progress, which makes designing one a scientific choice rather than a neutral one. Watch what happens when a score travels.","prompt":"A group reports the best-ever accuracy on a public benchmark of dermatology photographs and announces that its model is ready for clinical use. What does the benchmark result actually support?","options":["Clinical readiness, provided the test set was properly held out and never used during training.","Nothing at all, since benchmark performance bears no relationship to real-world performance.","Readiness for the specific conditions represented in the benchmark, with performance on other conditions expected to be similar.","Performance on images drawn from that benchmark's distribution and scored against its labels — so any claim about patients requires prospective evaluation in the population where the system would be deployed."],"correct":3,"why":["A clean held-out split guards against one specific failure, memorising the test set. It says nothing about whether the benchmark's images resemble the patients, cameras, lighting or skin tones a real clinic sees.","Too strong, and it discards a genuinely useful instrument. Shared benchmarks made computer vision comparable across groups, which is why the 2012 ImageNet result could be recognised as a result at all.","The first half is right and the second half is the assumption that fails. Generalisation to unrepresented cases is precisely what an in-distribution score cannot establish.","Correct. A benchmark is a dataset plus a scoring rule, so what it measures is bounded by both. Li's own account of ImageNet's limits runs this way: the images came from web search and inherited whatever the web over-represents, and for categories describing people the label set included terms that were offensive or not verifiable from a photograph in the first place."],"praise":"A score is a measurement of the benchmark. Anything past that is a further claim, and it needs its own evidence.","console":"Reasonable, but ask what the number was measured on. The dataset sets the boundary of what the score can say."},"thompson":{"lead":"Near the surface I can count years the way you count tree rings. Deep in the core the layers are squeezed together and I have to do something else entirely.","prompt":"In a mountain ice core, ages near the top come from counting visible annual layers, while ages deep down come from ice-flow models and from matching features to other climate records. Why are these two kinds of date different in kind, not merely in precision?","options":["The shallow dates are a direct count whose errors accumulate step by step, while the deep dates inherit the assumptions of a flow model and are partly tied to the very records they were matched against — so they are not independent of those records.","The deep dates are simply less precise, in the way any measurement degrades with distance from the instrument.","Both rest on physical principles that are equally well established, so the difference is one of stated uncertainty rather than of kind.","The shallow dates are the unreliable ones, since surface layers can be removed by melting or wind and a missing year is invisible in a count."],"correct":0,"why":["Correct. This is why Thompson's Quelccaya chronology, with countable wet-season snow alternating with dry-season dust back roughly fifteen centuries, is a stronger claim than his oldest Tibetan ages, which other groups dispute. It also means a deep date matched to another archive cannot then be offered as independent confirmation of that archive.","Precision is not the distinction. A deep date could in principle be quoted with a tight error bar and still depend on a model whose assumptions might be wrong, which is a different kind of exposure.","Ice flow really is physics, but a flow model needs inputs — accumulation history, thinning, temperature — that are estimated rather than observed. Layer counting needs far fewer of them.","Missing layers are a real problem and Thompson takes them seriously; some glaciers he sampled have lost their upper layers entirely. Even so, a count with gaps remains a more direct measurement than a modelled age."],"praise":"Two dates on the same core, and only one of them is a count.","console":"Both carry uncertainty, but they are not exposed to the same kind of error. Ask which one depends on a model."},"hayhoe":{"lead":"Twelve minutes, so I will be blunt. Someone will eventually offer you climate projections at one kilometre for your county, and you should know what that resolution is and is not.","prompt":"A consultancy offers climate projections at one-kilometre resolution, produced by statistically downscaling output from a global model. A city treats these as preferable to coarser projections. What is the key caveat?","options":["Statistical downscaling is less reliable than dynamical downscaling, so the fine-scale results should be regenerated with a regional physical model.","Downscaling cannot add information the global model does not have: if the parent model misplaces a feature such as the jet stream or the monsoon, that error is delivered at one kilometre, looking far more authoritative than it deserves.","One kilometre is finer than the observational network used to fit the relationship, so the projections cannot be validated at all.","Fine resolution is only a problem for rainfall; for temperature the downscaled values can be taken at face value."],"correct":1,"why":["The two methods have different strengths — dynamical downscaling is physically consistent and expensive, statistical downscaling is cheap and depends on the historical relationship holding. Neither escapes the limits of the global model it is nested in, which is the actual caveat.","Correct. Resolution is not accuracy. Hayhoe's group also has to assume that the historical link between large-scale and local variables still holds in a climate nobody has observed, an assumption unverifiable by construction — and shakier for rainfall than for temperature.","Validation is possible and standard: you fit the relationship on one historical period and test it on a withheld one. The gap between grid scale and station density is a real difficulty, not a bar to any testing at all.","Rainfall is indeed shakier than temperature, but errors inherited from the parent model reach both. A misplaced circulation feature moves temperature patterns as well as rainfall."],"praise":"Resolution is not accuracy, and a fine grid can make a bad answer look excellent.","console":"Good instinct, wrong lever. Fineness is about presentation; what limits you is what the parent model knows."},"simard":{"lead":"Birch and fir, each fed a different carbon isotope, and a cedar seedling planted alongside them. The cedar is the part of that design I would defend hardest.","prompt":"In Simard's field experiment, paper birch and Douglas-fir seedlings were labelled with different carbon isotopes, and a western redcedar seedling was included in each triplet. What does the cedar contribute to the inference?","options":["A second recipient species, which increases the statistical power of the comparison.","A demonstration that the isotope labels are harmless to plants outside the experiment.","An estimate of how much label can reach a neighbour by ordinary routes — soil water, root exudates, decomposition — because cedar forms a different type of mycorrhiza and cannot join the same fungal network.","A check on airborne transfer, since cedar foliage would intercept any label released into the atmosphere."],"correct":2,"why":["Replication of that sort calls for more triplets, not a third species. Cedar is not a substitute recipient; it is a different kind of recipient, chosen for what it cannot do.","Labels are used at tracer levels and their safety was never the question. The cedar earns its place through its biology, not through its tolerance.","Correct. Without such a control, label arriving in the fir is perfectly consistent with plain soil transfer and the network explanation gains nothing. Cedar picked up far less label than the fir did, and that contrast is what made a fungal route the better explanation — note how much still rests on it, since a 2023 review concluded that isotope transfer alone cannot show carbon travelled through fungal hyphae rather than through soil.","Atmospheric leakage is worth worrying about and is handled by bagging the labelled seedlings during exposure. Foliage interception would not distinguish an airborne route from a below-ground one in any case."],"praise":"The control is the argument. Without the cedar there is no network claim to make.","console":"Look at what the cedar cannot do rather than what it can. That inability is exactly what makes it a control."},"bertozzi":{"lead":"Genetics gave us no handle on sugars — you cannot fuse a fluorescent protein onto a glycan. So we borrowed the cell's own assembly line instead.","prompt":"A researcher wants to image a class of molecule in living cells that has no genetic handle: it is not copied from a template and cannot be fused to a fluorescent protein. Which strategy follows Bertozzi's approach, and what limitation comes with it?","options":["Feed the cells a building block carrying a small chemically inert handle, let their own enzymes install it, then couple a probe to that handle from outside — accepting that you see only the fraction the enzymes will accept, and that the analogue may itself perturb the pathway you are measuring.","Raise an antibody against the molecule class and use a labelled antibody, accepting that antibodies reach only the outside of a cell.","Attach a bright fluorophore directly to the building block and feed that in, accepting that the label is bulkier than the natural molecule.","Express an enzyme that modifies the molecule class and tag that enzyme, accepting that you then observe the enzyme rather than its product."],"correct":0,"why":["Correct. Bertozzi's group fed cells azide-bearing sugars, relying on earlier work from Reutter's group showing the biosynthetic pathway tolerates modified side chains, then reacted the azide with a probe delivered from outside. That reaction must be bioorthogonal — unreactive toward everything already present, fast at low concentration in water at body temperature, and free of any toxic catalyst, which is why a copper-catalysed coupling had to be replaced by a strained cyclooctyne.","Antibodies are genuinely useful here and are widely used for glycans. But they report on pre-existing structures rather than on newly made molecules, they need a well-defined epitope, and inside a living cell they are hard to deliver.","A bulky fluorophore is the problem the two-step design exists to avoid. The enzymes usually will not accept it, and if they do, a tag that large can change where the molecule ends up. Keeping the installed handle tiny is the entire point.","Tagging the enzyme tells you where the machinery is, not where its product goes. A reasonable complementary experiment that answers a different question."],"praise":"Small handle in, probe on afterwards. The size of that handle is the whole design.","console":"Each of those is a real technique. Ask which one lets the cell's own enzymes do the installing while the tag stays invisible to them."},"yamanaka":{"lead":"Twenty-four candidate genes, and not one of them does anything on its own. That is the part worth teaching, so let me hand you a version of the problem.","prompt":"A laboratory has twenty candidate genes that might jointly drive a change of cell state, and a clean survival readout for success. Introducing each gene individually produces nothing. What design would identify the required genes, and why does it work when the one-at-a-time test failed?","options":["Test every pair of genes, since a two-gene interaction is the simplest explanation for a null result from single genes.","Introduce all twenty together to establish that the full set works, then run twenty conditions each omitting one gene: if dropping a gene abolishes the readout, that gene is required.","Raise the expression level of each single gene, since the individual tests may have fallen below the threshold needed for the change.","Conclude that the readout is insensitive, and develop a better assay before testing any combinations."],"correct":1,"why":["Combinatorial testing gets expensive very fast and still fails if the effect needs four genes together, since no pair would show anything at all. The number of possible subsets is precisely why nobody searches this way.","Correct. Kazutoshi Takahashi introduced all twenty-four candidates at once and colonies appeared; the informative step was then subtraction, twenty-four pools each missing one factor. Four genes proved necessary — Oct3/4, Sox2, Klf4 and c-Myc. Subtraction works because it starts from a condition where the readout is already positive, so each removal is measured against a signal rather than against nothing.","Dose is a fair worry and easy to check. But if the requirement is genuinely a combination, no amount of one factor supplies the others, and this is how a real interaction gets misdiagnosed as a sensitivity problem.","The assay was not the limitation, and here it is doing its job — reporting honestly that one factor is not enough. Rebuilding a working readout before trying the obvious design would have cost years."],"praise":"Start from something that works and take pieces away. Addition tells you nothing when nothing works alone.","console":"The instinct to add is natural. Notice that you can only measure a loss against a signal you already have."},"charpentier":{"lead":"We deleted things one at a time and looked at a blot. With Cas9 gone the guide RNA never matured, which surprised us, since Cas9 was supposed to be the scissors for DNA.","prompt":"Deleting the Cas9 gene abolished maturation of the guide RNA, even though the RNA cutting itself is done by the cell's own RNase III. What does the deletion result establish?","options":["That Cas9 cuts the CRISPR transcript into mature guides, and RNase III plays a supporting role.","That Cas9 acts only downstream of RNA maturation, so the deletion must be affecting the cell indirectly.","That RNase III cannot be the processing enzyme, since removing a different protein blocked processing.","That Cas9 is required for the processing step — necessity, not mechanism — which is a reminder that a protein can be needed for a step other than the one it is named for."],"correct":3,"why":["This reads necessity as mechanism, the standard overreach from a knockout. The processing cuts are made by RNase III; Cas9 is needed for them to happen, plausibly by binding and holding the paired RNAs in a form the nuclease can act on.","Cas9 does act after maturation too, when it cuts target DNA. But the blot showed maturation failing in its absence, which places a requirement for Cas9 at the earlier step as well. A protein can be needed twice.","Two proteins can both be required for one step, and here both are: deleting RNase III also blocked maturation. Necessity is not exclusive, and treating it as exclusive makes knockout results appear to contradict each other for no reason.","Correct. Charpentier's group found tracrRNA, RNase III and Cas9 all necessary before mature guide RNA appears. A deletion licenses a necessity claim and nothing more; what the protein does at that step has to be worked out separately, which is what the later reconstitution from purified components was for."],"praise":"A deletion buys you necessity. Anything past that has to be earned in a tube.","console":"Careful with what a knockout says. Absence tells you the step needs the protein, not what the protein does there."}};
+const BOOKS = [{"id":"elements","title":"Elements","author":"Euclid","year":"c. 300 BCE","text":"Thirteen books that build geometry from a few definitions and five postulates. People learned mathematics from it for more than two thousand years."},{"id":"algebra","title":"The Compendious Book on Calculation by Completion and Balancing","author":"Muhammad ibn Musa al-Khwarizmi","year":"c. 820","text":"Its method of al-jabr — restoring a balance — gave algebra its name, and the author's own name became the word algorithm."},{"id":"optics","title":"Book of Optics","author":"Ibn al-Haytham","year":"c. 1011–1021","text":"Argued that we see because light travels into the eye, and tested ideas about light with careful experiments rather than argument alone."},{"id":"revolutions","title":"On the Revolutions of the Heavenly Spheres","author":"Nicolaus Copernicus","year":"1543","text":"Put the Sun, not the Earth, at the centre of the planets' orbits. Copernicus saw it printed in the year he died; the argument took another century to win."},{"id":"fabrica","title":"On the Fabric of the Human Body","author":"Andreas Vesalius","year":"1543","text":"Published the same year as Copernicus. Vesalius drew what dissection actually showed, and corrected errors that had stood since Galen."},{"id":"messenger","title":"The Starry Messenger","author":"Galileo Galilei","year":"1610","text":"A small telescope pointed upward: mountains on the Moon, and four moons circling Jupiter."},{"id":"micrographia","title":"Micrographia","author":"Robert Hooke","year":"1665","text":"Drawings made through a microscope — a flea the size of a page, and the little boxes in cork that Hooke named cells."},{"id":"principia","title":"Principia","author":"Isaac Newton","year":"1687","owner":"newton","text":"Three laws of motion and one of gravity: enough to explain a falling apple and the orbiting Moon with the same mathematics."},{"id":"plantarum","title":"Species Plantarum","author":"Carl Linnaeus","year":"1753","text":"Gave every plant known to him a two-part name, genus then species — the naming system biologists still use."},{"id":"traite","title":"Elementary Treatise of Chemistry","author":"Antoine Lavoisier","year":"1789","text":"Listed the chemical elements then known and showed that mass is conserved when substances react."},{"id":"engine","title":"Notes on the Analytical Engine","author":"Ada Lovelace","year":"1843","owner":"lovelace","text":"Notes on a mechanical computer that was never finished. They include what is often called the first published program, and the idea that such a machine could work on more than numbers."},{"id":"cholera","title":"On the Mode of Communication of Cholera","author":"John Snow","year":"1855","text":"Snow traced a cholera outbreak to a single water pump on Broad Street and argued that the disease spread through water, not foul air."},{"id":"nightingale","title":"Notes on Matters Affecting the Health of the British Army","author":"Florence Nightingale","year":"1858","text":"Her diagrams showed that more soldiers in the Crimean War died of preventable disease than of their wounds."},{"id":"origin","title":"On the Origin of Species","author":"Charles Darwin","year":"1859","owner":"darwin","text":"Evolution by natural selection, built from pigeons, barnacles, fossils and island birds. The first printing sold out to booksellers on the day it was issued."},{"id":"peas","title":"Experiments on Plant Hybridization","author":"Gregor Mendel","year":"1866","text":"Years of crossing pea plants showed that traits pass on as separate units in predictable ratios. It was largely ignored until 1900."},{"id":"periodic","title":"Principles of Chemistry","author":"Dmitri Mendeleev","year":"1869","owner":"mendeleev","text":"Arranged the elements into a periodic table and left gaps for elements nobody had found yet — then predicted what they would be like."},{"id":"treatise","title":"A Treatise on Electricity and Magnetism","author":"James Clerk Maxwell","year":"1873","text":"Brought electricity, magnetism and light together under one set of equations."},{"id":"radioactive","title":"Research on Radioactive Substances","author":"Marie Curie","year":"1903","owner":"curie","text":"Marie Curie's doctoral thesis on radioactivity, completed in the same year she shared the Nobel Prize in Physics."},{"id":"cepheids","title":"Periods of 25 Variable Stars in the Small Magellanic Cloud","author":"Henrietta Swan Leavitt","year":"1912","text":"Leavitt found that brighter Cepheid stars pulse more slowly — a ruler later used to measure the distances to other galaxies."},{"id":"continents","title":"The Origin of Continents and Oceans","author":"Alfred Wegener","year":"1915","text":"Proposed that the continents drift. Rejected for decades, until evidence from the ocean floor arrived in the 1960s."},{"id":"stellar","title":"Stellar Atmospheres","author":"Cecilia Payne","year":"1925","owner":"payne","text":"Payne's thesis showed that stars are made mostly of hydrogen and helium — against what almost everyone then believed."},{"id":"computable","title":"On Computable Numbers","author":"Alan Turing","year":"1936","owner":"turing","text":"Imagined a simple machine reading and writing symbols on a tape, and used it to define what can be computed at all."},{"id":"helix","title":"Molecular Structure of Nucleic Acids","author":"Watson, Crick — with Franklin and Gosling's X-ray evidence","year":"1953","owner":"franklin","text":"The double helix, proposed in a one-page paper. Rosalind Franklin and Raymond Gosling's X-ray evidence appeared in the same issue of the journal."},{"id":"spring","title":"Silent Spring","author":"Rachel Carson","year":"1962","text":"Showed how pesticides like DDT build up through food chains and harm wildlife, and helped start the modern environmental movement."}];
 
 
 /* ==== core.js ==== */
@@ -4916,14 +4934,15 @@ function bikeRack(b, x, z, y0, yaw, n = 4) {
   }
 }
 
+const TORUS_LO = pTorus(0.08, 12, 4);
 /* a bicycle mesh built around its own origin, facing +z; used static and ridden */
 function bicycleMesh(b, col, o = {}) {
   const frame = mat(0, col, { rough: 0.35, metal: 0.5 });
   const W = 0.34;       // wheel radius
   const ax = [0, W, -0.52], fx = [0, W, 0.52];
   for (const c of [ax, fx]) {
-    b.add(pTorus(0.07, 28, 6), xform(c, [0, 0, Math.PI / 2], [W * 2, W * 2, W * 2]), PM.rubber);
-    for (let s = 0; s < 8; s++) {
+    b.add(o.lod ? TORUS_LO : pTorus(0.07, 28, 6), xform(c, [0, 0, Math.PI / 2], [W * 2, W * 2, W * 2]), PM.rubber);
+    if (!o.lod) for (let s = 0; s < 8; s++) {
       const a = (s / 8) * TAU;
       strut(b, c, [c[0], c[1] + Math.sin(a) * W * 0.92, c[2] + Math.cos(a) * W * 0.92], 0.012, PM.steel);
     }
@@ -5844,7 +5863,28 @@ function buildWorld(gl, roster) {
   }
 
   /* ---------------- bikes to borrow, carts to drive ---------------- */
-  const rack = (x, z, yaw, n, rideable) => {
+  // is there room here? (buildings, trees, lamps, benches and the river)
+  const freeAt = (x, z, r) => {
+    if (!isWalkable(x, z) || Math.abs(x - riverX(z)) < 13 + r) return false;
+    for (const o of obbs) {
+      const dx = x - o.x, dz = z - o.z, c = Math.cos(o.yaw), s = Math.sin(o.yaw);
+      if (Math.abs(dx * c - dz * s) < o.hw + r && Math.abs(dx * s + dz * c) < o.hd + r) return false;
+    }
+    for (const c of colliders) if (Math.hypot(x - c.x, z - c.z) < c.r + r) return false;
+    return true;
+  };
+  const place = (x, z, r) => {
+    if (freeAt(x, z, r)) return [x, z];
+    for (let rad = 1; rad < 14; rad += 1) for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * TAU, nx = x + Math.cos(a) * rad, nz = z + Math.sin(a) * rad;
+      if (freeAt(nx, nz, r)) return [nx, nz];
+    }
+    return null;
+  };
+  const rack = (x0, z0, yaw, n, rideable) => {
+    const p = place(x0, z0, n * 0.45 + 0.4);
+    if (!p) return;
+    const [x, z] = p;
     bikeRack(W.at(x, z), x, z, H(x, z), yaw, n);
     for (let i = 0; i < n; i++) {
       const o = (i - (n - 1) / 2) * 0.9;
@@ -5854,11 +5894,112 @@ function buildWorld(gl, roster) {
     }
     obbs.push({ x, z, hw: n * 0.45 + 0.3, hd: 0.8, yaw, y0: 0, h: 1.2 });
   };
-  rack(12, 62, 0, 6, 2);
-  rack(-12, 62, 0, 5, 1);
-  rack(-56, -32, Math.PI / 2, 4, 1);
-  for (const d of DISTRICTS) { const D = DEPT[d.id]; rack(d.cx + Math.sin(D.yaw + 1.6) * 15, d.cz + Math.cos(D.yaw + 1.6) * 15, D.yaw, 5, 2); }
-  rack(-8, 124, Math.PI / 2, 4, 1);
+  // most rack bikes can be borrowed now; one or two stay locked for the look of it
+  rack(12, 62, 0, 6, 5);
+  rack(-12, 62, 0, 5, 4);
+  rack(-56, -32, Math.PI / 2, 4, 3);
+  for (const d of DISTRICTS) { const D = DEPT[d.id]; rack(d.cx + Math.sin(D.yaw + 1.6) * 15, d.cz + Math.cos(D.yaw + 1.6) * 15, D.yaw, 5, 4); }
+  rack(-8, 124, Math.PI / 2, 4, 3);
+  for (const [x, z, yaw, n] of [[16, -32.8, 0, 5], [-16, -32.8, 0, 5], [41, -26, Math.PI / 2, 5], [-24, 101, 0, 4], [-184, 74, Math.PI / 2, 4],
+    [16, -184, 0, 5], [28, 197.6, 0, 6], [-56, 197.6, 0, 5], [-206, 14, Math.PI / 2, 4], [210, 87, 0, 4], [4.4, 69, Math.PI / 2, 4],
+    [70, 42, 0.8, 4], [-72, -68, 0.8, 4], [96, 96, 0.8, 4], [-96, 90, -0.8, 4]]) rack(x, z, yaw, n, n - 1);
+  // the collectable bicycles: each one somewhere worth riding to
+  for (const [variant, x0, z0, yaw] of [['penny', -189, 101, 0.4], ['tandem', -203, -9, Math.PI / 2], ['racer', 126, 160, -0.8], ['bmx', -18, -201, 0.3], ['cargo', -16, 101.5, Math.PI / 2]]) {
+    const p = place(x0, z0, 1.3);
+    if (p) vehicles.push({ type: 'bike', variant, x: p[0], z: p[1], yaw });
+  }
+  vehicles.push({ type: 'bike', variant: 'golden', x: 5.5, z: -33.2, yaw: 0, hidden: true });   // earned, not found
+
+  /* ---------------- stunt ramps: hit them fast ---------------- */
+  const ramps = [];
+  const ramp = (id, name, x0, z0, yaw, target) => {
+    const p = place(x0, z0, 1.8) || [x0, z0];
+    const [x, z] = p, len = 3.2, wd = 2.4, h = 1.25, y0 = H(x, z);
+    const F2 = (lx, ly, lz) => [x + lx * Math.cos(yaw) + lz * Math.sin(yaw), y0 + ly, z - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+    const wood = mat(TX.WOOD, [0.62, 0.46, 0.3], { uv: 'frame', tile: 0.8, rough: 0.7 });
+    const paint = mat(0, [0.95, 0.75, 0.1], { rough: 0.5 }), dark = mat(0, [0.08, 0.08, 0.09], { rough: 0.6 });
+    const t = W.at(x, z);
+    // the running surface, the sides and the back
+    t.quad(F2(-wd / 2, 0.02, -len / 2), F2(-wd / 2, h, len / 2), F2(wd / 2, h, len / 2), F2(wd / 2, 0.02, -len / 2), wood, [[0, 0], [0, 3.4], [2.4, 3.4], [2.4, 0]]);
+    for (const sx of [-1, 1]) {
+      const a = F2(sx * wd / 2, 0, -len / 2), b2 = F2(sx * wd / 2, 0, len / 2), c = F2(sx * wd / 2, h, len / 2);
+      if (sx > 0) t.tri(a, c, b2, dark, [[0, 0], [1, 1], [1, 0]]); else t.tri(a, b2, c, dark, [[0, 0], [1, 0], [1, 1]]);
+    }
+    t.quad(F2(-wd / 2, 0, len / 2), F2(wd / 2, 0, len / 2), F2(wd / 2, h, len / 2), F2(-wd / 2, h, len / 2), dark, [[0, 0], [1, 0], [1, 1], [0, 1]]);
+    // warning chevrons on the lip
+    for (let i = 0; i < 4; i++) t.add(BOX, xform(F2(-0.9 + i * 0.6, h - 0.02, len / 2 - 0.12), [Math.atan2(h, len), yaw, 0], [0.3, 0.02, 0.18]), paint);
+    // a low wall at the back, so the lip is only reached by riding up the front
+    obbs.push({ x: F2(0, 0, len / 2 + 0.05)[0], z: F2(0, 0, len / 2 + 0.05)[2], hw: wd / 2, hd: 0.08, yaw, y0: 0, h: 0.6 });
+    ramps.push({ id, name, x, z, yaw, w: wd, len, h, y0, target });
+  };
+  ramp('backs', 'The Backs Kicker', -140, 0, -Math.PI / 2, 8.5);
+  ramp('avenue', 'The Avenue', 0, 150, 0, 8.5);
+  ramp('fields', 'Pavilion Leap', 30, -212, Math.PI, 9);
+  ramp('lane', 'Lane Launch', -95, 60, 0, 8.5);
+  ramp('parade', 'King\'s Parade Hop', 100, 204.6, Math.PI / 2, 9);
+
+  /* ---------------- overdue library books, hidden around campus ---------------- */
+  const bookSpots = [];
+  const book = (x0, z0, y) => {
+    const p = y == null ? place(x0, z0, 0.5) : [x0, z0];
+    if (!p) return;
+    bookSpots.push({ x: p[0], z: p[1], y: (y == null ? H(p[0], p[1]) : y) + 0.55 });
+  };
+  {
+    const hx = deptBuild.helix.glass, ep = deptBuild.engine.frame.P(18, 0, 5), ch = deptBuild.engine.frame.P(-30, 0, 5.5);
+    book(0, -37.4, 1.2);                 // on the library portico
+    book(0, 50);                         // under the Great Gate
+    book(-48, 0);                        // in the clock tower passage
+    book(66, -30);                       // behind the chapel
+    book(riverX(0), 0, 1.55);            // on the crown of the stone bridge
+    book(riverX(115), 115, 1.8);         // on the Mathematical Bridge
+    book(-223, 64, 0.0);                 // at the punt landing
+    book(-204, 90);                      // behind the boathouse
+    book(-176, -150);                    // behind the Observatory's domes
+    book(-138, 119);                     // under Newton's apple tree
+    book(hx[0], hx[2]);                  // in the glasshouse
+    book(166, 21);                       // in the rock garden
+    book(ep[0], ep[2], 11.1);            // on the Engine House's green roof
+    book(ch[0], ch[2]);                  // at the foot of the engine chimney
+    book(237, 127);                      // the far corner of the car park
+    book(13.5, 201.5);                   // by the phone box on King's Parade
+    book(-13, 118);                      // under the café tables
+    book(0, -186);                       // on the pavilion veranda
+    book(0, -262);                       // out in the middle of the playing fields
+    book(0, -166);                       // where the lane turns
+    book(-212, 172);                     // the far end of the riverside walk
+    book(riverX(-100) + 15, -100);       // under a willow by the river
+    book(267, -200);                     // on the verge of the east road
+    book(-12.5, 36.2);                   // at the foot of the statue
+  }
+
+  /* ---------------- noticeboards the feed has plastered over ---------------- */
+  const boards = [];
+  const board = (x0, z0, yaw, where) => {
+    const p = place(x0, z0, 1.2);
+    if (!p) return;
+    const [x, z] = p, y0 = H(x, z);
+    const F2 = (lx, ly, lz) => [x + lx * Math.cos(yaw) + lz * Math.sin(yaw), y0 + ly, z - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+    const t = W.at(x, z);
+    const oak = mat(TX.WOOD, [0.45, 0.3, 0.18], { uv: 'local', tile: 0.6, rough: 0.7 });
+    for (const sx of [-1, 1]) t.add(BOX, xform(F2(sx * 0.95, 1.1, 0), [0, yaw, 0], [0.1, 2.2, 0.1]), oak);
+    t.add(BOX, xform(F2(0, 1.55, -0.03), [0, yaw, 0], [1.9, 1.25, 0.06]), mat(TX.FABRIC, [0.55, 0.38, 0.22], { uv: 'local', tile: 0.4, rough: 0.95 }));   // cork
+    t.add(BOX, xform(F2(0, 2.28, 0.02), [0.35, yaw, 0], [2.1, 0.06, 0.4]), oak);                 // a little roof
+    colliders.push({ x, z, r: 0.5 });
+    boards.push({ x, z, yaw, y0, where, face: F2(0, 1.55, 0.02) });
+  };
+  board(-7, 43.5, Math.PI, 'the Great Gate');
+  board(-13, -35.5, 0, 'the library steps');
+  board(-117, 99, 2.2, 'Foundry Hall');
+  board(-122, -103, 0.8, 'the Observatory');
+  board(117, -106, -0.8, 'the Helix Building');
+  board(138, 36, -1.6, 'Lattice Laboratory');
+  board(116, 116, -2.3, 'the Engine House');
+  board(-19, 99.5, 0, 'the Buttery');
+  board(-16, -184, Math.PI, 'the pavilion');
+  board(-128, 5, Math.PI, 'the Backs');
+  board(12, 191.5, Math.PI, 'King\'s Parade');
+  board(-184, 95, -Math.PI / 2, 'the boathouse');
   vehicles.push({ type: 'cart', x: 225, z: 100, yaw: 0 }, { type: 'cart', x: 230, z: 100, yaw: 0 },
     { type: 'cart', x: 70, z: 45, yaw: Math.PI / 2 }, { type: 'cart', x: -70, z: -60, yaw: 0 });
 
@@ -5875,6 +6016,7 @@ function buildWorld(gl, roster) {
   return {
     chunks: mesh, foliage, glass, water, spinners: [], lights, stations, vaults, spots, slabs, pads: [], zips: [], pillars: [],
     colliders, obbs, paths: PATHS, map, vehicles, synth, clockFaces, districts: DISTRICTS, spawn: { x: -6, z: 30, yaw: 0.35 }, seats,
+    ramps, bookSpots, boards,
   };
 }
 
@@ -8239,9 +8381,33 @@ const Ambience = {
 
 const VEH = {
   bike: { max: 10.5, sprint: 13.5, accel: 4.2, brake: 9, drag: 0.35, steer: 0.62, wheelbase: 1.05, r: 0.45,
-          camDist: 4.6, camH: 1.7, seat: 0.92, pose: 'ride', riderY: 0.0, riderZ: -0.08 },
+          camDist: 4.6, camH: 1.7, seat: 0.92, pose: 'ride', riderY: 0.0, riderZ: -0.08, hop: 3.6, grip: [0.25, 1.02, 0.42] },
   cart: { max: 11.5, sprint: 14, accel: 5.0, brake: 10, drag: 0.4, steer: 0.55, wheelbase: 1.9, r: 1.0,
-          camDist: 6.2, camH: 2.2, seat: 0.62, pose: 'drive', riderY: 0.05, riderZ: 0.05 },
+          camDist: 6.2, camH: 2.2, seat: 0.62, pose: 'drive', riderY: 0.05, riderZ: 0.05, hop: 0 },
+  // the collectable ones
+  penny:  { max: 7.8, sprint: 9.8, accel: 2.4, brake: 6, drag: 0.35, steer: 0.48, wheelbase: 1.05, r: 0.6,
+            camDist: 5.6, camH: 2.5, seat: 1.44, pose: 'ride', riderY: 0, riderZ: 0.13, hop: 1.8, upright: true,
+            bbZ: 0.2, bbDrop: 0.8, crankR: 0.13, grip: [0.25, 1.64, 0.3] },
+  tandem: { max: 11.5, sprint: 14.5, accel: 3.6, brake: 8, drag: 0.35, steer: 0.5, wheelbase: 1.85, r: 0.6,
+            camDist: 5.6, camH: 1.9, seat: 0.92, pose: 'ride', riderY: 0, riderZ: 0.38, hop: 2.4, grip: [0.25, 1.02, 0.42] },
+  racer:  { max: 13, sprint: 17, accel: 5.6, brake: 10, drag: 0.3, steer: 0.6, wheelbase: 1.0, r: 0.45,
+            camDist: 4.8, camH: 1.6, seat: 0.95, pose: 'ride', riderY: 0, riderZ: -0.1, hop: 3.4, grip: [0.2, 0.9, 0.52] },
+  bmx:    { max: 9.2, sprint: 12, accel: 6.2, brake: 11, drag: 0.4, steer: 0.82, wheelbase: 0.9, r: 0.42,
+            camDist: 4.2, camH: 1.55, seat: 0.74, pose: 'ride', riderY: 0, riderZ: -0.12, hop: 6.4,
+            bbZ: 0.26, bbDrop: 0.44, grip: [0.3, 1.0, 0.36] },
+  cargo:  { max: 8.6, sprint: 10.8, accel: 3.0, brake: 8, drag: 0.4, steer: 0.5, wheelbase: 1.9, r: 0.7,
+            camDist: 5.8, camH: 1.9, seat: 0.92, pose: 'ride', riderY: 0, riderZ: -0.5, hop: 1.4, upright: true, grip: [0.3, 1.08, 0.38] },
+  golden: { max: 14, sprint: 18, accel: 6.4, brake: 11, drag: 0.3, steer: 0.64, wheelbase: 1.05, r: 0.45,
+            camDist: 4.8, camH: 1.7, seat: 0.92, pose: 'ride', riderY: 0, riderZ: -0.08, hop: 5.2, grip: [0.25, 1.02, 0.42] },
+};
+/* the bicycle collection: the first ride on each adds it, with a line of history */
+const SPECIAL_BIKES = {
+  penny:  { name: 'The Penny-Farthing', fact: 'High-wheelers ruled the 1870s: with the pedals fixed to the front wheel, a bigger wheel went further on every turn. Chain-driven "safety" bicycles replaced them in the late 1880s.' },
+  tandem: { name: 'The Tandem', fact: 'Two riders, one frame, nearly the same air resistance as one — so on the flat a good tandem outruns either rider alone.' },
+  racer:  { name: 'The Racer', fact: 'Past about 25 km/h most of a cyclist\'s effort goes into pushing air aside. Drop handlebars let you fold down and shrink the hole you punch through it.' },
+  bmx:    { name: 'The BMX', fact: 'Bicycle motocross began with kids racing on dirt tracks in 1970s California. It became an Olympic sport at Beijing in 2008.' },
+  cargo:  { name: 'The Bakfiets', fact: 'Dutch for "box bike". In Dutch cities cargo bikes carry children, shopping and whole house moves.' },
+  golden: { name: 'The Chancellor\'s Bicycle', fact: 'Awarded for returning every overdue book on campus. It is extremely fast and slightly ridiculous.' },
 };
 
 function buildCartMesh(gl, col) {
@@ -8265,22 +8431,106 @@ function buildCartMesh(gl, col) {
   return b.upload(gl);
 }
 
-function buildBikeMesh(gl, col, basket) {
+function buildBikeMesh(gl, col, basket, lod) {
   const b = new Builder(1024);
-  bicycleMesh(b, col, { basket });
+  bicycleMesh(b, col, { basket, lod });
   return b.upload(gl);
 }
 
+/* the collectable bicycles, each built around the same origin and facing +z */
+function buildSpecialBike(gl, type, lod) {
+  const b = new Builder(2048);
+  const wheel = (c, R, tube = 0.07, spokes = 10, rim = PM.rubber) => {
+    b.add(pTorus(tube, lod ? 14 : 32, lod ? 4 : 6), xform(c, [0, 0, Math.PI / 2], [R * 2, R * 2, R * 2]), rim);
+    if (!lod) for (let s = 0; s < spokes; s++) { const a = (s / spokes) * TAU; strut(b, c, [c[0], c[1] + Math.sin(a) * R * 0.92, c[2] + Math.cos(a) * R * 0.92], 0.01, PM.steel); }
+    b.add(pCyl(10), xform(c, [0, 0, Math.PI / 2], [0.07, 0.09, 0.07]), PM.steel);
+  };
+  if (type === 'penny') {
+    const frame = mat(0, [0.02, 0.02, 0.025], { rough: 0.3, metal: 0.5 });
+    const F = [0, 0.66, 0.35], Rr = [0, 0.2, -0.78];
+    wheel(F, 0.66, 0.04, 24); wheel(Rr, 0.2, 0.09, 8);
+    // the backbone curves down from the head to the little wheel
+    let prev = [0, 1.38, 0.3];
+    for (let i = 1; i <= 8; i++) {
+      const t = i / 8, a = t * Math.PI / 2;
+      const p = [0, lerp(1.38, 0.28, Math.sin(a)), lerp(0.3, -0.74, 1 - Math.cos(a))];
+      strut(b, prev, p, 0.05, frame); prev = p;
+    }
+    strut(b, [0, 1.38, 0.3], F, 0.05, frame);
+    b.add(BOX, xform([0, 1.58, 0.36], [0, 0, 0], [0.62, 0.03, 0.03]), frame);
+    strut(b, [0, 1.38, 0.3], [0, 1.58, 0.36], 0.04, frame);
+    b.add(BOX, xform([0, 1.45, 0.12], [0.1, 0, 0], [0.14, 0.05, 0.26]), mat(TX.WOOD, [0.3, 0.18, 0.1], { uv: 'local', tile: 0.3, rough: 0.6 }));
+    for (const sx of [-1, 1]) b.add(BOX, xform([sx * 0.12, 0.66, 0.35], [0, 0, 0], [0.08, 0.03, 0.1]), PM.iron);
+  } else if (type === 'bmx') {
+    const frame = mat(0, [0.9, 0.12, 0.08], { rough: 0.35, metal: 0.5 });
+    const A = [0, 0.26, -0.44], Fw = [0, 0.26, 0.44];
+    wheel(A, 0.26, 0.13, 12, mat(0, [0.03, 0.03, 0.03], { rough: 0.9 })); wheel(Fw, 0.26, 0.13, 12, mat(0, [0.03, 0.03, 0.03], { rough: 0.9 }));
+    const bb = [0, 0.3, 0], seat = [0, 0.66, -0.2], head = [0, 0.72, 0.3], bar = [0, 1.0, 0.24];
+    for (const [p, q] of [[bb, seat], [bb, head], [seat, head], [bb, A], [seat, A], [head, Fw], [head, bar]]) strut(b, p, q, 0.05, frame);
+    b.add(BOX, xform(bar, [0, 0, 0], [0.66, 0.04, 0.04]), PM.iron);
+    b.add(BOX, xform([0, 0.9, 0.26], [0, 0, 0], [0.4, 0.03, 0.03]), PM.iron);
+    b.add(BOX, xform([0, 0.7, -0.22], [0.1, 0, 0], [0.12, 0.05, 0.24]), PM.iron);
+    for (const sx of [-1, 1]) b.add(pCyl(8), xform([sx * 0.1, 0.26, 0.44], [0, 0, Math.PI / 2], [0.05, 0.12, 0.05]), PM.steel);   // pegs
+  } else if (type === 'tandem') {
+    const frame = mat(0, [0.1, 0.35, 0.3], { rough: 0.35, metal: 0.5 });
+    const A = [0, 0.34, -0.95], Fw = [0, 0.34, 0.95];
+    wheel(A, 0.34); wheel(Fw, 0.34);
+    const bb1 = [0, 0.3, 0.46], bb2 = [0, 0.3, -0.42], s1 = [0, 0.86, 0.32], s2 = [0, 0.86, -0.56], head = [0, 0.84, 0.82], bar = [0, 1.02, 0.8];
+    for (const [p, q] of [[bb1, s1], [bb2, s2], [bb1, head], [s1, head], [s1, s2], [bb1, bb2], [bb2, A], [s2, A], [head, Fw], [head, bar]]) strut(b, p, q, 0.045, frame);
+    b.add(BOX, xform(bar, [0, 0, 0], [0.56, 0.035, 0.035]), PM.iron);
+    b.add(BOX, xform([0, 1.0, 0.28], [0, 0, 0], [0.46, 0.035, 0.035]), PM.iron);   // the stoker's bar
+    for (const s of [s1, s2]) b.add(BOX, xform([0, 0.9, s[2] - 0.02], [0.1, 0, 0], [0.13, 0.05, 0.26]), PM.iron);
+  } else if (type === 'cargo') {
+    const frame = mat(0, [0.12, 0.14, 0.13], { rough: 0.4, metal: 0.4 });
+    const A = [0, 0.34, -0.9], Fw = [0, 0.24, 1.0];
+    wheel(A, 0.34); wheel(Fw, 0.24);
+    const bb = [0, 0.3, -0.45], seat = [0, 0.86, -0.62], head = [0, 0.9, 0.2];
+    for (const [p, q] of [[bb, seat], [bb, head], [seat, head], [bb, A], [seat, A], [head, [0, 0.3, 0.3]], [[0, 0.3, 0.3], Fw], [head, [0, 1.1, 0.08]]]) strut(b, p, q, 0.05, frame);
+    b.add(BOX, xform([0, 1.1, 0.08], [0, 0, 0], [0.62, 0.035, 0.035]), PM.iron);
+    b.add(BOX, xform([0, 0.9, -0.64], [0.1, 0, 0], [0.13, 0.05, 0.26]), PM.iron);
+    // the wooden box on the front
+    const wood = mat(TX.WOOD, [0.6, 0.42, 0.25], { uv: 'local', tile: 0.5, rough: 0.6 });
+    b.add(BOX, xform([0, 0.42, 0.62], [0, 0, 0], [0.62, 0.04, 0.8]), wood);
+    for (const [x, z, w, d] of [[0.3, 0.62, 0.03, 0.8], [-0.3, 0.62, 0.03, 0.8], [0, 0.22, 0.62, 0.03], [0, 1.02, 0.62, 0.03]]) b.add(BOX, xform([x, 0.65, z], [0, 0, 0], [w, 0.46, d]), wood);
+  } else {
+    // racer and golden: a lean diamond frame with drop bars
+    const gold = type === 'golden';
+    const frame = gold ? mat(0, [1.0, 0.72, 0.28], { rough: 0.22, metal: 1, glow: 0.12 }) : mat(0, [0.95, 0.78, 0.1], { rough: 0.3, metal: 0.5 });
+    const A = [0, 0.35, -0.5], Fw = [0, 0.35, 0.5];
+    wheel(A, 0.35, gold ? 0.06 : 0.035, 14); wheel(Fw, 0.35, gold ? 0.06 : 0.035, 14);
+    const bb = [0, 0.3, 0], seat = [0, 0.9, -0.18], head = [0, 0.86, 0.4], bar = [0, 0.94, 0.46];
+    for (const [p, q] of [[bb, seat], [bb, head], [seat, head], [bb, A], [seat, A], [head, Fw], [head, bar]]) strut(b, p, q, gold ? 0.05 : 0.035, frame);
+    b.add(BOX, xform(bar, [0, 0, 0], [0.42, 0.03, 0.03]), PM.iron);
+    for (const sx of [-1, 1]) {
+      strut(b, [sx * 0.2, 0.94, 0.46], [sx * 0.2, 0.86, 0.58], 0.025, PM.iron);
+      strut(b, [sx * 0.2, 0.86, 0.58], [sx * 0.2, 0.8, 0.5], 0.025, PM.iron);
+    }
+    b.add(BOX, xform([0, 0.94, -0.2], [0.08, 0, 0], [0.1, 0.04, 0.26]), PM.iron);
+  }
+  // pedals and chainring for all of them
+  return b.upload(gl);
+}
+
+const BIKE_MESHES = {};
 class Vehicle {
   constructor(gl, spec, i) {
     this.type = spec.type;
-    this.P = VEH[this.type];
+    this.variant = spec.variant || null;           // a collectable bicycle
+    this.P = VEH[this.variant || this.type];
     this.x = spec.x; this.z = spec.z; this.yaw = spec.yaw || 0;
     this.y = groundH(this.x, this.z);
     this.speed = 0; this.steer = 0; this.lean = 0; this.crank = 0; this.pitch = 0;
+    this.vy = 0; this.air = false; this.airT = 0; this.climb = 0;
+    this.hidden = !!spec.hidden;
     this.home = { x: this.x, z: this.z, yaw: this.yaw };
     const cols = [[0.08, 0.1, 0.12], [0.45, 0.06, 0.05], [0.08, 0.22, 0.4], [0.75, 0.74, 0.7], [0.12, 0.3, 0.16]];
-    this.mesh = this.type === 'bike' ? buildBikeMesh(gl, cols[i % cols.length], i % 3 === 0) : buildCartMesh(gl, [[0.1, 0.25, 0.14], [0.6, 0.58, 0.55], [0.12, 0.16, 0.3]][i % 3]);
+    // ordinary bikes share a handful of meshes
+    const key = this.variant || (this.type === 'bike' ? 'bike' + (i % 10) : 'cart' + (i % 3));
+    this.mesh = BIKE_MESHES[key] || (BIKE_MESHES[key] = this.variant ? buildSpecialBike(gl, this.variant)
+      : this.type === 'bike' ? buildBikeMesh(gl, cols[i % cols.length], i % 3 === 0) : buildCartMesh(gl, [[0.1, 0.25, 0.14], [0.6, 0.58, 0.55], [0.12, 0.16, 0.3]][i % 3]));
+    // no spokes past thirty metres
+    this.lod = this.type !== 'bike' ? this.mesh : BIKE_MESHES[key + 'L'] || (BIKE_MESHES[key + 'L'] = this.variant ? buildSpecialBike(gl, this.variant, true)
+      : buildBikeMesh(gl, cols[i % cols.length], i % 3 === 0, true));
     this.model = M4.create();
     Object.assign(this, { camDist: this.P.camDist, camH: this.P.camH, seat: this.P.seat, pose: this.P.pose, riderY: this.P.riderY, riderZ: this.P.riderZ });
     this.updateModel();
@@ -8288,7 +8538,8 @@ class Vehicle {
 
   updateModel() {
     const tilt = this.type === 'bike' ? this.lean : 0;
-    xformTo(this.model, this.x, this.y, this.z, this.pitch, this.yaw, -tilt);
+    // lawns and paths sit a few centimetres above the terrain height
+    xformTo(this.model, this.x, this.y + 0.06, this.z, this.pitch, this.yaw, -tilt);
   }
 
   /* one step of driving: input {throttle, brake, steer (-1..1), sprint} */
@@ -8313,15 +8564,40 @@ class Vehicle {
       this.speed *= 0.55;
     }
     if (isWalkable(res[0], res[1])) { this.x = res[0]; this.z = res[1]; } else this.speed *= -0.3;
-    const gy = game.groundAt(this.x, this.z, this.y + 0.6);
-    this.y += ((gy === -Infinity ? this.y : gy) - this.y) * (1 - Math.exp(-14 * dt));
+    // the ground, ramps, and time in the air
+    const g0 = game.groundAt(this.x, this.z, this.y + 0.6);
+    const gy = g0 === -Infinity ? this.y : g0;
+    this.landed = null;
+    if (this.air) {
+      this.vy -= 17 * dt; this.y += this.vy * dt; this.airT += dt;
+      if (this.y <= gy) { this.landed = { airT: this.airT, impact: -this.vy }; this.y = gy; this.air = false; this.vy = 0; }
+    } else if (inp.hop && this.P.hop) {
+      this.vy = this.P.hop + Math.max(0, this.climb) * 0.5; this.air = true; this.airT = 0; this.launch = null;
+    } else if (gy < this.y - 0.2 && Math.abs(this.speed) > 2.5) {
+      // the ground falls away under you — off a ramp's lip or a step — and you fly
+      this.air = true; this.airT = 0; this.vy = Math.max(0, this.climb);
+      this.launch = { x: this.x, z: this.z, y: this.y, ramp: this.onRamp || null, speed: this.speed };
+    } else {
+      // track the ground exactly going up (a ramp's slope is your launch), ease down small steps
+      const ny = gy > this.y ? gy : this.y + (gy - this.y) * (1 - Math.exp(-18 * dt));
+      this.climb = (ny - this.y) / Math.max(dt, 1e-3);
+      this.y = ny;
+    }
+    this.onRamp = game.rampUnder ? game.rampUnder(this.x, this.z) : null;
     // a bike leans into the corner; the cranks turn with the wheels
     const lat = this.speed * this.speed * Math.tan(this.steer) / P.wheelbase;
     this.lean += (clamp(Math.atan(lat / 9.8), -0.5, 0.5) - this.lean) * (1 - Math.exp(-6 * dt));
     this.crank += (fwd ? Math.max(this.speed, 2) : this.speed * 0.3) * dt / 0.34 * 0.5;
-    // pitch with the slope under the wheels
-    const ahead = groundH(this.x + Math.sin(this.yaw) * 0.8, this.z + Math.cos(this.yaw) * 0.8), behind = groundH(this.x - Math.sin(this.yaw) * 0.8, this.z - Math.cos(this.yaw) * 0.8);
-    this.pitch += (-Math.atan2(ahead - behind, 1.6) - this.pitch) * (1 - Math.exp(-8 * dt));
+    // pitch with the slope under the wheels, or with the flight path in the air
+    let wantPitch;
+    if (this.air) wantPitch = -Math.atan2(this.vy, Math.max(3, Math.abs(this.speed))) * 0.8;
+    else {
+      const gA = game.groundAt(this.x + Math.sin(this.yaw) * 0.8, this.z + Math.cos(this.yaw) * 0.8, this.y + 0.9);
+      const gB = game.groundAt(this.x - Math.sin(this.yaw) * 0.8, this.z - Math.cos(this.yaw) * 0.8, this.y + 0.9);
+      const ahead = gA === -Infinity ? this.y : gA, behind = gB === -Infinity ? this.y : gB;
+      wantPitch = -Math.atan2(ahead - behind, 1.6);
+    }
+    this.pitch += (wantPitch - this.pitch) * (1 - Math.exp(-8 * dt));
     this.updateModel();
   }
 
@@ -8558,6 +8834,15 @@ function drawBlip(c, kind, x, y, col, label, s = 1) {
     c.fillStyle = '#f1e6c8'; c.fillRect(-4 * s, -5 * s, 8 * s, 10 * s); c.strokeStyle = '#6a5a3a'; c.lineWidth = 1.2; c.strokeRect(-4 * s, -5 * s, 8 * s, 10 * s);
   } else if (kind === 'bike') {
     c.strokeStyle = '#e8eef4'; c.lineWidth = 1.6; c.beginPath(); c.arc(-4 * s, 2 * s, 3 * s, 0, TAU); c.arc(4 * s, 2 * s, 3 * s, 0, TAU); c.stroke();
+  } else if (kind === 'book') {
+    c.fillStyle = '#b0282a'; c.fillRect(-4 * s, -5.5 * s, 8 * s, 11 * s); c.strokeStyle = '#ffd98a'; c.lineWidth = 1.5; c.strokeRect(-4 * s, -5.5 * s, 8 * s, 11 * s);
+  } else if (kind === 'sbike') {
+    c.shadowColor = '#8fd0ff'; c.shadowBlur = 6; c.strokeStyle = '#bfe6ff'; c.lineWidth = 2; c.beginPath(); c.arc(-4.5 * s, 2 * s, 3.4 * s, 0, TAU); c.arc(4.5 * s, 2 * s, 3.4 * s, 0, TAU); c.stroke(); c.shadowBlur = 0;
+  } else if (kind === 'board') {
+    c.fillStyle = col; c.fillRect(-5 * s, -4 * s, 10 * s, 8 * s); c.lineWidth = 1.6; c.strokeStyle = '#111'; c.strokeRect(-5 * s, -4 * s, 10 * s, 8 * s);
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(0, -2 * s, 1.4 * s, 0, TAU); c.fill();
+  } else if (kind === 'ramp') {
+    c.fillStyle = '#ffd23a'; c.beginPath(); c.moveTo(0, -6 * s); c.lineTo(6 * s, 5 * s); c.lineTo(-6 * s, 5 * s); c.closePath(); c.fill(); c.lineWidth = 1.5; c.strokeStyle = '#111'; c.stroke();
   } else if (kind === 'student') {
     c.beginPath(); c.arc(0, 0, 2.6 * s, 0, TAU); c.fillStyle = col; c.fill();
   }
@@ -8581,8 +8866,15 @@ function collectBlips(g) {
     out.push({ kind: 'student', x: s.x, z: s.z, col: s.confused > 0 ? '#ff45a6' : t >= 3 ? '#ffd98a' : t >= 2 ? '#7df0ae' : t >= 1 ? '#8fb8d8' : 'rgba(220,225,235,.75)' });
   }
   for (const p of g.pickups) if (!g.found[p.item.id] && Math.hypot(p.x - g.cam.x, p.z - g.cam.z) < 80) out.push({ kind: 'note', x: p.x, z: p.z });
-  for (const v of g.vehicles) if (v !== g.vehicle && v.type === 'bike' && Math.hypot(v.x - g.cam.x, v.z - g.cam.z) < 45) out.push({ kind: 'bike', x: v.x, z: v.z });
+  for (const v of g.vehicles) if (v !== g.vehicle && v.type === 'bike' && !v.hidden && !(v.variant && !g.bikesFound[v.variant]) && Math.hypot(v.x - g.cam.x, v.z - g.cam.z) < 45) out.push({ kind: 'bike', x: v.x, z: v.z });
   for (const d of g.life.drones) if (!d.dead) out.push({ kind: 'drone', x: d.x, z: d.z, edge: true, s: d.boss ? 1.5 : 1 });
+  // things to collect: close by, or everywhere once you have the catalogue
+  const all = g.perk && g.perk('map');
+  const near = (x, z, r) => all || Math.hypot(x - g.cam.x, z - g.cam.z) < r;
+  for (const b of g.bookItems || []) if (!g.booksFound[b.book.id] && near(b.x, b.z, 40)) out.push({ kind: 'book', x: b.x, z: b.z, edge: all });
+  for (const v of g.vehicles) if (v.variant && !v.hidden && !g.bikesFound[v.variant] && v !== g.vehicle && near(v.x, v.z, 70)) out.push({ kind: 'sbike', x: v.x, z: v.z, edge: all });
+  for (const b of g.boards || []) { const mine = !!g.boardsDone[b.where]; if (mine || Math.hypot(b.x - g.cam.x, b.z - g.cam.z) < 160) out.push({ kind: 'board', x: b.x, z: b.z, col: mine ? (g.boardsDone[b.where].hex || '#8fd0ff') : '#ff3fa8', edge: !mine }); }
+  for (const r of g.ramps || []) if (!g.jumpsDone[r.id] && Math.hypot(r.x - g.cam.x, r.z - g.cam.z) < 100) out.push({ kind: 'ramp', x: r.x, z: r.z });
   if (tgt) out.push({ kind: tgt.waypoint ? 'waypoint' : 'objective', x: tgt.x, z: tgt.z, edge: true });
   return out;
 }
@@ -8789,6 +9081,11 @@ function crowdPongTable(b, x, y, z, yaw) {
   const sp = F(-0.72, 0, -1.55);
   b.add(pCyl(14), xform([sp[0], y + 0.08, sp[2]], [0, yaw, Math.PI / 2], [0.14, 0.26, 0.14]), mat(TX.FABRIC, [0.05, 0.05, 0.055], { uv: 'local', tile: 0.1 }));
 }
+function crowdLantern(b, x, y, z) {
+  b.add(pCyl(10), xform([x, y + 0.13, z], [0, 0, 0], [0.16, 0.24, 0.16]), mat(0, [1.0, 0.78, 0.45], { kind: KIND.LAMP, glow: 1.6, rough: 0.2 }));
+  b.add(pCyl(10), xform([x, y + 0.27, z], [0, 0, 0], [0.18, 0.04, 0.18]), mat(0, [0.1, 0.1, 0.1], { rough: 0.4, metal: 0.6 }));
+  b.add(pTorus(0.06, 12, 4), xform([x, y + 0.33, z], [Math.PI / 2, 0, 0], [0.12, 0.12, 0.12]), mat(0, [0.1, 0.1, 0.1], { rough: 0.4, metal: 0.6 }));
+}
 function crowdGuitarCase(b, x, y, z, yaw) {
   b.add(BOX, xform([x, y + 0.04, z], [0, yaw, 0], [0.42, 0.08, 1.05]), mat(0, [0.03, 0.03, 0.035], { rough: 0.5 }));
   b.add(BOX, xform([x, y + 0.075, z], [0, yaw, 0], [0.36, 0.01, 0.98]), mat(TX.FABRIC, LIN('#8a1a2a'), { uv: 'local', tile: 0.2 }));
@@ -8809,6 +9106,9 @@ const CROWD_SCENES = [
   { type: 'rim', x: 0, z: 0, n: 2, a0: 2.25 },
   { type: 'chat', x: 9, z: 38.5, yaw: 0, n: 3 },
   { type: 'chat', x: -26, z: -37.5, yaw: 0, n: 2 },
+  { type: 'chat', x: 39.5, z: 9, yaw: 0, n: 3 },
+  { type: 'study', x: 14, z: 13, yaw: 0.8, n: 2 },
+  { type: 'chat', x: -39.5, z: -12, yaw: 0, n: 3 },
   // the Backs
   { type: 'pong', x: -100, z: 30, yaw: 0.1, n: 7 },
   { type: 'sunbathe', x: -142, z: -26, yaw: 0.4, n: 4 },
@@ -8963,7 +9263,7 @@ class Crowd {
     const TOWELS = [['#e84a5f', '#ffffff'], ['#2a9df4', '#ffe066'], ['#3ac47d', '#ffffff'], ['#f7a440', '#8a3ab9'], ['#ffffff', '#1f5fa8'], ['#ff7eb6', '#fff3b0']];
     switch (def.type) {
       case 'chat': {
-        const rr = 0.55 + n * 0.14;
+        const rr = 0.42 + n * 0.11;
         for (let i = 0; i < n; i++) {
           const a = yaw + (i / n) * TAU + (R() - 0.5) * 0.3;
           const px = x + Math.sin(a) * rr, pz = z + Math.cos(a) * rr;
@@ -9093,6 +9393,13 @@ class Crowd {
       }
     }
     if (!sc.members.length) return null;
+    // groups that carry on into the evening bring a lantern
+    if (def.type === 'pong' || def.type === 'guitar' || def.type === 'picnic') {
+      const lp = def.type === 'pong' ? F(0.75, 1.62) : def.type === 'guitar' ? F(-0.9, -0.4) : F(0.55, -0.25);
+      const ly = def.type === 'pong' ? gy(lp[0], lp[1]) + 0.42 : gy(lp[0], lp[1]) + 0.03;
+      crowdLantern(B.at(lp[0], lp[1]), lp[0], ly, lp[1]);
+      this.game.world.lights.push({ pos: [lp[0], ly + 0.6, lp[1]], col: [1.0, 0.72, 0.42], range: 9, intensity: 1.1, night: true });
+    }
     this.scenes.push(sc);
     return sc;
   }
@@ -10101,8 +10408,8 @@ const CHATTER = {
   ],
   feed: ['I saw a video about this…', 'Everyone\'s sharing it, so…', 'It had a chart. Charts are real.',
     'My feed says the opposite of yours.', 'Apparently one study proved it.', 'A doctor said it. On a podcast.'],
-  learned: ['Apparently: {c}.', 'Someone explained {c} to me.', 'Okay, {c} actually makes sense now.', 'Did you know about {c}?'],
-  tell: ['Guys — {c}!', 'Listen: {c}.', 'So it turns out, {c}.', 'You have to hear this: {c}.'],
+  learned: ['Someone told me about “{c}”.', '“{c}” actually makes sense now.', 'Have you heard about “{c}”?', 'I keep thinking about “{c}”.'],
+  tell: ['Guys — have you heard about “{c}”?', 'Okay, listen: “{c}”.', 'You have to hear about “{c}”.', 'Someone just explained “{c}” to me!'],
   laugh: ['HAHA', 'Stop it!', 'I can\'t!', 'No way!', 'Hahaha!', 'Dead.'],
   pong: ['You\'re on!', 'Elbows!', 'Bounce it!', 'Aim for the middle.'],
   pongMake: ['LET\'S GO!', 'Drink up!', 'He\'s heating up!', 'Clutch!', 'Nothing but cup!', 'Too easy.'],
@@ -10141,7 +10448,7 @@ const CHATTER = {
 const SUMMIT_STUDENTS = 14;
 const DRONE_MAX = 4;
 const DRONE_MAX_UNARMED = 2;
-const WALKERS = 26;      // passers-by on the paths: some on phones, some with coffee, some in pairs
+const WALKERS = 34;      // passers-by on the paths: some on phones, some with coffee, some in pairs
 const CYCLISTS = 7;      // students riding the paths and the lane
 const WALKER_STYLES = ['plain', 'phone', 'coffee', 'pair', 'pockets', 'straps', 'jog', 'plain', 'phone', 'pair', 'straps', 'coffee', 'pockets', 'pair'];
 
@@ -10382,7 +10689,7 @@ class Life {
         }
       }
       this.bikeMeshes = [[0.08, 0.1, 0.12], [0.45, 0.06, 0.05], [0.08, 0.22, 0.4], [0.75, 0.74, 0.7], [0.12, 0.3, 0.16]]
-        .map((c, i) => buildBikeMesh(gl, c, i % 2 === 0));
+        .map((c, i) => ({ full: buildBikeMesh(gl, c, i % 2 === 0), lod: buildBikeMesh(gl, c, i % 2 === 0, true) }));
       for (let i = 0; i < CYCLISTS; i++) {
         const s = this.spawnStudent(this.students.length, null);
         s.cyclist = true; s.path = null; s.pi = 0; s.speed = 4.2 + this.rnd() * 1.8; s.v0 = s.speed;
@@ -10465,7 +10772,7 @@ class Life {
 
   /* heard it from a friend: half as good as hearing it from you, and it
      can take someone as far as Informed but not to Graduate */
-  hear(m, from, col, hex, concept) {
+  hear(m, from, col, hex, concept, via) {
     const before = this.tier(m);
     const wasConfused = m.confused > 0;
     m.confused = 0;
@@ -10483,7 +10790,7 @@ class Life {
           r: col ? col[0] : 0.6, g: col ? col[1] : 1, b: col ? col[2] : 0.8, a0: 0.9, grav: 0, drag: 2 });
       }
     }
-    if (this.game.onHeard) this.game.onHeard(m, before, wasConfused);
+    if (this.game.onHeard) this.game.onHeard(m, before, wasConfused, via);
   }
 
   /* you walked into someone: you stop, they react */
@@ -10597,8 +10904,14 @@ class Life {
       s.yaw = L.yaw; s.moving = L.moving !== false; s.bob = L.bob + 0.45; s.state = 'walk';
     } else {
       if (!s.path || s.pi >= s.path.length) {
-        if (!s.path) { const n0 = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0]; s.x = n0.x; s.z = n0.z; }
-        const n = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0];
+        // most trips start or end somewhere central: the court, the avenue, the Backs
+        const pickNode = () => {
+          const N = G.nav.nodes;
+          for (let k = 0; k < 8; k++) { const n = N[(this.rnd() * N.length) | 0]; if (this.rnd() < 0.35 || Math.hypot(n.x + 40, n.z) < 150) return n; }
+          return N[(this.rnd() * N.length) | 0];
+        };
+        if (!s.path) { const n0 = pickNode(); s.x = n0.x; s.z = n0.z; }
+        const n = pickNode();
         s.path = G.nav.route(s.x, s.z, n.x, n.z); s.pi = 1;
         s.side = (this.rnd() - 0.5) * 1.6;
       }
@@ -11227,6 +11540,7 @@ class Life {
     }
 
     if (this.crowd) this.crowd.tickHearing(dt);
+    if (G.mode === 'title') { this.bolts.length = 0; return; }
     if (this.mode === 'ride') this.updateRideDrones(dt, t);
     else this.updateFeed(dt, t);
 
@@ -11336,8 +11650,8 @@ class Life {
       const vis = R.visible(bmin, bmax);
       if (!vis && (d2 > 25 * 25 || s.posedAt === time)) continue;
       if (s.cyclist) {
-        xformTo(this.model, s.x, by, s.z, 0, s.yaw, -s.lean);
-        if (vis) R.drawMesh(s.bikeMesh, this.model);
+        xformTo(this.model, s.x, by - SURF_LIFT + 0.06, s.z, 0, s.yaw, -s.lean);
+        if (vis) R.drawMesh(R.shadowPass || d2 > 30 * 30 ? s.bikeMesh.lod : s.bikeMesh.full, this.model);
         M4.mul(bm, this.model, xformTo(tmpX, 0, 0, -0.08, 0, 0, 0));
       } else if (ride) {
         M4.trs(this.model, s.x, by + Math.abs(Math.sin(s.bob)) * 0.06, s.z, s.yaw, 1, 1, 1);
@@ -11402,13 +11716,10 @@ class Life {
     const e = G.cam, fx = -Math.sin(e.yaw) * Math.cos(e.pitch), fy = Math.sin(e.pitch), fz = -Math.cos(e.yaw) * Math.cos(e.pitch);
     for (const s of this.students) {
       const dist = Math.hypot(s.x - cam.x, s.z - cam.z);
+      // the one under the crosshair; groups stand too close for more than one plate
       let lim = ride ? 62 : 0;
       if (s === aimed) lim = 48;
-      else if (aiming && !ride) {
-        // while aiming, the people near the crosshair
-        const dx = s.x - e.x, dy = (s.hw ? s.hw[1] : 1.5) - e.y, dz = s.z - e.z, L = Math.hypot(dx, dy, dz) || 1;
-        if ((dx * fx + dy * fy + dz * fz) / L > 0.94) lim = 40;
-      }
+      void aiming; void fx; void fy; void fz;
       if (dist > lim || dist < 1.2) continue;
       const t = this.tier(s);
       const q = QTYPES[s.wants];
@@ -11642,7 +11953,7 @@ const HUD = {
     this._acc = null;
     document.getElementById('hud').classList.toggle('summit', g.level === 'summit');
     const station = g.level !== 'summit';
-    for (const id of ['st-con-row', 'st-vau-row']) {
+    for (const id of ['st-con-row', 'st-vau-row', 'st-reach-row']) {
       const el = document.getElementById(id);
       if (el) el.style.display = station ? '' : 'none';
     }
@@ -11677,12 +11988,15 @@ const HUD = {
     const st = g.districtStatus(d);
     $('#obj-title').textContent = `Secure ${d.name}`;
     $('#obj-where').textContent = `${g.securedCount()}/5 districts secured`;
+    const cs = this._collect;
     box.innerHTML = st.tasks.map((t) => {
       const done = t.n >= t.of;
       return `<div class="task ${done ? 'done' : ''} ${t.locked && !done ? 'locked' : ''}">
         <i>${done ? '✓' : '▢'}</i><span>${esc(t.label)}</span>
         <b>${t.n}/${t.of}</b></div>`;
-    }).join('');
+    }).join('') + (cs ? `<div class="collectline"><span title="Overdue library books">📕 ${cs.books}/${cs.booksMax}</span>
+        <span title="Bicycle collection">🚲 ${cs.bikes}/${cs.bikesMax}</span><span title="Noticeboards reclaimed">📌 ${cs.boards}/${cs.boardsMax}</span>
+        <span title="Stunt jumps">⤴ ${cs.jumps}/${cs.jumpsMax}</span></div>` : '');
     document.documentElement.style.setProperty('--obj-c', d.accent);
   },
 
@@ -11707,6 +12021,10 @@ const HUD = {
     if (t) t.textContent = String(s.taught || 0);
     if (db) db.textContent = String(s.debunked || 0);
     if (mg) mg.textContent = `${s.marginalia || 0}/${s.marginaliaMax || 0}`;
+    const set = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+    set('#st-books', `${s.books || 0}/${s.booksMax || 0}`); set('#st-bikes', `${s.bikes || 0}/${s.bikesMax || 0}`);
+    set('#st-boards', `${s.boards || 0}/${s.boardsMax || 0}`); set('#st-jumps', `${s.jumps || 0}/${s.jumpsMax || 0}`);
+    this._collect = s;
     const en = $('#st-end'), ct = $('#st-cite');
     if (en) en.textContent = `${s.endorsements || 0}/${s.endorsementsMax || 0}`;
     if (ct) ct.textContent = String(s.citations || 0);
@@ -11864,6 +12182,22 @@ const HUD = {
     el.onclick = () => el.classList.remove('on');
     clearTimeout(this._mgT);
     this._mgT = setTimeout(() => el.classList.remove('on'), 24000);
+  },
+
+  /* the card for a collected book or bicycle */
+  itemCard(tag, title, sub, text, foot, hex) {
+    const el = $('#marginalia');
+    el.style.setProperty('--mgc', hex || '#d8b464');
+    el.innerHTML = `
+      <div class="mg-head"><span class="mg-tag" style="color:${hex || '#e9c877'}">${esc(tag)}</span>
+        <span class="mg-owner">${esc(sub || '')}</span></div>
+      <div class="mg-title">${esc(title)}</div>
+      <div class="mg-text">${esc(text)}</div>
+      <div class="mg-foot">${esc(foot || '')} · click to close</div>`;
+    el.classList.add('on');
+    el.onclick = () => el.classList.remove('on');
+    clearTimeout(this._mgT);
+    this._mgT = setTimeout(() => el.classList.remove('on'), 16000);
   },
 
   /* Big, centred, holds long enough to actually read. Toasts were too small
@@ -12478,6 +12812,7 @@ const HUD = {
             <div class="bar"><i style="width:${Math.round(o.pct * 100)}%"></i></div>
             <p style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;margin-top:7px;
                color:var(--acc)">${Math.round(o.pct * 100)}%</p></div>`).join('')}</div>
+        ${this.collectionHTML(g)}
         <h2 class="sec">Session <span>saved to this browser</span></h2>
         <div class="center"><button class="btn ghost" id="btn-reset"
           style="border-color:#ff8a7a;color:#ff8a7a">Erase progress and restart</button></div>`;
@@ -12486,6 +12821,36 @@ const HUD = {
         if (confirm('Erase all progress in this browser and reload?')) g.resetSave();
       });
     }
+  },
+
+  /* the campus collection: books, bicycles, noticeboards, stunt jumps */
+  collectionHTML(g) {
+    if (!g.bookItems) return '';
+    const r = g.reach(), nb = g.booksCount();
+    const next = BOOK_REWARDS.find((q) => q.at > nb);
+    const books = g.bookItems.map((b) => {
+      const got = g.booksFound[b.book.id];
+      return `<div class="card coll ${got ? '' : 'missing'}"><h3>${got ? esc(b.book.title) : '— missing —'}</h3>
+        <p>${got ? `${esc(b.book.author)} · ${esc(b.book.year)}<br>${esc(b.book.text)}` : 'Somewhere on campus. Look for a warm glow.'}</p></div>`;
+    }).join('');
+    const bikes = Object.entries(SPECIAL_BIKES).map(([k, s]) => `<div class="card coll ${g.bikesFound[k] ? '' : 'missing'}">
+        <h3>${g.bikesFound[k] ? esc(s.name) : '— not yet found —'}</h3><p>${g.bikesFound[k] ? esc(s.fact) : (k === 'golden' ? 'Return every overdue book.' : 'Parked somewhere worth the ride. It glows blue.')}</p></div>`).join('');
+    const boards = g.boards.map((b) => { const d = g.boardsDone[b.where]; return `<div class="card coll ${d ? '' : 'missing'}"><h3>${esc(b.where)}</h3>
+        <p>${d ? `“${esc(d.concept)}” — ${esc(d.who)}` : 'Still covered in the feed\'s flyers. Press E at the board.'}</p></div>`; }).join('');
+    const jumps = g.ramps.map((q) => `<div class="card coll ${g.jumpsDone[q.id] ? '' : 'missing'}"><h3>${esc(q.name)}</h3>
+        <p>${g.jumpsDone[q.id] ? 'Cleared.' : `Clear ${q.target} m. Hit it at full speed (Shift).`}</p></div>`).join('');
+    return `
+      <h2 class="sec">Reach <span>${r.n} of ${r.of} people on campus have heard an idea from you</span></h2>
+      <p class="prose">Teach one person in a group and they tell the rest. Reclaimed noticeboards teach whoever walks past.
+        ${g.spreadCount ? `So far <em>${g.spreadCount}</em> people heard something second-hand.` : ''}</p>
+      <h2 class="sec">Overdue library books <span>${nb} of ${g.bookItems.length}${next ? ` · next reward at ${next.at}: ${esc(next.title.toLowerCase())}` : ' · all returned'}</span></h2>
+      <div class="cols">${books}</div>
+      <h2 class="sec">The bicycle collection <span>${Object.keys(g.bikesFound).length} of ${Object.keys(SPECIAL_BIKES).length}</span></h2>
+      <div class="cols">${bikes}</div>
+      <h2 class="sec">Noticeboards <span>${Object.keys(g.boardsDone).length} of ${g.boards.length} taken back from the feed</span></h2>
+      <div class="cols">${boards}</div>
+      <h2 class="sec">Stunt jumps <span>${Object.keys(g.jumpsDone).length} of ${g.ramps.length}</span></h2>
+      <div class="cols">${jumps}</div>`;
   },
 
   connCard(cn) {
@@ -12947,6 +13312,7 @@ class Game {
     this.vehicles = (this.world.vehicles || []).map((v, i) => new Vehicle(gl, v, i));
     this.traffic = new Traffic(gl);
     this.vehicle = null;
+    this.initCollect();
     this.lastLook = 0;
     // a few birds wheeling over the court
     this.birdMesh = (() => {
@@ -13081,6 +13447,7 @@ class Game {
         feed: this.feedCleared, secured: this.secured, found: this.found || {},
         challenged: this.challenged || {}, bossDone: this.bossDone || {},
         citations: this.citations || 0, spread: this.spreadCount || 0, reachMark: this.reachMark || 0,
+        books: this.booksFound || {}, bikes: this.bikesFound || {}, boards: this.boardsDone || {}, jumps: this.jumpsDone || {},
         st: this.lives && this.lives.colloquium ? this.lives.colloquium.students.map((s) => s.taught) : this.savedStudents || [],
       }));
     } catch (e) { /* private browsing — play on without saving */ }
@@ -13093,6 +13460,7 @@ class Game {
       const s = JSON.parse(raw);
       if (s && (s.v === 1 || s.v === 2 || s.v === 3)) {
         this.spreadCount = s.spread || 0; this.reachMark = s.reachMark || 0;
+        this.booksFound = s.books || {}; this.bikesFound = s.bikes || {}; this.boardsDone = s.boards || {}; this.jumpsDone = s.jumps || {};
         this.savedStudents = s.v === 3 && Array.isArray(s.st) ? s.st : null;
         this.progress = s.progress || {};
         this.connectionsFound = s.conns || [];
@@ -13381,7 +13749,8 @@ class Game {
     };
 
     for (const s of this.world.stations) consider({ kind: 'person', s }, s.x, s.z, 9.5, 0.62);
-    if (!this.vehicle) for (const v of (this.vehicles || [])) consider({ kind: 'vehicle', v }, v.x, v.z, 3.0, -0.2);
+    if (!this.vehicle) for (const v of (this.vehicles || [])) if (!v.hidden) consider({ kind: 'vehicle', v }, v.x, v.z, 3.0, -0.2);
+    if (this.level === 'colloquium' && !this.vehicle) for (const b of (this.boards || [])) if (!this.boardsDone[b.where]) consider({ kind: 'board', b }, b.x, b.z, 4.2, 0.25);
     if (this.level === 'summit' && this.world.finish) {
       const f = this.world.finish;
       // the marquee is a place you stand in, not something you aim at
@@ -13414,6 +13783,7 @@ class Game {
       HUD.openPoster(); Sfx.complete();
       return;
     }
+    if (t.kind === 'board') { this.reclaimBoard(t.b); return; }
     if (t.kind === 'person') this.beginInterview(t.s);
     else if (t.kind === 'vault') {
       document.exitPointerLock();
@@ -13507,6 +13877,7 @@ class Game {
     const asked = this.progress[p.id] || (this.progress[p.id] = []);
     const isNew = !asked.includes(q.key);
     if (isNew) asked.push(q.key);
+    this.lastInsight = { id: p.id, key: q.key };
 
     this.selSlot = slot;
     HUD.setDialogueText(a.text, q, isNew ? a.concept : null, false);
@@ -13863,6 +14234,11 @@ class Game {
     const matched = s.wants === qi;
     const rescued = this.life.teach(s, col, line, matched);
     s.lastConcept = concept;
+    if (this.perk('splash')) {
+      let nb = null, nd = 4;
+      for (const o of this.life.students) { if (o === s) continue; const d = Math.hypot(o.x - s.x, o.z - s.z); if (d < nd) { nd = d; nb = o; } }
+      if (nb && nb.taught < 3) this.life.hear(nb, s, col, QHEX[qi], concept);
+    }
     // they turn and tell the people they are with
     const told = this.life.crowd && s.scene ? this.life.crowd.spread(s, concept, col, QHEX[qi]) : 0;
     const toldTxt = told ? ` — and they're telling ${told === 1 ? 'a friend' : `${told} friends`}` : '';
@@ -13896,14 +14272,17 @@ class Game {
   }
 
   /* someone heard an idea from a friend you taught */
-  onHeard(m, before, wasConfused) {
+  onHeard(m, before, wasConfused, via) {
     this.spreadCount = (this.spreadCount || 0) + 1;
     if (wasConfused) this.rescued = (this.rescued || 0) + 1;
     this._heardBatch = (this._heardBatch || 0) + 1;
+    if (via === 'board') this._heardBoard = true;
     clearTimeout(this._heardT);
     this._heardT = setTimeout(() => {
       const n = this._heardBatch; this._heardBatch = 0;
-      HUD.toast(`WORD OF MOUTH +${n}`, `${n === 1 ? 'Someone' : `${n} people`} heard it from a friend`);
+      if (this._heardBoard) HUD.toast(`NOTICEBOARD +${n}`, `${n === 1 ? 'Someone' : `${n} people`} stopped to read your notice`);
+      else HUD.toast(`WORD OF MOUTH +${n}`, `${n === 1 ? 'Someone' : `${n} people`} heard it from a friend`);
+      this._heardBoard = false;
       Sfx.tone(660, 0.2, 'sine', 0.025, 990);
       this.checkReach();
       this.refreshStats(); this.refreshSecured(); this.save();
@@ -14125,6 +14504,10 @@ class Game {
       marginalia: Object.keys(this.found || {}).length, marginaliaMax: MARGINALIA.length,
       endorsements: this.countEndorsements(), endorsementsMax: Object.keys(CHALLENGES).length,
       citations: this.citations || 0,
+      books: this.booksCount ? this.booksCount() : 0, booksMax: (this.bookItems || []).length,
+      bikes: Object.keys(this.bikesFound || {}).length, bikesMax: Object.keys(SPECIAL_BIKES).length,
+      boards: Object.keys(this.boardsDone || {}).length, boardsMax: (this.boards || []).length,
+      jumps: Object.keys(this.jumpsDone || {}).length, jumpsMax: (this.ramps || []).length,
     });
   }
 
@@ -14355,6 +14738,10 @@ class Game {
     for (const s of (this.world.slabs || [])) {
       if (s.y <= footY + STEP && s.y > g && this.slabHas(s, x, z)) g = s.y;
     }
+    if (this.level === 'colloquium' && this.ramps && this.ramps.length) {
+      const r = this.rampAt(x, z);
+      if (r > g && r <= footY + STEP) g = r;
+    }
     return g;
   }
 
@@ -14363,6 +14750,7 @@ class Game {
     for (const s of (this.world.slabs || [])) {
       if (s.y > footY + STEP && s.y - (s.h || 4) < footY + EYE && this.slabHas(s, x, z)) return true;
     }
+    if (this.level === 'colloquium' && this.ramps && this.rampAt(x, z) > footY + STEP) return true;
     return false;
   }
 
@@ -14433,6 +14821,7 @@ class Game {
   }
 
   jump() {
+    if (this.vehicle) { this.hopReq = true; return; }        // a bunny hop
     if (this.mode !== 'play' || this.level === 'summit' || this.zip) return;
     if (!this.grounded) return;
     this.vy = JUMP_V; this.grounded = false;
@@ -14558,7 +14947,7 @@ class Game {
 
     const sprint = (K['shift'] === true) && mag > 0;
     const tp = this.camMode === 'third';
-    const speed = sprint ? (tp ? 9.6 : 11.5) : (tp ? 5.4 : 6.2);
+    const speed = (sprint ? (tp ? 9.6 : 11.5) : (tp ? 5.4 : 6.2)) * (this.perk && this.perk('run') ? 1.12 : 1);
 
     const fx = -Math.sin(c.yaw), fz = -Math.cos(c.yaw);
     const rx = Math.cos(c.yaw), rz = -Math.sin(c.yaw);
@@ -14606,12 +14995,14 @@ class Game {
   /* ---------- vehicles ---------- */
   mount(v) {
     this.vehicle = v;
+    this.collectBike(v);
     v.speed = 0;
     this.vel.x = this.vel.z = 0;
     this.cam.x = v.x; this.cam.z = v.z; this.footY = v.y;
     this.cam.yaw = v.yaw + Math.PI;
     Sfx.tone(v.type === 'bike' ? 900 : 160, 0.12, v.type === 'bike' ? 'triangle' : 'sawtooth', 0.02, v.type === 'bike' ? 1200 : 220);
-    HUD.toast(v.type === 'bike' ? 'ON THE BIKE' : 'IN THE CART', 'W / S · A D steer · Shift to pedal hard · E to get off');
+    HUD.toast(v.variant ? SPECIAL_BIKES[v.variant].name.toUpperCase() : v.type === 'bike' ? 'ON THE BIKE' : 'IN THE CART',
+      v.type === 'bike' ? 'W / S · A D steer · Shift pedal hard · Space hop · E off' : 'W / S · A D steer · Shift to go faster · E to get out');
   }
 
   dismount(silent) {
@@ -14634,7 +15025,9 @@ class Game {
     let steer = 0;
     if (K['a'] || K['arrowleft']) steer += 1;
     if (K['d'] || K['arrowright']) steer -= 1;
-    v.drive({ throttle: !!(K['w'] || K['arrowup']), brake: !!(K['s'] || K['arrowdown']), steer, sprint: !!K['shift'] }, dt, this);
+    v.drive({ throttle: !!(K['w'] || K['arrowup']), brake: !!(K['s'] || K['arrowdown']), steer, sprint: !!K['shift'], hop: this.hopReq }, dt, this);
+    this.hopReq = false;
+    this.updateStunt(v, dt);
     // people are solid: you stop for them, and they let you know about it
     const [qx, qz] = this.life.bumpCheck(v.x, v.z, v.P.r * 0.9, v.y, Math.abs(v.speed) > 1.5);
     if (qx !== v.x || qz !== v.z) {
@@ -14818,7 +15211,7 @@ class Game {
     requestAnimationFrame((t) => this.frame(t));
     let dt = (now - this.last) / 1000;
     this.last = now;
-    dt = Math.min(dt, 0.05);
+    dt = Math.min(dt, 0.05) * (this.timeScale || 1);
     this.time += dt;
 
     this.R.resize();
@@ -14853,6 +15246,7 @@ class Game {
       else if (this.vehicle) this.updateVehicle(dt);
       else this.updatePlayer(dt);
       this.updatePickups(dt);
+      this.updateCollect(dt);
     }
     this.applyCamAnim(dt);
     this.updateView(dt);
@@ -14898,7 +15292,7 @@ class Game {
     }
 
     // living world + combat
-    if (this.mode !== 'title' && !paused) this.life.update(dt, this.time);
+    if (!paused) this.life.update(dt, this.time);        // on the title the campus lives, but the feed holds off
     if (this.level === 'colloquium' && !paused) this.traffic.update(dt, this);
     if (!paused) this.updateParticles(dt);
     this.fireCd = Math.max(0, this.fireCd - dt);
@@ -14991,8 +15385,16 @@ class Game {
       return;
     }
     if (t.kind === 'vehicle') {
-      HUD.setReticle('near', 0, t.v.type === 'bike' ? 'BICYCLE' : 'CAMPUS CART', 'BORROWED, NOT STOLEN');
+      const sp = t.v.variant && SPECIAL_BIKES[t.v.variant];
+      HUD.setReticle('near', 0, sp ? sp.name.toUpperCase() : t.v.type === 'bike' ? 'BICYCLE' : 'CAMPUS CART',
+        sp ? (this.bikesFound[t.v.variant] ? 'IN YOUR COLLECTION' : 'NOT IN YOUR COLLECTION YET') : 'BORROWED, NOT STOLEN');
       HUD.prompt(`<kbd>E</kbd> ${t.v.type === 'bike' ? 'ride the bike' : 'drive the cart'}`);
+      return;
+    }
+    if (t.kind === 'board') {
+      const n = Object.keys(this.boardsDone).length;
+      HUD.setReticle('lock', n / this.boards.length, 'NOTICEBOARD', `THE FEED HAS COVERED IT · ${n}/${this.boards.length} RECLAIMED`);
+      HUD.prompt(this.countInsights() ? '<kbd>E</kbd> tear down the flyers, pin up what you learned' : 'Interview a scientist first — then pin it up here');
       return;
     }
     if (t.kind === 'poster') {
@@ -15041,6 +15443,7 @@ class Game {
       M4.trs(this.tmpM2, p.x, p.y + Math.sin(this.time * 1.7 + p.x) * 0.08, p.z, this.time * 1.4 + p.z, 1, 1, 1);
       R.drawMesh(this.pageMark, this.tmpM2);
     }
+    this.drawCollectOpaque(R, c);
 
     for (const s of (this.world.spinners || [])) {
       const a = this.time * s.speed;
@@ -15070,8 +15473,11 @@ class Game {
     this.life.draw(R, c, this.basis, this.time);
     if (this.level === 'colloquium') {
       for (const v of this.vehicles) {
-        if ((v.x - c.x) ** 2 + (v.z - c.z) ** 2 > 160 * 160) continue;
-        R.drawMesh(v.mesh, v.model);
+        if (v.hidden) continue;
+        const d2 = (v.x - c.x) ** 2 + (v.z - c.z) ** 2;
+        const far = v.type === 'bike' && v !== this.vehicle ? 95 : 130;
+        if (d2 > far * far || (R.shadowPass && d2 > 32 * 32)) continue;
+        R.drawMesh(d2 > 30 * 30 || R.shadowPass ? v.lod : v.mesh, v.model);
       }
       this.traffic.draw(R, c);
     }
@@ -15100,10 +15506,13 @@ class Game {
     const third = this.camMode === 'third' && this.mode !== 'talk';
     if (!third && !R.shadowPass) return;               // in first person you still cast a shadow
     const v = this.vehicle;
+    const VP = v ? v.P : null;
     const P = {
       state: v ? v.pose : (this.grounded ? (Math.hypot(this.vel.x, this.vel.z) > 0.4 ? 'walk' : 'idle') : 'air'),
-      phase: this.anim.phase, speed: this.anim.speed, t: this.time, aim: this.anim.aim, hold: true,
+      phase: this.anim.phase, speed: this.anim.speed, t: this.time, aim: this.anim.aim, hold: !v,
       crank: v ? v.crank : 0, seat: v ? v.seat : 0,
+      bbZ: VP ? VP.bbZ : undefined, bbDrop: VP ? VP.bbDrop : undefined, crankR: VP ? VP.crankR : undefined,
+      upright: VP ? !!VP.upright : false, grip: VP && VP.grip && v.type === 'bike' ? VP.grip : null,
     };
     poseCharacter(this.avatar, P, this.avatarBones);
     if (v) M4.mul(this.avatarM, v.model, xformTo(this.tmpM2, 0, v.riderY || 0, v.riderZ || 0, 0, 0, 0));
@@ -15192,6 +15601,7 @@ class Game {
       }
     }
     this.life.drawGlows(R, c, this.time);
+    this.drawCollectGlow(R, c);
     for (const p of this.pulses) {
       const t = p.t / 1.4;
       const sc = 2 + t * 26;
@@ -15202,6 +15612,7 @@ class Game {
     R.drawParticles(this.particles.list, this.basis);
 
     this.life.drawPlates(R, c, this.basis);
+    this.drawBoards(R, c);
     if (this.life.crowd) this.life.crowd.drawBubbles(R, c, this.basis);
     for (const s of this.world.stations) {
       const dist = Math.hypot(s.x - c.x, s.z - c.z);
@@ -15308,6 +15719,295 @@ window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('title').classList.remove('on');
     }
   }
+});
+
+
+/* ==== collect.js ==== */
+/* ============================================================
+   collect.js — things to find, and things to do between interviews.
+
+     · 24 overdue library books hidden around campus, each a classic of
+       science with a line on why it mattered; every six unlock something
+     · the bicycle collection: five odd bikes to find, a golden one to earn
+     · twelve noticeboards the feed has plastered with nonsense: pin up
+       what the scientists told you and passers-by read it
+     · five stunt ramps, GTA-style: hit them fast enough to clear the gap
+   ============================================================ */
+
+const BOOK_REWARDS = [
+  { at: 6, key: 'run', title: 'LIBRARY CARD', sub: 'Six books returned. You know the shortcuts now: you run a little faster.' },
+  { at: 12, key: 'splash', title: 'ANNOTATED EDITION', sub: 'Twelve returned. An insight that lands now reaches someone standing next to them too.' },
+  { at: 18, key: 'map', title: 'THE CATALOGUE', sub: 'Eighteen returned. Every missing book and bicycle is marked on your radar and map.' },
+  { at: 24, key: 'golden', title: 'THE CHANCELLOR\'S BICYCLE', sub: 'Every book returned. A golden bicycle is waiting on the library steps.' },
+];
+const BOOK_COLS = ['#7a1f24', '#1f3a6a', '#2a5a34', '#6a4a1a', '#4a2a5a', '#1a4a4a', '#5a1a3a', '#3a3a3a'];
+
+function buildBookMeshes(gl) {
+  return BOOK_COLS.map((c) => {
+    const b = new Builder(256);
+    const cover = mat(TX.FABRIC, LIN(c).map((v) => v * 2.2), { uv: 'local', tile: 0.12, rough: 0.6, glow: 0.12 });
+    const gold = mat(0, [1.0, 0.75, 0.3], { rough: 0.3, metal: 1, glow: 0.25 });
+    b.add(BOX, xform([0, 0, 0], [0, 0, 0], [0.05, 0.25, 0.18]), cover);
+    b.add(BOX, xform([0.004, 0, 0.004], [0, 0, 0], [0.042, 0.236, 0.18]), mat(0, [0.86, 0.82, 0.7], { rough: 0.9 }));
+    for (const y of [-0.08, 0.08]) b.add(BOX, xform([-0.001, y, -0.09], [0, 0, 0], [0.052, 0.012, 0.004]), gold);
+    return b.upload(gl);
+  });
+}
+
+/* the feed's flyers: loud, pink, and saying nothing */
+function feedBoardTexture(gl) {
+  const cv = document.createElement('canvas'); cv.width = 640; cv.height = 420;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#5a3a22'; c.fillRect(0, 0, 640, 420);
+  const flyer = (x, y, w, h, rot, bg, fg, lines) => {
+    c.save(); c.translate(x, y); c.rotate(rot);
+    c.fillStyle = bg; c.fillRect(-w / 2, -h / 2, w, h);
+    c.fillStyle = fg; c.textAlign = 'center'; c.textBaseline = 'middle';
+    const total = lines.reduce((a, [, size]) => a + size + 8, -8);
+    let ly = -total / 2;
+    for (const [t, size, weight] of lines) { c.font = `${weight || 800} ${size}px "Helvetica Neue", Arial, sans-serif`; c.fillText(t, 0, ly + size / 2); ly += size + 8; }
+    c.restore();
+  };
+  flyer(170, 150, 270, 240, -0.08, '#ff3fa8', '#fff', [['YOU WON\'T', 32], ['BELIEVE', 32], ['WHAT THEY\'RE', 28], ['HIDING', 32], ['share before it\'s deleted', 16, 500]]);
+  flyer(460, 130, 250, 200, 0.07, '#ffe14a', '#1a1a1a', [['DOCTORS', 38], ['HATE THIS', 38], ['one weird trick', 20, 600], ['❤ 48.2K  ↻ 12K', 22, 700]]);
+  flyer(300, 310, 280, 170, 0.03, '#b44aff', '#fff', [['DO YOUR', 34], ['OWN RESEARCH', 30], ['(watch this video)', 18, 500]]);
+  return texFromCanvas(gl, cv);
+}
+
+/* your notice: what a scientist told you, and who said it */
+function yourBoardTexture(gl, concept, who, field, hex, qname) {
+  const cv = document.createElement('canvas'); cv.width = 640; cv.height = 420;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#5a3a22'; c.fillRect(0, 0, 640, 420);
+  c.save(); c.translate(320, 210); c.rotate(-0.015);
+  c.fillStyle = '#f4eedf'; c.fillRect(-270, -180, 540, 360);
+  c.fillStyle = hex || '#2a5ab8'; c.fillRect(-270, -180, 540, 66);
+  const rgb = hex2rgb(hex || '#2a5ab8'), lum = 0.3 * rgb[0] + 0.59 * rgb[1] + 0.11 * rgb[2];
+  c.fillStyle = lum > 0.6 ? '#1b2330' : '#fff'; c.font = '800 38px "Helvetica Neue", Arial, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText('DID YOU KNOW?', 0, -147);
+  c.fillStyle = '#1b2330'; c.font = '700 34px Georgia, "Times New Roman", serif';
+  // wrap the concept onto up to four lines
+  const words = String(concept).split(/\s+/), lines = [];
+  let cur = '';
+  for (const wd of words) { const t = cur ? cur + ' ' + wd : wd; if (c.measureText(t).width > 480 && cur) { lines.push(cur); cur = wd; } else cur = t; }
+  if (cur) lines.push(cur);
+  const nl = Math.min(lines.length, 4), y0 = -22 - (nl - 1) * 22;
+  lines.slice(0, 4).forEach((ln, i) => c.fillText(ln, 0, y0 + i * 44));
+  if (qname) { c.fillStyle = '#6a7280'; c.font = '600 17px "Helvetica Neue", Arial, sans-serif'; c.fillText(`THE ANSWER TO A ${qname} QUESTION`, 0, y0 + nl * 44 + 4); }
+  c.fillStyle = '#4a5260'; c.font = 'italic 500 24px Georgia, serif';
+  c.fillText(`— ${who}${field ? ', ' + field : ''}`, 0, 118);
+  c.font = '600 16px "Helvetica Neue", Arial, sans-serif'; c.fillStyle = '#8a8f98';
+  c.fillText('ASK ME ABOUT IT', 0, 156);
+  c.restore();
+  return texFromCanvas(gl, cv);
+}
+
+Object.assign(Game.prototype, {
+  initCollect() {
+    const W = this.worlds.colloquium.world, gl = this.gl;
+    this.booksFound = this.booksFound || {};
+    this.bikesFound = this.bikesFound || {};
+    this.boardsDone = this.boardsDone || {};
+    this.jumpsDone = this.jumpsDone || {};
+    this.bookItems = (W.bookSpots || []).map((sp, i) => ({ ...sp, book: BOOKS[i], i })).filter((b) => b.book);
+    this.bookMeshes = buildBookMeshes(gl);
+    this.feedTex = feedBoardTexture(gl);
+    this.boards = (W.boards || []).map((b, i) => ({ ...b, i, tex: null }));
+    for (const b of this.boards) {
+      const d = this.boardsDone[b.where];
+      if (d) b.tex = yourBoardTexture(gl, d.concept, d.who, d.field, d.hex, d.q);
+    }
+    this.ramps = W.ramps || [];
+    this.timeScale = 1;
+    this.applyBookPerks(true);
+  },
+
+  booksCount() { return Object.keys(this.booksFound || {}).length; },
+  perk(key) { const r = BOOK_REWARDS.find((q) => q.key === key); return !!r && this.booksCount() >= r.at; },
+  applyBookPerks(quiet) {
+    const golden = (this.vehicles || []).find((v) => v.variant === 'golden');
+    if (golden) golden.hidden = !this.perk('golden');
+    void quiet;
+  },
+
+  /* ---------- per frame ---------- */
+  updateCollect(dt) {
+    if (this.level !== 'colloquium') return;
+    const c = this.cam;
+    // books: walk (or ride) over them
+    for (const b of this.bookItems) {
+      if (this.booksFound[b.book.id]) continue;
+      const dy = Math.abs((this.vehicle ? this.vehicle.y : this.footY) - (b.y - 0.55));   // b.y is the book's resting height
+      if (dy < 1.7 && (c.x - b.x) ** 2 + (c.z - b.z) ** 2 < (this.vehicle ? 2.4 : 1.7) ** 2) this.collectBook(b);
+    }
+    this._bkT = (this._bkT || 0) + dt;
+    if (this._bkT > 0.35) {
+      this._bkT = 0;
+      for (const b of this.bookItems) {
+        if (this.booksFound[b.book.id] || (c.x - b.x) ** 2 + (c.z - b.z) ** 2 > 70 * 70) continue;
+        this.particles.burst(b.x, b.y + 0.1, b.z, 2, { col: [1, 0.85, 0.55], speed: 0.6, life: 1.4, size: 0.1, grav: 0.4, drag: 1.2, alpha: 0.9 });
+      }
+    }
+    // reclaimed noticeboards: people passing stop and read them
+    this._bdT = (this._bdT || 0) + dt;
+    if (this._bdT > 0.5) {
+      this._bdT = 0;
+      for (const b of this.boards) {
+        const d = this.boardsDone[b.where];
+        if (!d) continue;
+        for (const s of this.life.students) {
+          if (s.cyclist || (s.x - b.x) ** 2 + (s.z - b.z) ** 2 > 36) continue;
+          s.readBoards = s.readBoards || {};
+          if (s.readBoards[b.i]) continue;
+          s.readBoards[b.i] = true;
+          if (s.taught < 2) this.life.hear(s, null, hex2rgb(d.hex || '#8fd0ff'), d.hex, d.concept, 'board');
+        }
+      }
+    }
+  },
+
+  collectBook(b) {
+    this.booksFound[b.book.id] = true;
+    const n = this.booksCount();
+    this.particles.burst(b.x, b.y, b.z, 50, { cols: [[1, 0.85, 0.5], [1, 1, 1]], speed: 3.4, life: 1.0, size: 0.16, grav: -1, drag: 2 });
+    Sfx.tone(660, 0.12, 'triangle', 0.03, 990); setTimeout(() => Sfx.tone(990, 0.2, 'sine', 0.03, 1320), 110);
+    const owner = b.book.owner && this.byId[b.book.owner];
+    HUD.itemCard(`OVERDUE BOOK · ${n} OF ${this.bookItems.length} RETURNED`, b.book.title, `${b.book.author} · ${b.book.year}`, b.book.text,
+      owner ? `${owner.name} is on campus — ask them about it.` : 'Returned to the library.', '#e8b04a');
+    const reward = BOOK_REWARDS.find((r) => r.at === n);
+    if (reward) {
+      setTimeout(() => { HUD.banner(reward.title, reward.sub, '#ffd98a'); Sfx.complete(); }, 1200);
+      this.applyBookPerks();
+    } else HUD.log(`<b>Book returned</b> — ${esc(b.book.title)} (${n}/${this.bookItems.length}).`);
+    this.refreshStats();
+    this.save();
+  },
+
+  /* the first ride on a collectable bicycle adds it to your collection */
+  collectBike(v) {
+    if (!v.variant || this.bikesFound[v.variant]) return;
+    this.bikesFound[v.variant] = true;
+    const info = SPECIAL_BIKES[v.variant];
+    const n = Object.keys(this.bikesFound).length, of = Object.keys(SPECIAL_BIKES).length;
+    HUD.itemCard(`BICYCLE COLLECTION · ${n} OF ${of}`, info.name, 'Added to your collection', info.fact, 'Ride it anywhere. It will wait where you leave it.', '#8fd0ff');
+    Sfx.complete();
+    this.refreshStats();
+    this.save();
+  },
+
+  /* ---------- noticeboards ---------- */
+  boardConcept() {
+    // the most recent thing you learned, with who told you
+    const ids = Object.keys(this.progress).filter((id) => (this.progress[id] || []).length);
+    if (!ids.length) return null;
+    const recent = this.lastInsight && this.byId[this.lastInsight.id] ? this.lastInsight : null;
+    const id = recent ? recent.id : ids[(Math.random() * ids.length) | 0];
+    const keys = this.progress[id], key = recent && keys.includes(recent.key) ? recent.key : keys[keys.length - 1];
+    const p = this.byId[id], qi = QTYPES.findIndex((q) => q.key === key);
+    return { concept: p.answers[key].concept, who: p.name, field: p.field, hex: QHEX[qi], q: QTYPES[qi].name };
+  },
+  reclaimBoard(b) {
+    if (this.boardsDone[b.where]) return;
+    const d = this.boardConcept();
+    if (!d) { Sfx.deny(); HUD.banner('NOTHING TO PIN UP YET', 'Interview a scientist first — then you will have something true to put here.', '#ffab6a'); return; }
+    this.boardsDone[b.where] = d;
+    b.tex = yourBoardTexture(this.gl, d.concept, d.who, d.field, d.hex, d.q);
+    const n = Object.keys(this.boardsDone).length;
+    this.particles.burst(b.face[0], b.face[1], b.face[2], 60, { cols: [hex2rgb(d.hex), [1, 1, 1], [1, 0.3, 0.7]], speed: 3, life: 1, size: 0.16, grav: 2, drag: 1.5 });
+    HUD.banner(`NOTICEBOARD RECLAIMED · ${n}/${this.boards.length}`, `The feed's flyers are gone from ${b.where}. Anyone who walks past will read: ${d.concept}.`, d.hex);
+    Sfx.complete();
+    // whoever is standing nearby reads it straight away
+    for (const s of this.life.students) {
+      if ((s.x - b.x) ** 2 + (s.z - b.z) ** 2 > 12 * 12) continue;
+      s.readBoards = s.readBoards || {}; s.readBoards[b.i] = true;
+      if (s.taught < 2) this.life.hear(s, null, hex2rgb(d.hex), d.hex, d.concept, 'board');
+    }
+    this.refreshStats();
+    this.save();
+  },
+
+  /* ---------- stunt ramps ---------- */
+  rampAt(x, z) {
+    let best = -Infinity, hit = null;
+    for (const r of this.ramps || []) {
+      const dx = x - r.x, dz = z - r.z;
+      if (Math.abs(dx) > 3 || Math.abs(dz) > 3) continue;
+      const co = Math.cos(r.yaw), si = Math.sin(r.yaw);
+      const lx = dx * co - dz * si, lz = dx * si + dz * co;
+      if (Math.abs(lx) > r.w / 2 || Math.abs(lz) > r.len / 2) continue;
+      const h = r.y0 + r.h * (lz + r.len / 2) / r.len;
+      if (h > best) { best = h; hit = r; }
+    }
+    this._rampHit = hit;
+    return best;
+  },
+  rampUnder(x, z) { return this.rampAt(x, z) > -Infinity ? this._rampHit : null; },
+  updateStunt(v, dt) {
+    if (v.air && v.launch && v.launch.ramp && !this.stunt && Math.abs(v.launch.speed) > 6) {
+      this.stunt = { ramp: v.launch.ramp, from: v.launch };
+      HUD.toast('STUNT JUMP', v.launch.ramp.name);
+    }
+    if (this.stunt && v.landed) {
+      const r = this.stunt.ramp, f = this.stunt.from;
+      const dist = Math.hypot(v.x - f.x, v.z - f.z);
+      this.stunt = null;
+      if (dist >= r.target) {
+        const first = !this.jumpsDone[r.id];
+        this.jumpsDone[r.id] = true;
+        const n = Object.keys(this.jumpsDone).length;
+        HUD.banner(first ? `STUNT JUMP COMPLETED · ${n}/${this.ramps.length}` : 'STUNT JUMP', `${r.name} — ${dist.toFixed(1)} m`, '#ffd23a');
+        Sfx.complete();
+        this.shake = Math.max(this.shake, 0.35);
+        this.refreshStats(); this.save();
+      } else HUD.banner('STUNT JUMP FAILED', `${dist.toFixed(1)} m of ${r.target} — come in faster (hold Shift)`, '#ffab6a');
+    }
+    // slow motion while you're in the air off a ramp
+    const want = this.stunt && v.air ? 0.42 : 1;
+    this.timeScale += (want - this.timeScale) * (1 - Math.exp(-(want < 1 ? 10 : 4) * dt));
+  },
+
+  /* ---------- drawing ---------- */
+  drawCollectOpaque(R, c) {
+    if (this.level !== 'colloquium') return;
+    for (const b of this.bookItems) {
+      if (this.booksFound[b.book.id] || (b.x - c.x) ** 2 + (b.z - c.z) ** 2 > 120 * 120) continue;
+      M4.trs(this.tmpM2, b.x, b.y + 0.25 + Math.sin(this.time * 1.8 + b.i) * 0.1, b.z, this.time * 1.3 + b.i, 1.9, 1.9, 1.9);
+      R.drawMesh(this.bookMeshes[b.i % this.bookMeshes.length], this.tmpM2, { noShadow: true });
+    }
+  },
+  drawCollectGlow(R, c) {
+    if (this.level !== 'colloquium') return;
+    // a warm ring under each unfound book, a gold one under each uncollected bicycle
+    for (const b of this.bookItems) {
+      const d2 = (b.x - c.x) ** 2 + (b.z - c.z) ** 2;
+      if (this.booksFound[b.book.id] || d2 > 110 * 110) continue;
+      M4.trs(this.tmpM, b.x, b.y - 0.5, b.z, this.time * 0.6, 1.1, 1, 1.1);
+      R.drawMesh(this.life.marks.aura, this.tmpM, { alpha: 0.5 + 0.15 * Math.sin(this.time * 3 + b.i), tint: [1.0, 0.72, 0.3] });
+      // a faint shaft of light, so you can spot one from across a lawn
+      const fade = clamp((Math.sqrt(d2) - 4) / 10, 0, 1);
+      M4.trs(this.tmpM, b.x, b.y - 0.55, b.z, 0, 0.16, 0.3, 0.16);
+      R.drawMesh(this.beaconMesh, this.tmpM, { alpha: 0.22 * fade, tint: [1.0, 0.75, 0.35] });
+    }
+    for (const v of this.vehicles) {
+      if (!v.variant || v.hidden || this.bikesFound[v.variant] || v === this.vehicle) continue;
+      if ((v.x - c.x) ** 2 + (v.z - c.z) ** 2 > 90 * 90) continue;
+      M4.trs(this.tmpM, v.x, v.y + 0.06, v.z, -this.time * 0.5, 1.5, 1, 1.5);
+      R.drawMesh(this.life.marks.aura, this.tmpM, { alpha: 0.4 + 0.12 * Math.sin(this.time * 2.4), tint: [0.55, 0.85, 1.0] });
+    }
+  },
+  drawBoards(R, c) {
+    if (this.level !== 'colloquium' || !this.boards) return;
+    const gl = R.gl;
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    const night = this.env ? this.env.night || 0 : 0, k = lerp(1.0, 0.32, night);
+    for (const b of this.boards) {
+      if ((b.x - c.x) ** 2 + (b.z - c.z) ** 2 > 70 * 70) continue;
+      const basis = { right: [Math.cos(b.yaw), 0, -Math.sin(b.yaw)], up: [0, 1, 0] };
+      const p = [b.face[0] + Math.sin(b.yaw) * 0.035, b.face[1], b.face[2] + Math.cos(b.yaw) * 0.035];
+      R.drawBillboard(b.tex || this.feedTex, p, 1.8, 1.18, [k, k, k, 1], b.tex ? 0 : 0.15 * (1 - night) + 0.5 * night, basis);
+    }
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+  },
 });
 
 </script>

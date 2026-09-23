@@ -142,6 +142,11 @@ function crowdPongTable(b, x, y, z, yaw) {
   const sp = F(-0.72, 0, -1.55);
   b.add(pCyl(14), xform([sp[0], y + 0.08, sp[2]], [0, yaw, Math.PI / 2], [0.14, 0.26, 0.14]), mat(TX.FABRIC, [0.05, 0.05, 0.055], { uv: 'local', tile: 0.1 }));
 }
+function crowdLantern(b, x, y, z) {
+  b.add(pCyl(10), xform([x, y + 0.13, z], [0, 0, 0], [0.16, 0.24, 0.16]), mat(0, [1.0, 0.78, 0.45], { kind: KIND.LAMP, glow: 1.6, rough: 0.2 }));
+  b.add(pCyl(10), xform([x, y + 0.27, z], [0, 0, 0], [0.18, 0.04, 0.18]), mat(0, [0.1, 0.1, 0.1], { rough: 0.4, metal: 0.6 }));
+  b.add(pTorus(0.06, 12, 4), xform([x, y + 0.33, z], [Math.PI / 2, 0, 0], [0.12, 0.12, 0.12]), mat(0, [0.1, 0.1, 0.1], { rough: 0.4, metal: 0.6 }));
+}
 function crowdGuitarCase(b, x, y, z, yaw) {
   b.add(BOX, xform([x, y + 0.04, z], [0, yaw, 0], [0.42, 0.08, 1.05]), mat(0, [0.03, 0.03, 0.035], { rough: 0.5 }));
   b.add(BOX, xform([x, y + 0.075, z], [0, yaw, 0], [0.36, 0.01, 0.98]), mat(TX.FABRIC, LIN('#8a1a2a'), { uv: 'local', tile: 0.2 }));
@@ -162,6 +167,9 @@ const CROWD_SCENES = [
   { type: 'rim', x: 0, z: 0, n: 2, a0: 2.25 },
   { type: 'chat', x: 9, z: 38.5, yaw: 0, n: 3 },
   { type: 'chat', x: -26, z: -37.5, yaw: 0, n: 2 },
+  { type: 'chat', x: 39.5, z: 9, yaw: 0, n: 3 },
+  { type: 'study', x: 14, z: 13, yaw: 0.8, n: 2 },
+  { type: 'chat', x: -39.5, z: -12, yaw: 0, n: 3 },
   // the Backs
   { type: 'pong', x: -100, z: 30, yaw: 0.1, n: 7 },
   { type: 'sunbathe', x: -142, z: -26, yaw: 0.4, n: 4 },
@@ -316,7 +324,7 @@ class Crowd {
     const TOWELS = [['#e84a5f', '#ffffff'], ['#2a9df4', '#ffe066'], ['#3ac47d', '#ffffff'], ['#f7a440', '#8a3ab9'], ['#ffffff', '#1f5fa8'], ['#ff7eb6', '#fff3b0']];
     switch (def.type) {
       case 'chat': {
-        const rr = 0.55 + n * 0.14;
+        const rr = 0.42 + n * 0.11;
         for (let i = 0; i < n; i++) {
           const a = yaw + (i / n) * TAU + (R() - 0.5) * 0.3;
           const px = x + Math.sin(a) * rr, pz = z + Math.cos(a) * rr;
@@ -446,6 +454,13 @@ class Crowd {
       }
     }
     if (!sc.members.length) return null;
+    // groups that carry on into the evening bring a lantern
+    if (def.type === 'pong' || def.type === 'guitar' || def.type === 'picnic') {
+      const lp = def.type === 'pong' ? F(0.75, 1.62) : def.type === 'guitar' ? F(-0.9, -0.4) : F(0.55, -0.25);
+      const ly = def.type === 'pong' ? gy(lp[0], lp[1]) + 0.42 : gy(lp[0], lp[1]) + 0.03;
+      crowdLantern(B.at(lp[0], lp[1]), lp[0], ly, lp[1]);
+      this.game.world.lights.push({ pos: [lp[0], ly + 0.6, lp[1]], col: [1.0, 0.72, 0.42], range: 9, intensity: 1.1, night: true });
+    }
     this.scenes.push(sc);
     return sc;
   }
@@ -1454,8 +1469,8 @@ const CHATTER = {
   ],
   feed: ['I saw a video about this…', 'Everyone\'s sharing it, so…', 'It had a chart. Charts are real.',
     'My feed says the opposite of yours.', 'Apparently one study proved it.', 'A doctor said it. On a podcast.'],
-  learned: ['Apparently: {c}.', 'Someone explained {c} to me.', 'Okay, {c} actually makes sense now.', 'Did you know about {c}?'],
-  tell: ['Guys — {c}!', 'Listen: {c}.', 'So it turns out, {c}.', 'You have to hear this: {c}.'],
+  learned: ['Someone told me about “{c}”.', '“{c}” actually makes sense now.', 'Have you heard about “{c}”?', 'I keep thinking about “{c}”.'],
+  tell: ['Guys — have you heard about “{c}”?', 'Okay, listen: “{c}”.', 'You have to hear about “{c}”.', 'Someone just explained “{c}” to me!'],
   laugh: ['HAHA', 'Stop it!', 'I can\'t!', 'No way!', 'Hahaha!', 'Dead.'],
   pong: ['You\'re on!', 'Elbows!', 'Bounce it!', 'Aim for the middle.'],
   pongMake: ['LET\'S GO!', 'Drink up!', 'He\'s heating up!', 'Clutch!', 'Nothing but cup!', 'Too easy.'],

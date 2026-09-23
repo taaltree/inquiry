@@ -224,6 +224,7 @@ class Game {
     this.vehicles = (this.world.vehicles || []).map((v, i) => new Vehicle(gl, v, i));
     this.traffic = new Traffic(gl);
     this.vehicle = null;
+    this.initCollect();
     this.lastLook = 0;
     // a few birds wheeling over the court
     this.birdMesh = (() => {
@@ -358,6 +359,7 @@ class Game {
         feed: this.feedCleared, secured: this.secured, found: this.found || {},
         challenged: this.challenged || {}, bossDone: this.bossDone || {},
         citations: this.citations || 0, spread: this.spreadCount || 0, reachMark: this.reachMark || 0,
+        books: this.booksFound || {}, bikes: this.bikesFound || {}, boards: this.boardsDone || {}, jumps: this.jumpsDone || {},
         st: this.lives && this.lives.colloquium ? this.lives.colloquium.students.map((s) => s.taught) : this.savedStudents || [],
       }));
     } catch (e) { /* private browsing — play on without saving */ }
@@ -370,6 +372,7 @@ class Game {
       const s = JSON.parse(raw);
       if (s && (s.v === 1 || s.v === 2 || s.v === 3)) {
         this.spreadCount = s.spread || 0; this.reachMark = s.reachMark || 0;
+        this.booksFound = s.books || {}; this.bikesFound = s.bikes || {}; this.boardsDone = s.boards || {}; this.jumpsDone = s.jumps || {};
         this.savedStudents = s.v === 3 && Array.isArray(s.st) ? s.st : null;
         this.progress = s.progress || {};
         this.connectionsFound = s.conns || [];
@@ -658,7 +661,8 @@ class Game {
     };
 
     for (const s of this.world.stations) consider({ kind: 'person', s }, s.x, s.z, 9.5, 0.62);
-    if (!this.vehicle) for (const v of (this.vehicles || [])) consider({ kind: 'vehicle', v }, v.x, v.z, 3.0, -0.2);
+    if (!this.vehicle) for (const v of (this.vehicles || [])) if (!v.hidden) consider({ kind: 'vehicle', v }, v.x, v.z, 3.0, -0.2);
+    if (this.level === 'colloquium' && !this.vehicle) for (const b of (this.boards || [])) if (!this.boardsDone[b.where]) consider({ kind: 'board', b }, b.x, b.z, 4.2, 0.25);
     if (this.level === 'summit' && this.world.finish) {
       const f = this.world.finish;
       // the marquee is a place you stand in, not something you aim at
@@ -691,6 +695,7 @@ class Game {
       HUD.openPoster(); Sfx.complete();
       return;
     }
+    if (t.kind === 'board') { this.reclaimBoard(t.b); return; }
     if (t.kind === 'person') this.beginInterview(t.s);
     else if (t.kind === 'vault') {
       document.exitPointerLock();
@@ -784,6 +789,7 @@ class Game {
     const asked = this.progress[p.id] || (this.progress[p.id] = []);
     const isNew = !asked.includes(q.key);
     if (isNew) asked.push(q.key);
+    this.lastInsight = { id: p.id, key: q.key };
 
     this.selSlot = slot;
     HUD.setDialogueText(a.text, q, isNew ? a.concept : null, false);
@@ -1140,6 +1146,11 @@ class Game {
     const matched = s.wants === qi;
     const rescued = this.life.teach(s, col, line, matched);
     s.lastConcept = concept;
+    if (this.perk('splash')) {
+      let nb = null, nd = 4;
+      for (const o of this.life.students) { if (o === s) continue; const d = Math.hypot(o.x - s.x, o.z - s.z); if (d < nd) { nd = d; nb = o; } }
+      if (nb && nb.taught < 3) this.life.hear(nb, s, col, QHEX[qi], concept);
+    }
     // they turn and tell the people they are with
     const told = this.life.crowd && s.scene ? this.life.crowd.spread(s, concept, col, QHEX[qi]) : 0;
     const toldTxt = told ? ` — and they're telling ${told === 1 ? 'a friend' : `${told} friends`}` : '';
@@ -1173,14 +1184,17 @@ class Game {
   }
 
   /* someone heard an idea from a friend you taught */
-  onHeard(m, before, wasConfused) {
+  onHeard(m, before, wasConfused, via) {
     this.spreadCount = (this.spreadCount || 0) + 1;
     if (wasConfused) this.rescued = (this.rescued || 0) + 1;
     this._heardBatch = (this._heardBatch || 0) + 1;
+    if (via === 'board') this._heardBoard = true;
     clearTimeout(this._heardT);
     this._heardT = setTimeout(() => {
       const n = this._heardBatch; this._heardBatch = 0;
-      HUD.toast(`WORD OF MOUTH +${n}`, `${n === 1 ? 'Someone' : `${n} people`} heard it from a friend`);
+      if (this._heardBoard) HUD.toast(`NOTICEBOARD +${n}`, `${n === 1 ? 'Someone' : `${n} people`} stopped to read your notice`);
+      else HUD.toast(`WORD OF MOUTH +${n}`, `${n === 1 ? 'Someone' : `${n} people`} heard it from a friend`);
+      this._heardBoard = false;
       Sfx.tone(660, 0.2, 'sine', 0.025, 990);
       this.checkReach();
       this.refreshStats(); this.refreshSecured(); this.save();
@@ -1402,6 +1416,10 @@ class Game {
       marginalia: Object.keys(this.found || {}).length, marginaliaMax: MARGINALIA.length,
       endorsements: this.countEndorsements(), endorsementsMax: Object.keys(CHALLENGES).length,
       citations: this.citations || 0,
+      books: this.booksCount ? this.booksCount() : 0, booksMax: (this.bookItems || []).length,
+      bikes: Object.keys(this.bikesFound || {}).length, bikesMax: Object.keys(SPECIAL_BIKES).length,
+      boards: Object.keys(this.boardsDone || {}).length, boardsMax: (this.boards || []).length,
+      jumps: Object.keys(this.jumpsDone || {}).length, jumpsMax: (this.ramps || []).length,
     });
   }
 
@@ -1632,6 +1650,10 @@ class Game {
     for (const s of (this.world.slabs || [])) {
       if (s.y <= footY + STEP && s.y > g && this.slabHas(s, x, z)) g = s.y;
     }
+    if (this.level === 'colloquium' && this.ramps && this.ramps.length) {
+      const r = this.rampAt(x, z);
+      if (r > g && r <= footY + STEP) g = r;
+    }
     return g;
   }
 
@@ -1640,6 +1662,7 @@ class Game {
     for (const s of (this.world.slabs || [])) {
       if (s.y > footY + STEP && s.y - (s.h || 4) < footY + EYE && this.slabHas(s, x, z)) return true;
     }
+    if (this.level === 'colloquium' && this.ramps && this.rampAt(x, z) > footY + STEP) return true;
     return false;
   }
 
@@ -1710,6 +1733,7 @@ class Game {
   }
 
   jump() {
+    if (this.vehicle) { this.hopReq = true; return; }        // a bunny hop
     if (this.mode !== 'play' || this.level === 'summit' || this.zip) return;
     if (!this.grounded) return;
     this.vy = JUMP_V; this.grounded = false;
@@ -1835,7 +1859,7 @@ class Game {
 
     const sprint = (K['shift'] === true) && mag > 0;
     const tp = this.camMode === 'third';
-    const speed = sprint ? (tp ? 9.6 : 11.5) : (tp ? 5.4 : 6.2);
+    const speed = (sprint ? (tp ? 9.6 : 11.5) : (tp ? 5.4 : 6.2)) * (this.perk && this.perk('run') ? 1.12 : 1);
 
     const fx = -Math.sin(c.yaw), fz = -Math.cos(c.yaw);
     const rx = Math.cos(c.yaw), rz = -Math.sin(c.yaw);
@@ -1883,12 +1907,14 @@ class Game {
   /* ---------- vehicles ---------- */
   mount(v) {
     this.vehicle = v;
+    this.collectBike(v);
     v.speed = 0;
     this.vel.x = this.vel.z = 0;
     this.cam.x = v.x; this.cam.z = v.z; this.footY = v.y;
     this.cam.yaw = v.yaw + Math.PI;
     Sfx.tone(v.type === 'bike' ? 900 : 160, 0.12, v.type === 'bike' ? 'triangle' : 'sawtooth', 0.02, v.type === 'bike' ? 1200 : 220);
-    HUD.toast(v.type === 'bike' ? 'ON THE BIKE' : 'IN THE CART', 'W / S · A D steer · Shift to pedal hard · E to get off');
+    HUD.toast(v.variant ? SPECIAL_BIKES[v.variant].name.toUpperCase() : v.type === 'bike' ? 'ON THE BIKE' : 'IN THE CART',
+      v.type === 'bike' ? 'W / S · A D steer · Shift pedal hard · Space hop · E off' : 'W / S · A D steer · Shift to go faster · E to get out');
   }
 
   dismount(silent) {
@@ -1911,7 +1937,9 @@ class Game {
     let steer = 0;
     if (K['a'] || K['arrowleft']) steer += 1;
     if (K['d'] || K['arrowright']) steer -= 1;
-    v.drive({ throttle: !!(K['w'] || K['arrowup']), brake: !!(K['s'] || K['arrowdown']), steer, sprint: !!K['shift'] }, dt, this);
+    v.drive({ throttle: !!(K['w'] || K['arrowup']), brake: !!(K['s'] || K['arrowdown']), steer, sprint: !!K['shift'], hop: this.hopReq }, dt, this);
+    this.hopReq = false;
+    this.updateStunt(v, dt);
     // people are solid: you stop for them, and they let you know about it
     const [qx, qz] = this.life.bumpCheck(v.x, v.z, v.P.r * 0.9, v.y, Math.abs(v.speed) > 1.5);
     if (qx !== v.x || qz !== v.z) {
@@ -2095,7 +2123,7 @@ class Game {
     requestAnimationFrame((t) => this.frame(t));
     let dt = (now - this.last) / 1000;
     this.last = now;
-    dt = Math.min(dt, 0.05);
+    dt = Math.min(dt, 0.05) * (this.timeScale || 1);
     this.time += dt;
 
     this.R.resize();
@@ -2130,6 +2158,7 @@ class Game {
       else if (this.vehicle) this.updateVehicle(dt);
       else this.updatePlayer(dt);
       this.updatePickups(dt);
+      this.updateCollect(dt);
     }
     this.applyCamAnim(dt);
     this.updateView(dt);
@@ -2175,7 +2204,7 @@ class Game {
     }
 
     // living world + combat
-    if (this.mode !== 'title' && !paused) this.life.update(dt, this.time);
+    if (!paused) this.life.update(dt, this.time);        // on the title the campus lives, but the feed holds off
     if (this.level === 'colloquium' && !paused) this.traffic.update(dt, this);
     if (!paused) this.updateParticles(dt);
     this.fireCd = Math.max(0, this.fireCd - dt);
@@ -2268,8 +2297,16 @@ class Game {
       return;
     }
     if (t.kind === 'vehicle') {
-      HUD.setReticle('near', 0, t.v.type === 'bike' ? 'BICYCLE' : 'CAMPUS CART', 'BORROWED, NOT STOLEN');
+      const sp = t.v.variant && SPECIAL_BIKES[t.v.variant];
+      HUD.setReticle('near', 0, sp ? sp.name.toUpperCase() : t.v.type === 'bike' ? 'BICYCLE' : 'CAMPUS CART',
+        sp ? (this.bikesFound[t.v.variant] ? 'IN YOUR COLLECTION' : 'NOT IN YOUR COLLECTION YET') : 'BORROWED, NOT STOLEN');
       HUD.prompt(`<kbd>E</kbd> ${t.v.type === 'bike' ? 'ride the bike' : 'drive the cart'}`);
+      return;
+    }
+    if (t.kind === 'board') {
+      const n = Object.keys(this.boardsDone).length;
+      HUD.setReticle('lock', n / this.boards.length, 'NOTICEBOARD', `THE FEED HAS COVERED IT · ${n}/${this.boards.length} RECLAIMED`);
+      HUD.prompt(this.countInsights() ? '<kbd>E</kbd> tear down the flyers, pin up what you learned' : 'Interview a scientist first — then pin it up here');
       return;
     }
     if (t.kind === 'poster') {
@@ -2318,6 +2355,7 @@ class Game {
       M4.trs(this.tmpM2, p.x, p.y + Math.sin(this.time * 1.7 + p.x) * 0.08, p.z, this.time * 1.4 + p.z, 1, 1, 1);
       R.drawMesh(this.pageMark, this.tmpM2);
     }
+    this.drawCollectOpaque(R, c);
 
     for (const s of (this.world.spinners || [])) {
       const a = this.time * s.speed;
@@ -2347,8 +2385,11 @@ class Game {
     this.life.draw(R, c, this.basis, this.time);
     if (this.level === 'colloquium') {
       for (const v of this.vehicles) {
-        if ((v.x - c.x) ** 2 + (v.z - c.z) ** 2 > 160 * 160) continue;
-        R.drawMesh(v.mesh, v.model);
+        if (v.hidden) continue;
+        const d2 = (v.x - c.x) ** 2 + (v.z - c.z) ** 2;
+        const far = v.type === 'bike' && v !== this.vehicle ? 95 : 130;
+        if (d2 > far * far || (R.shadowPass && d2 > 32 * 32)) continue;
+        R.drawMesh(d2 > 30 * 30 || R.shadowPass ? v.lod : v.mesh, v.model);
       }
       this.traffic.draw(R, c);
     }
@@ -2377,10 +2418,13 @@ class Game {
     const third = this.camMode === 'third' && this.mode !== 'talk';
     if (!third && !R.shadowPass) return;               // in first person you still cast a shadow
     const v = this.vehicle;
+    const VP = v ? v.P : null;
     const P = {
       state: v ? v.pose : (this.grounded ? (Math.hypot(this.vel.x, this.vel.z) > 0.4 ? 'walk' : 'idle') : 'air'),
-      phase: this.anim.phase, speed: this.anim.speed, t: this.time, aim: this.anim.aim, hold: true,
+      phase: this.anim.phase, speed: this.anim.speed, t: this.time, aim: this.anim.aim, hold: !v,
       crank: v ? v.crank : 0, seat: v ? v.seat : 0,
+      bbZ: VP ? VP.bbZ : undefined, bbDrop: VP ? VP.bbDrop : undefined, crankR: VP ? VP.crankR : undefined,
+      upright: VP ? !!VP.upright : false, grip: VP && VP.grip && v.type === 'bike' ? VP.grip : null,
     };
     poseCharacter(this.avatar, P, this.avatarBones);
     if (v) M4.mul(this.avatarM, v.model, xformTo(this.tmpM2, 0, v.riderY || 0, v.riderZ || 0, 0, 0, 0));
@@ -2469,6 +2513,7 @@ class Game {
       }
     }
     this.life.drawGlows(R, c, this.time);
+    this.drawCollectGlow(R, c);
     for (const p of this.pulses) {
       const t = p.t / 1.4;
       const sc = 2 + t * 26;
@@ -2479,6 +2524,7 @@ class Game {
     R.drawParticles(this.particles.list, this.basis);
 
     this.life.drawPlates(R, c, this.basis);
+    this.drawBoards(R, c);
     if (this.life.crowd) this.life.crowd.drawBubbles(R, c, this.basis);
     for (const s of this.world.stations) {
       const dist = Math.hypot(s.x - c.x, s.z - c.z);

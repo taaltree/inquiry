@@ -760,7 +760,28 @@ function buildWorld(gl, roster) {
   }
 
   /* ---------------- bikes to borrow, carts to drive ---------------- */
-  const rack = (x, z, yaw, n, rideable) => {
+  // is there room here? (buildings, trees, lamps, benches and the river)
+  const freeAt = (x, z, r) => {
+    if (!isWalkable(x, z) || Math.abs(x - riverX(z)) < 13 + r) return false;
+    for (const o of obbs) {
+      const dx = x - o.x, dz = z - o.z, c = Math.cos(o.yaw), s = Math.sin(o.yaw);
+      if (Math.abs(dx * c - dz * s) < o.hw + r && Math.abs(dx * s + dz * c) < o.hd + r) return false;
+    }
+    for (const c of colliders) if (Math.hypot(x - c.x, z - c.z) < c.r + r) return false;
+    return true;
+  };
+  const place = (x, z, r) => {
+    if (freeAt(x, z, r)) return [x, z];
+    for (let rad = 1; rad < 14; rad += 1) for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * TAU, nx = x + Math.cos(a) * rad, nz = z + Math.sin(a) * rad;
+      if (freeAt(nx, nz, r)) return [nx, nz];
+    }
+    return null;
+  };
+  const rack = (x0, z0, yaw, n, rideable) => {
+    const p = place(x0, z0, n * 0.45 + 0.4);
+    if (!p) return;
+    const [x, z] = p;
     bikeRack(W.at(x, z), x, z, H(x, z), yaw, n);
     for (let i = 0; i < n; i++) {
       const o = (i - (n - 1) / 2) * 0.9;
@@ -770,11 +791,112 @@ function buildWorld(gl, roster) {
     }
     obbs.push({ x, z, hw: n * 0.45 + 0.3, hd: 0.8, yaw, y0: 0, h: 1.2 });
   };
-  rack(12, 62, 0, 6, 2);
-  rack(-12, 62, 0, 5, 1);
-  rack(-56, -32, Math.PI / 2, 4, 1);
-  for (const d of DISTRICTS) { const D = DEPT[d.id]; rack(d.cx + Math.sin(D.yaw + 1.6) * 15, d.cz + Math.cos(D.yaw + 1.6) * 15, D.yaw, 5, 2); }
-  rack(-8, 124, Math.PI / 2, 4, 1);
+  // most rack bikes can be borrowed now; one or two stay locked for the look of it
+  rack(12, 62, 0, 6, 5);
+  rack(-12, 62, 0, 5, 4);
+  rack(-56, -32, Math.PI / 2, 4, 3);
+  for (const d of DISTRICTS) { const D = DEPT[d.id]; rack(d.cx + Math.sin(D.yaw + 1.6) * 15, d.cz + Math.cos(D.yaw + 1.6) * 15, D.yaw, 5, 4); }
+  rack(-8, 124, Math.PI / 2, 4, 3);
+  for (const [x, z, yaw, n] of [[16, -32.8, 0, 5], [-16, -32.8, 0, 5], [41, -26, Math.PI / 2, 5], [-24, 101, 0, 4], [-184, 74, Math.PI / 2, 4],
+    [16, -184, 0, 5], [28, 197.6, 0, 6], [-56, 197.6, 0, 5], [-206, 14, Math.PI / 2, 4], [210, 87, 0, 4], [4.4, 69, Math.PI / 2, 4],
+    [70, 42, 0.8, 4], [-72, -68, 0.8, 4], [96, 96, 0.8, 4], [-96, 90, -0.8, 4]]) rack(x, z, yaw, n, n - 1);
+  // the collectable bicycles: each one somewhere worth riding to
+  for (const [variant, x0, z0, yaw] of [['penny', -189, 101, 0.4], ['tandem', -203, -9, Math.PI / 2], ['racer', 126, 160, -0.8], ['bmx', -18, -201, 0.3], ['cargo', -16, 101.5, Math.PI / 2]]) {
+    const p = place(x0, z0, 1.3);
+    if (p) vehicles.push({ type: 'bike', variant, x: p[0], z: p[1], yaw });
+  }
+  vehicles.push({ type: 'bike', variant: 'golden', x: 5.5, z: -33.2, yaw: 0, hidden: true });   // earned, not found
+
+  /* ---------------- stunt ramps: hit them fast ---------------- */
+  const ramps = [];
+  const ramp = (id, name, x0, z0, yaw, target) => {
+    const p = place(x0, z0, 1.8) || [x0, z0];
+    const [x, z] = p, len = 3.2, wd = 2.4, h = 1.25, y0 = H(x, z);
+    const F2 = (lx, ly, lz) => [x + lx * Math.cos(yaw) + lz * Math.sin(yaw), y0 + ly, z - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+    const wood = mat(TX.WOOD, [0.62, 0.46, 0.3], { uv: 'frame', tile: 0.8, rough: 0.7 });
+    const paint = mat(0, [0.95, 0.75, 0.1], { rough: 0.5 }), dark = mat(0, [0.08, 0.08, 0.09], { rough: 0.6 });
+    const t = W.at(x, z);
+    // the running surface, the sides and the back
+    t.quad(F2(-wd / 2, 0.02, -len / 2), F2(-wd / 2, h, len / 2), F2(wd / 2, h, len / 2), F2(wd / 2, 0.02, -len / 2), wood, [[0, 0], [0, 3.4], [2.4, 3.4], [2.4, 0]]);
+    for (const sx of [-1, 1]) {
+      const a = F2(sx * wd / 2, 0, -len / 2), b2 = F2(sx * wd / 2, 0, len / 2), c = F2(sx * wd / 2, h, len / 2);
+      if (sx > 0) t.tri(a, c, b2, dark, [[0, 0], [1, 1], [1, 0]]); else t.tri(a, b2, c, dark, [[0, 0], [1, 0], [1, 1]]);
+    }
+    t.quad(F2(-wd / 2, 0, len / 2), F2(wd / 2, 0, len / 2), F2(wd / 2, h, len / 2), F2(-wd / 2, h, len / 2), dark, [[0, 0], [1, 0], [1, 1], [0, 1]]);
+    // warning chevrons on the lip
+    for (let i = 0; i < 4; i++) t.add(BOX, xform(F2(-0.9 + i * 0.6, h - 0.02, len / 2 - 0.12), [Math.atan2(h, len), yaw, 0], [0.3, 0.02, 0.18]), paint);
+    // a low wall at the back, so the lip is only reached by riding up the front
+    obbs.push({ x: F2(0, 0, len / 2 + 0.05)[0], z: F2(0, 0, len / 2 + 0.05)[2], hw: wd / 2, hd: 0.08, yaw, y0: 0, h: 0.6 });
+    ramps.push({ id, name, x, z, yaw, w: wd, len, h, y0, target });
+  };
+  ramp('backs', 'The Backs Kicker', -140, 0, -Math.PI / 2, 8.5);
+  ramp('avenue', 'The Avenue', 0, 150, 0, 8.5);
+  ramp('fields', 'Pavilion Leap', 30, -212, Math.PI, 9);
+  ramp('lane', 'Lane Launch', -95, 60, 0, 8.5);
+  ramp('parade', 'King\'s Parade Hop', 100, 204.6, Math.PI / 2, 9);
+
+  /* ---------------- overdue library books, hidden around campus ---------------- */
+  const bookSpots = [];
+  const book = (x0, z0, y) => {
+    const p = y == null ? place(x0, z0, 0.5) : [x0, z0];
+    if (!p) return;
+    bookSpots.push({ x: p[0], z: p[1], y: (y == null ? H(p[0], p[1]) : y) + 0.55 });
+  };
+  {
+    const hx = deptBuild.helix.glass, ep = deptBuild.engine.frame.P(18, 0, 5), ch = deptBuild.engine.frame.P(-30, 0, 5.5);
+    book(0, -37.4, 1.2);                 // on the library portico
+    book(0, 50);                         // under the Great Gate
+    book(-48, 0);                        // in the clock tower passage
+    book(66, -30);                       // behind the chapel
+    book(riverX(0), 0, 1.55);            // on the crown of the stone bridge
+    book(riverX(115), 115, 1.8);         // on the Mathematical Bridge
+    book(-223, 64, 0.0);                 // at the punt landing
+    book(-204, 90);                      // behind the boathouse
+    book(-176, -150);                    // behind the Observatory's domes
+    book(-138, 119);                     // under Newton's apple tree
+    book(hx[0], hx[2]);                  // in the glasshouse
+    book(166, 21);                       // in the rock garden
+    book(ep[0], ep[2], 11.1);            // on the Engine House's green roof
+    book(ch[0], ch[2]);                  // at the foot of the engine chimney
+    book(237, 127);                      // the far corner of the car park
+    book(13.5, 201.5);                   // by the phone box on King's Parade
+    book(-13, 118);                      // under the café tables
+    book(0, -186);                       // on the pavilion veranda
+    book(0, -262);                       // out in the middle of the playing fields
+    book(0, -166);                       // where the lane turns
+    book(-212, 172);                     // the far end of the riverside walk
+    book(riverX(-100) + 15, -100);       // under a willow by the river
+    book(267, -200);                     // on the verge of the east road
+    book(-12.5, 36.2);                   // at the foot of the statue
+  }
+
+  /* ---------------- noticeboards the feed has plastered over ---------------- */
+  const boards = [];
+  const board = (x0, z0, yaw, where) => {
+    const p = place(x0, z0, 1.2);
+    if (!p) return;
+    const [x, z] = p, y0 = H(x, z);
+    const F2 = (lx, ly, lz) => [x + lx * Math.cos(yaw) + lz * Math.sin(yaw), y0 + ly, z - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+    const t = W.at(x, z);
+    const oak = mat(TX.WOOD, [0.45, 0.3, 0.18], { uv: 'local', tile: 0.6, rough: 0.7 });
+    for (const sx of [-1, 1]) t.add(BOX, xform(F2(sx * 0.95, 1.1, 0), [0, yaw, 0], [0.1, 2.2, 0.1]), oak);
+    t.add(BOX, xform(F2(0, 1.55, -0.03), [0, yaw, 0], [1.9, 1.25, 0.06]), mat(TX.FABRIC, [0.55, 0.38, 0.22], { uv: 'local', tile: 0.4, rough: 0.95 }));   // cork
+    t.add(BOX, xform(F2(0, 2.28, 0.02), [0.35, yaw, 0], [2.1, 0.06, 0.4]), oak);                 // a little roof
+    colliders.push({ x, z, r: 0.5 });
+    boards.push({ x, z, yaw, y0, where, face: F2(0, 1.55, 0.02) });
+  };
+  board(-7, 43.5, Math.PI, 'the Great Gate');
+  board(-13, -35.5, 0, 'the library steps');
+  board(-117, 99, 2.2, 'Foundry Hall');
+  board(-122, -103, 0.8, 'the Observatory');
+  board(117, -106, -0.8, 'the Helix Building');
+  board(138, 36, -1.6, 'Lattice Laboratory');
+  board(116, 116, -2.3, 'the Engine House');
+  board(-19, 99.5, 0, 'the Buttery');
+  board(-16, -184, Math.PI, 'the pavilion');
+  board(-128, 5, Math.PI, 'the Backs');
+  board(12, 191.5, Math.PI, 'King\'s Parade');
+  board(-184, 95, -Math.PI / 2, 'the boathouse');
   vehicles.push({ type: 'cart', x: 225, z: 100, yaw: 0 }, { type: 'cart', x: 230, z: 100, yaw: 0 },
     { type: 'cart', x: 70, z: 45, yaw: Math.PI / 2 }, { type: 'cart', x: -70, z: -60, yaw: 0 });
 
@@ -791,6 +913,7 @@ function buildWorld(gl, roster) {
   return {
     chunks: mesh, foliage, glass, water, spinners: [], lights, stations, vaults, spots, slabs, pads: [], zips: [], pillars: [],
     colliders, obbs, paths: PATHS, map, vehicles, synth, clockFaces, districts: DISTRICTS, spawn: { x: -6, z: 30, yaw: 0.35 }, seats,
+    ramps, bookSpots, boards,
   };
 }
 
