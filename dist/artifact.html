@@ -1071,6 +1071,7 @@ figure.portrait figcaption {
         <div class="label">Field Record</div>
         <div class="stat hot"><span>Insights</span><span id="st-ins">0/0</span></div>
         <div class="stat"><span>Interviews</span><span id="st-int">0/0</span></div>
+        <div class="stat hot" id="st-reach-row"><span>Reach</span><span id="st-reach">0/0</span></div>
         <div class="stat" id="st-con-row"><span>Connections</span><span id="st-con">0/0</span></div>
         <div class="stat" id="st-vau-row"><span>Vaults</span><span id="st-vau">0/5</span></div>
         <div class="stat"><span>Students taught</span><span id="st-taught">0</span></div>
@@ -2730,6 +2731,7 @@ layout(location=6) in vec2 aTex;
 uniform mat4 uVP, uModel, uView;
 uniform mat3 uNormalMat;
 uniform mat4 uBones[14];
+uniform mat4 uBonesP[14];                    // each bone's parent, carried straight on through the joint
 uniform float uTime, uWind;
 out vec3 vWorld, vNrm, vCol, vView;
 out float vGlow;
@@ -2738,9 +2740,13 @@ flat out vec2 vTex;
 void main(){
   vec4 lp = vec4(aPos, 1.0);
   vec3 ln = aNrm;
-  if (aTex.y > 15.5) {                       // skinned: one bone per vertex
-    mat4 B = uBones[int(aTex.y - 16.0 + 0.5)];
+  float glow = aGlow;
+  if (aTex.y > 15.5) {                       // skinned: one bone, eased toward its parent near the joint
+    int bi = int(aTex.y - 16.0 + 0.5);
+    mat4 B = uBones[bi];
+    if (aGlow > 0.001) B = B * (1.0 - aGlow) + uBonesP[bi] * aGlow;
     lp = B * lp; ln = mat3(B) * ln;
+    glow = 0.0;                              // for skinned vertices the glow slot holds the blend weight
   }
   vec4 wp = uModel * lp;
   if (abs(aTex.y - 1.0) < 0.5) {             // foliage sways, more at the crown
@@ -2751,7 +2757,7 @@ void main(){
   }
   vWorld = wp.xyz;
   vNrm   = normalize(uNormalMat * ln);
-  vCol = aCol; vGlow = aGlow; vMat = aMat; vUV = aUV; vTex = aTex;
+  vCol = aCol; vGlow = glow; vMat = aMat; vUV = aUV; vTex = aTex;
   vView  = (uView * wp).xyz;
   gl_Position = uVP * wp;
 }`;
@@ -2986,22 +2992,30 @@ ${alphaTest ? `
   col = mix(col, fcol, clamp(fog, 0.0, 1.0));
 
   frag = vec4(col, alpha);
-  gbuf = vec4(normalize(mat3(uView) * Ng), -vView.z);
+  // people are small and round: tag them (a shorter normal) so the AO pass goes easy on them
+  gbuf = vec4(normalize(mat3(uView) * Ng) * (kind >= 16 ? 0.5 : 1.0), -vView.z);
 }`;
 
 /* ---------- depth-only, for the shadow map (skinning + wind + alpha test) ---------- */
 const VS_DEPTH = `#version 300 es
 layout(location=0) in vec3 aPos;
+layout(location=3) in float aGlow;
 layout(location=5) in vec2 aUV;
 layout(location=6) in vec2 aTex;
 uniform mat4 uLightVP, uModel;
 uniform mat4 uBones[14];
+uniform mat4 uBonesP[14];
 uniform float uTime, uWind;
 out vec2 vUV;
 flat out vec2 vTex;
 void main(){
   vec4 lp = vec4(aPos, 1.0);
-  if (aTex.y > 15.5) lp = uBones[int(aTex.y - 16.0 + 0.5)] * lp;
+  if (aTex.y > 15.5) {
+    int bi = int(aTex.y - 16.0 + 0.5);
+    mat4 B = uBones[bi];
+    if (aGlow > 0.001) B = B * (1.0 - aGlow) + uBonesP[bi] * aGlow;
+    lp = B * lp;
+  }
   vec4 wp = uModel * lp;
   if (abs(aTex.y - 1.0) < 0.5) {
     float ph = dot(wp.xz, vec2(0.11, 0.07)) + uTime * 1.3;
@@ -3163,6 +3177,7 @@ void main(){
   float depth = g.w;
   if (depth <= 0.0 || depth > uFar * 0.95) { frag = vec4(1.0); return; }
   vec3 P = viewPos(vUV, depth);
+  float person = length(g.xyz) < 0.75 ? 1.0 : 0.0;
   vec3 N = normalize(g.xyz);
   vec3 rnd = texture(uNoise, vUV * uRes / 4.0).xyz * 2.0 - 1.0;
   vec3 T = normalize(rnd - N * dot(rnd, N));
@@ -3181,6 +3196,7 @@ void main(){
     occ += (sd < -s.z - 0.04 ? 1.0 : 0.0) * range;
   }
   float ao = 1.0 - occ / float(${AO_SAMPLES});
+  ao = mix(ao, 1.0, person * 0.75);
   frag = vec4(vec3(pow(ao, 1.6)), 1.0);
 }`;
 
@@ -3374,8 +3390,8 @@ class Renderer {
     this.lightView = M4.create(); this.lightProj = M4.create();
     this.lightVP = [M4.create(), M4.create()];
     this.planes = new Float32Array(24);
-    this.bones0 = new Float32Array(14 * 16);
-    for (let i = 0; i < 14; i++) this.bones0.set(M4.create(), i * 16);
+    this.bones0 = new Float32Array(28 * 16);
+    for (let i = 0; i < 28; i++) this.bones0.set(M4.create(), i * 16);
 
     // one atlas, two cascades side by side
     this.shadow = makeFBO(gl, SHADOW_RES * 2, SHADOW_RES, { shadow: true });
@@ -3567,7 +3583,7 @@ class Renderer {
         gl.uniformMatrix4fv(p.u.uLightVP, false, this.lightVP[k]);
         gl.uniform1f(p.u.uTime, this.time || 0);
         gl.uniform1f(p.u.uWind, env.wind == null ? 1 : env.wind);
-        if (p.u.uBones) gl.uniformMatrix4fv(p.u.uBones, false, this.bones0);
+        this.setBones(p, this.bones0);
       }
       gl.activeTexture(gl.TEXTURE8);
       gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.mats.alb);
@@ -3663,7 +3679,7 @@ class Renderer {
       gl.uniform1i(p.u.uShadow, 7);
       gl.uniform1i(p.u.uAlb, 8);
       gl.uniform1i(p.u.uNrmT, 9);
-      if (p.u.uBones) gl.uniformMatrix4fv(p.u.uBones, false, this.bones0);
+      this.setBones(p, this.bones0);
       this.uploadLights(p);
     }
     this.prog = this.pScene;
@@ -3693,6 +3709,13 @@ class Renderer {
     this.leafMode = !!on;
   }
 
+  /* a pose is 14 bone matrices, then (optionally) 14 parent-continuation matrices */
+  setBones(p, B) {
+    const gl = this.gl;
+    if (p.u.uBones) gl.uniformMatrix4fv(p.u.uBones, false, B, 0, 224);
+    if (p.u.uBonesP) gl.uniformMatrix4fv(p.u.uBonesP, false, B, B.length >= 448 ? 224 : 0, 224);
+  }
+
   drawMesh(mesh, model, opts = {}) {
     const gl = this.gl;
     const m = model || IDENT;
@@ -3701,7 +3724,7 @@ class Renderer {
       if (opts.noShadow || (opts.alpha != null && opts.alpha < 0.9)) return;
       const p = this.leafMode ? this.pDepthA : this.pDepth;
       gl.uniformMatrix4fv(p.u.uModel, false, m);
-      if (opts.bones) gl.uniformMatrix4fv(p.u.uBones, false, opts.bones);
+      if (opts.bones) this.setBones(p, opts.bones);
       gl.bindVertexArray(mesh.vao);
       gl.drawElements(gl.TRIANGLES, mesh.count, mesh.u32 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT, 0);
       return;
@@ -3713,7 +3736,7 @@ class Renderer {
     gl.uniform1f(p.u.uHolo, opts.holo ? 1 : 0);
     gl.uniform1f(p.u.uAlpha, opts.alpha == null ? 1 : opts.alpha);
     gl.uniform1f(p.u.uEmissive, opts.emissive == null ? 1 : opts.emissive);
-    if (opts.bones) gl.uniformMatrix4fv(p.u.uBones, false, opts.bones);
+    if (opts.bones) this.setBones(p, opts.bones);
     const t = opts.tint || WHITE3;
     gl.uniform3f(p.u.uTint, t[0], t[1], t[2]);
     gl.bindVertexArray(mesh.vao);
@@ -5023,16 +5046,20 @@ function punt(b, x, z, y, yaw) {
 
 /* café table with two chairs and a parasol */
 function cafeSet(b, x, z, y0, rnd, col) {
+  const chairs = [];
   b.add(pCyl(12), xform([x, y0 + 0.73, z], [0, 0, 0], [0.7, 0.03, 0.7]), PM.whiteP);
   b.add(pCyl(8), xform([x, y0 + 0.37, z], [0, 0, 0], [0.06, 0.72, 0.06]), PM.iron);
   for (let i = 0; i < 2; i++) {
-    const a = rnd() * TAU, cx = x + Math.cos(a) * 0.62, cz = z + Math.sin(a) * 0.62;
+    const a = (i === 0 ? rnd() * TAU : chairs[0].a + Math.PI * (0.75 + rnd() * 0.5)), cx = x + Math.cos(a) * 0.62, cz = z + Math.sin(a) * 0.62;
+    // whoever sits here faces the table
+    chairs.push({ a, x: x + Math.cos(a) * 0.66, z: z + Math.sin(a) * 0.66, yaw: Math.atan2(-Math.cos(a), -Math.sin(a)) });
     b.add(BOX, xform([cx, y0 + 0.45, cz], [0, -a, 0], [0.42, 0.04, 0.42]), PM.iron);
     b.add(BOX, xform([cx + Math.cos(a) * 0.2, y0 + 0.72, cz + Math.sin(a) * 0.2], [0, -a + Math.PI / 2, 0], [0.42, 0.5, 0.03]), PM.iron);
     for (const d of [[0.18, 0.18], [-0.18, 0.18], [0.18, -0.18], [-0.18, -0.18]]) b.add(BOX, xform([cx + d[0], y0 + 0.22, cz + d[1]], [0, 0, 0], [0.03, 0.44, 0.03]), PM.iron);
   }
   b.add(pCyl(6), xform([x, y0 + 1.3, z], [0, 0, 0], [0.04, 2.6, 0.04]), PM.whiteP);
   b.add(pCyl(8, false, true, 0.02, 0.5), xform([x, y0 + 2.45, z], [0, 0, 0], [2.6, 0.55, 2.6]), mat(TX.FABRIC, col || [0.85, 0.82, 0.74], { uv: 'prim', tu: 3, tv: 1 }));
+  return chairs;
 }
 
 /* a fingerpost with arms toward named places (the names are drawn as signs) */
@@ -5237,7 +5264,8 @@ function buildWorld(gl, roster) {
   const addObbs = (list) => { for (const o of list || []) { obbs.push(o); map.buildings.push(o); } };
   const addTree = (x, z, kind, s) => { const t = tree(W, Fo, x, z, H(x, z), kind, rnd, s); colliders.push({ x, z, r: t.r }); map.trees.push({ x, z, r: t.crown, kind }); return t; };
   const addLamp = (x, z, style) => { lights.push(lampPost(W.at(x, z), x, z, H(x, z), style)); colliders.push({ x, z, r: 0.25 }); };
-  const addBench = (x, z, yaw) => { bench(W.at(x, z), x, z, H(x, z), yaw); colliders.push({ x, z, r: 0.75 }); };
+  const seats = [];         // benches and café chairs people can sit on
+  const addBench = (x, z, yaw) => { bench(W.at(x, z), x, z, H(x, z), yaw); colliders.push({ x, z, r: 0.75 }); seats.push({ kind: 'bench', x, z, yaw }); };
   const lawn = (pts, stripeYaw = 0) => {
     const prev = W.frame;
     W.frame = uvFrame(0, 0, stripeYaw, 0);
@@ -5563,7 +5591,10 @@ function buildWorld(gl, roster) {
       roof: { type: 'hip', pitch: 0.65, M: MAT.clay, overhang: 0.5, chimneys: 2 } }, rnd);
     addObbs(r.colliders);
     W.frame = null; W.fan(rect(-20, 106, -8, 124), GM.setts, H, 0.06);
-    for (let i = 0; i < 6; i++) cafeSet(W.at(-14, 115), -17 + (i % 2) * 6, 108.5 + Math.floor(i / 2) * 6, 0.06, rnd, i % 3 ? [0.86, 0.82, 0.74] : [0.55, 0.2, 0.18]);
+    for (let i = 0; i < 6; i++) {
+      const chairs = cafeSet(W.at(-14, 115), -17 + (i % 2) * 6, 108.5 + Math.floor(i / 2) * 6, 0.06, rnd, i % 3 ? [0.86, 0.82, 0.74] : [0.55, 0.2, 0.18]);
+      for (const ch of chairs) seats.push({ kind: 'cafe', table: i, ...ch });
+    }
     map.labels.push({ x: -32, z: 115, text: 'THE BUTTERY (CAFÉ)', size: 0.55 });
   }
   {
@@ -5835,7 +5866,7 @@ function buildWorld(gl, roster) {
 
   return {
     chunks: mesh, foliage, glass, water, spinners: [], lights, stations, vaults, spots, slabs, pads: [], zips: [], pillars: [],
-    colliders, obbs, paths: PATHS, map, vehicles, synth, clockFaces, districts: DISTRICTS, spawn: { x: -6, z: 30, yaw: 0.35 },
+    colliders, obbs, paths: PATHS, map, vehicles, synth, clockFaces, districts: DISTRICTS, spawn: { x: -6, z: 30, yaw: 0.35 }, seats,
   };
 }
 
@@ -5854,7 +5885,7 @@ function buildColliders(world) { return world.colliders; }
    Characters face +z; their left is +x.
    ============================================================ */
 
-const BONE = { PELVIS: 0, CHEST: 1, HEAD: 2, UARM_L: 3, FARM_L: 4, UARM_R: 5, FARM_R: 6, THIGH_L: 7, SHIN_L: 8, THIGH_R: 9, SHIN_R: 10, HAND_R: 11 };
+const BONE = { PELVIS: 0, CHEST: 1, HEAD: 2, UARM_L: 3, FARM_L: 4, UARM_R: 5, FARM_R: 6, THIGH_L: 7, SHIN_L: 8, THIGH_R: 9, SHIN_R: 10, HAND_R: 11, HAND_L: 12 };
 
 /* write T·Ry·Rx·Rz into o without allocating */
 function xformTo(o, tx, ty, tz, rx, ry, rz) {
@@ -5869,15 +5900,17 @@ function xformTo(o, tx, ty, tz, rx, ry, rz) {
 const SKIN_TONES = ['#f1d3bd', '#e8b996', '#d49c74', '#b77b52', '#8d5b3a', '#6a4129', '#4e2f1f'];
 const HAIR_COLS = ['#1b1512', '#2e2119', '#4a3222', '#6b4a2e', '#8f6a40', '#b58c5a', '#c9b089', '#9a3a1e', '#d8d2c8'];
 const TOP_COLS = ['#2f3a4f', '#5a2a2a', '#2f4a3a', '#6b6b6b', '#1f1f24', '#8a6a3e', '#3e5a7a', '#7a3e5a', '#c8c0b0', '#274060', '#6a7a3a', '#a04a2a'];
+const SUMMER_COLS = ['#e8e4da', '#d9a33a', '#3a8a8a', '#c94c4c', '#5a7ac8', '#8a5ab8', '#e07a4a', '#f0f0ec', '#2a6a4a', '#e8b4c0', '#7ab0d8', '#f2d06a'];
 const BOTTOM_COLS = ['#26324a', '#1d2433', '#3a3a3a', '#5a4a3a', '#2e2e30', '#4a5a6a', '#7a6a50'];
 
-/* a random student, deterministic from its seed */
-function studentLook(seed) {
+/* a random student, deterministic from its seed. opts.summer dresses them for
+   a warm afternoon on the grass; opts.pack = false leaves the backpack at home */
+function studentLook(seed, opts = {}) {
   const r = mulberry(seed);
   const pick = (a) => a[Math.floor(r() * a.length)];
   const fem = r() < 0.5;
-  return {
-    H: fem ? 1.6 + r() * 0.12 : 1.7 + r() * 0.14, build: fem ? 0.9 + r() * 0.12 : 1.0 + r() * 0.14,
+  const L = {
+    fem, H: fem ? 1.6 + r() * 0.12 : 1.7 + r() * 0.14, build: fem ? 0.9 + r() * 0.12 : 1.0 + r() * 0.14,
     skin: pick(SKIN_TONES), hair: fem ? pick(['long', 'bun', 'bob', 'pony', 'long', 'short']) : pick(['short', 'short', 'crop', 'curly', 'bald', 'short']),
     hairCol: pick(HAIR_COLS.slice(0, 8)),
     top: pick(['tee', 'jumper', 'hoodie', 'jacket', 'shirt', 'coat', 'jumper']), topCol: pick(TOP_COLS),
@@ -5887,6 +5920,21 @@ function studentLook(seed) {
     scarf: r() < 0.18 ? pick(['#7a1a1a', '#1a2a5a', '#2a4a2a']) : null,
     glasses: r() < 0.25, beard: !fem && r() < 0.2,
   };
+  const hatRoll = r(), shadeRoll = r(), summerRoll = r();
+  if (opts.summer || (opts.mixed && summerRoll < 0.45)) {
+    L.top = fem ? pick(['tee', 'vest', 'tee', 'dress', 'shirt']) : pick(['tee', 'tee', 'vest', 'shirt']);
+    L.topCol = pick(SUMMER_COLS);
+    L.bottom = L.top === 'dress' ? 'trousers' : pick(['shorts', 'shorts', 'jeans', fem ? 'skirt' : 'shorts']);
+    if (L.top === 'dress') L.bottomCol = L.topCol;
+    L.bottomCol = L.bottom === 'shorts' ? pick(['#2e3f5c', '#c8b890', '#3a3a3a', '#6a8aa8', '#4a5a3a']) : L.bottomCol;
+    L.scarf = null;
+    L.shoes = pick(['#e8e6e0', '#1a1a1a', '#b85a3a', '#e8e6e0']);
+    L.shades = shadeRoll < 0.45;
+  }
+  if (opts.pack === false) L.backpack = null;
+  if (hatRoll < (opts.summer ? 0.28 : 0.1)) L.hat = pick(['cap', 'cap', 'beanie', 'bucket']);
+  L.hatCol = pick(['#1f2a44', '#b23a2a', '#e8e4da', '#2a4a2a', '#d9a33a', '#1a1a1a']);
+  return L;
 }
 
 /* the scientists: era clothes from their LOOKS entry (actors.js) */
@@ -5913,9 +5961,51 @@ function scientistLook(person) {
   };
 }
 
-/* build the skinned mesh; returns { mesh, J } where J holds joint offsets */
+/* build the skinned mesh; returns { mesh, lod, J } where J holds joint offsets.
+   `lod` is a coarse version (about a fifth of the triangles) for distance and shadows. */
 function buildCharacter(gl, look) {
-  const b = new Builder(4096);
+  const full = buildCharacterMesh(gl, look, 0);
+  const lod = buildCharacterMesh(gl, look, 1);
+  return { mesh: full.mesh, lod: lod.mesh, J: full.J, look };
+}
+/* a surface of revolution with an elliptical, front/back-asymmetric section.
+   rings: [y, rx, rzFront, rzBack] from bottom to top; a zero radius closes it. */
+function pLathe(rings, seg) {
+  const pos = [], nrm = [], idx = [], uv = [];
+  const R = rings.length, W = seg + 1;
+  const P = (i, j) => { const k = (i * W + j) * 3; return [pos[k], pos[k + 1], pos[k + 2]]; };
+  for (let i = 0; i < R; i++) {
+    const [y, rx, rf, rb] = rings[i];
+    for (let j = 0; j <= seg; j++) {
+      const a = (j / seg) * TAU, c = Math.cos(a), n = Math.sin(a);
+      pos.push(c * rx, y, n * (n > 0 ? rf : (rb == null ? rf : rb)));
+      uv.push(j / seg, i / (R - 1));
+    }
+  }
+  for (let i = 0; i < R; i++) for (let j = 0; j <= seg; j++) {
+    const up0 = P(Math.max(0, i - 1), j), up1 = P(Math.min(R - 1, i + 1), j);
+    const ar0 = P(i, (j - 1 + seg) % seg), ar1 = P(i, (j + 1) % seg);
+    const ux = up1[0] - up0[0], uy = up1[1] - up0[1], uz = up1[2] - up0[2];
+    const ax = ar1[0] - ar0[0], ay = ar1[1] - ar0[1], az = ar1[2] - ar0[2];
+    let nx = uy * az - uz * ay, ny = uz * ax - ux * az, nz = ux * ay - uy * ax;
+    const L = Math.hypot(nx, ny, nz);
+    if (L < 1e-9) { const p = P(i, j); nx = 0; ny = p[1] > 0 ? 1 : -1; nz = 0; } else { nx /= L; ny /= L; nz /= L; }
+    nrm.push(nx, ny, nz);
+  }
+  for (let i = 0; i < R - 1; i++) for (let j = 0; j < seg; j++) {
+    const top = (i + 1) * W + j, bot = i * W + j;
+    idx.push(top, bot, bot + 1, top, bot + 1, top + 1);
+  }
+  return { pos, nrm, idx, uv };
+}
+
+/* how far each bone's vertices near its joint follow the parent instead:
+   [joint plane y, length of the blend] in the bone's own frame */
+const SKIN_ZONES = { 1: [0.0, 0.1], 2: [0.0, 0.04], 3: [0.02, 0.08], 4: [0.0, 0.07], 5: [0.02, 0.08], 6: [0.0, 0.07], 7: [0.0, 0.08], 8: [0.0, 0.07], 9: [0.0, 0.08], 10: [0.0, 0.07] };
+
+function buildCharacterMesh(gl, look, lod) {
+  const b = new Builder(lod ? 2048 : 6144);
+  const SPHERE_HI = lod ? SPHERE_LO : SPHERE;
   const H = look.H, s = H / 1.75, w = look.build;
   const J = {
     hipY: 0.93 * s, chest: 0.12 * s, neck: 0.46 * s, shY: 0.42 * s, shX: 0.19 * s * w,
@@ -5926,66 +6016,92 @@ function buildCharacter(gl, look) {
   const skin = lin(look.skin), hairC = lin(look.hairCol), topC = lin(look.topCol).map((c) => c * 1.6), botC = lin(look.bottomCol).map((c) => c * 1.6), shoeC = lin(look.shoes);
   const fabric = (col, bone, rough = 0.9) => mat(TX.FABRIC, col, { uv: 'local', tile: 0.35, rough, kind: 16 + bone });
   const plain = (col, bone, rough = 0.6, metal = 0) => mat(0, col, { rough, metal, kind: 16 + bone });
-  const skinM = (bone) => plain(skin, bone, 0.55);
-  const A = (bone, prim, t, r, sc, M) => b.add(prim, xform(t, r, sc), M);
-  const cap = (r) => pCapsule(r, 10, 4);
+  const skinM = (bone) => plain(skin, bone, 0.6);
+  // add a part to a bone; vertices near the bone's joint get a blend weight
+  // (in the glow slot, which skinned vertices do not otherwise use)
+  const A = (bone, prim, t, r, sc, M) => {
+    const n0 = b.n;
+    b.add(prim, xform(t, r, sc), M);
+    const z = SKIN_ZONES[bone];
+    if (!z) return;
+    const j0 = z[0] * s, len = z[1] * s;
+    for (let v = n0; v < b.n; v++) {
+      const y = b.v[v * 16 + 1];
+      b.v[v * 16 + 9] = 1 - smoothstep(clamp((j0 - y) / len, 0, 1));
+    }
+  };
+  const seg = lod ? 8 : 16;
+  const lathe = (rings) => pLathe(rings.map(([y, rx, rf, rb]) => [y * s, rx * s * w, rf * s, (rb == null ? rf : rb) * s]), seg);
+  const fem = !!look.fem;
 
   // ---------------- legs ----------------
   const longSkirt = look.bottom === 'long skirt', skirt = look.bottom === 'skirt';
-  for (const [side, T, S] of [[1, BONE.THIGH_L, BONE.SHIN_L], [-1, BONE.THIGH_R, BONE.SHIN_R]]) {
-    const legM = look.bottom === 'shorts' ? skinM(T) : fabric(botC, T);
-    A(T, cap(0.078 * s * w), [0, -J.th / 2, 0], [0, 0, 0], [1, J.th + 0.1 * s, 1], legM);
-    const shinM = skirt ? plain(hex2rgb('#2a2622'), S, 0.4) : fabric(botC, S);
-    A(S, cap(0.058 * s * w), [0, -J.sh / 2, 0], [0, 0, 0], [1, J.sh + 0.06 * s, 1], shinM);
-    // shoe: a box with a rounded toe
-    A(S, BOX, [0, -J.sh - 0.035 * s, 0.045 * s], [0, 0, 0], [0.1 * s, 0.07 * s, 0.24 * s], plain(shoeC, S, 0.45));
-    A(S, SPHERE_LO, [0, -J.sh - 0.035 * s, 0.15 * s], [0, 0, 0], [0.1 * s, 0.075 * s, 0.1 * s], plain(shoeC, S, 0.45));
-    void side;
+  const shorts = look.bottom === 'shorts', bareLegs = shorts || skirt || (look.top === 'dress' && !look.scientist);
+  const th = 0.43, sh = 0.43;
+  const thighRings = [[-th - 0.035, 0.001, 0.001], [-th - 0.02, 0.048, 0.05, 0.048], [-th + 0.03, 0.053, 0.056, 0.05], [-th * 0.62, 0.066, 0.07, 0.066],
+    [-th * 0.3, 0.078, 0.082, 0.082], [-0.03, 0.086, 0.088, 0.092], [0.05, 0.074, 0.078, 0.08], [0.08, 0.001, 0.001]];
+  const shinRings = [[-sh - 0.02, 0.001, 0.001], [-sh, 0.034, 0.036, 0.036], [-sh * 0.74, 0.04, 0.042, 0.047], [-sh * 0.36, 0.051, 0.047, 0.062],
+    [-sh * 0.1, 0.05, 0.05, 0.054], [0.02, 0.047, 0.05, 0.046], [0.05, 0.001, 0.001]];
+  for (const [T, S] of [[BONE.THIGH_L, BONE.SHIN_L], [BONE.THIGH_R, BONE.SHIN_R]]) {
+    A(T, lathe(thighRings), [0, 0, 0], [0, 0, 0], [1, 1, 1], bareLegs && !shorts ? skinM(T) : shorts ? skinM(T) : fabric(botC, T));
+    if (shorts) {
+      // shorts: cloth over the top of the thigh, ending above the knee
+      A(T, lathe([[-th * 0.55, 0.001, 0.001], [-th * 0.54, 0.074, 0.078, 0.076], [-th * 0.3, 0.088, 0.092, 0.092], [-0.03, 0.095, 0.097, 0.1], [0.06, 0.08, 0.084, 0.086], [0.09, 0.001, 0.001]]),
+        [0, 0, 0], [0, 0, 0], [1, 1, 1], fabric(botC, T));
+    }
+    A(S, lathe(shinRings), [0, 0, 0], [0, 0, 0], [1, 1, 1], bareLegs ? (skirt && !shorts ? plain(hex2rgb('#2a2622'), S, 0.4) : skinM(S)) : fabric(botC, S));
+    // shoe: a rounded foot with a sole
+    A(S, SPHERE_LO, [0, -J.sh - 0.035 * s, 0.055 * s], [0, 0, 0], [0.105 * s, 0.085 * s, 0.27 * s], plain(shoeC, S, 0.45));
+    A(S, BOX, [0, -J.sh - 0.072 * s, 0.055 * s], [0, 0, 0], [0.1 * s, 0.022 * s, 0.26 * s], plain(shoeC.map((c) => c * 0.5), S, 0.7));
   }
   // ---------------- hips ----------------
-  A(BONE.PELVIS, pCyl(12, true, true, 0.5, 0.46), [0, -0.02 * s, 0], [0, 0, 0], [0.34 * s * w, 0.2 * s, 0.22 * s], fabric(botC, BONE.PELVIS));
+  const hipK = fem ? 1.08 : 1, waistK = fem ? 0.9 : 1;
+  A(BONE.PELVIS, lathe([[-0.125, 0.001, 0.001], [-0.105, 0.12 * hipK, 0.09, 0.1], [-0.05, 0.16 * hipK, 0.105, 0.128], [0.02, 0.168 * hipK, 0.108, 0.122],
+    [0.08, 0.155 * waistK, 0.1, 0.106], [0.13, 0.145 * waistK, 0.096, 0.098], [0.16, 0.001, 0.001]]), [0, 0, 0], [0, 0, 0], [1, 1, 1], fabric(botC, BONE.PELVIS));
   if (skirt || longSkirt) {
     const len = longSkirt ? J.hipY - 0.06 : 0.42 * s;
-    A(BONE.PELVIS, pCyl(14, false, true, 0.5, longSkirt ? 0.95 : 0.78), [0, -len / 2, 0], [0, 0, 0], [0.36 * s * w, len, 0.3 * s], fabric(longSkirt ? topC : botC, BONE.PELVIS));
+    A(BONE.PELVIS, pCyl(lod ? 10 : 16, false, true, 0.5, longSkirt ? 0.95 : 0.78), [0, -len / 2, 0], [0, 0, 0], [0.36 * s * w * hipK, len, 0.3 * s], fabric(longSkirt ? topC : botC, BONE.PELVIS));
   }
   // ---------------- torso ----------------
   const tc = BONE.CHEST;
   const topM = fabric(topC, tc, look.top === 'labcoat' ? 0.8 : 0.9);
-  const tl = J.neck - 0.02;
-  A(tc, pCyl(16, true, true, 0.5, 0.38), [0, tl * 0.55, 0.005 * s], [0, 0, 0], [0.43 * s * w, tl * 0.78, 0.25 * s], topM);
-  A(tc, SPHERE, [0, tl * 0.7, 0.02 * s], [0, 0, 0], [0.4 * s * w, 0.26 * s, 0.25 * s], topM);
-  A(tc, pCyl(14, true, true, 0.38, 0.44), [0, tl * 0.08, 0], [0, 0, 0], [0.34 * s * w, 0.2 * s, 0.22 * s], topM);
-  for (const sx of [-1, 1]) A(tc, SPHERE_LO, [sx * J.shX * 0.92, J.shY - 0.02 * s, 0], [0, 0, 0], [0.15 * s, 0.13 * s, 0.17 * s], topM);
-  if (look.top === 'hoodie') A(tc, pTorus(0.3, 16, 6), [0, J.neck - 0.07 * s, -0.04 * s], [0.35, 0, 0], [0.26 * s, 0.26 * s, 0.22 * s], topM);
+  const bust = fem ? 0.022 : 0;
+  A(tc, lathe([[-0.06, 0.001, 0.001], [-0.045, 0.15 * waistK, 0.104, 0.104], [0.04, 0.152 * waistK, 0.102, 0.1], [0.14, 0.162, 0.11, 0.106],
+    [0.24, 0.17, 0.118 + bust, 0.11], [0.31, 0.176, 0.114 + bust * 0.5, 0.11], [0.37, 0.172, 0.1, 0.1], [0.415, 0.14, 0.08, 0.086],
+    [0.445, 0.075, 0.062, 0.062], [0.47, 0.001, 0.001]]), [0, 0, 0], [0, 0, 0], [1, 1, 1], topM);
+  for (const sx of [-1, 1]) A(tc, SPHERE_LO, [sx * J.shX * 0.9, J.shY - 0.025 * s, -0.003 * s], [0, 0, 0], [0.125 * s, 0.12 * s, 0.14 * s], topM);
+  if (look.top === 'hoodie') A(tc, pTorus(0.3, lod ? 10 : 16, 6), [0, J.neck - 0.07 * s, -0.04 * s], [0.35, 0, 0], [0.26 * s, 0.26 * s, 0.22 * s], topM);
   if (look.top === 'shirt' || look.top === 'suit' || look.top === 'frock') {
-    A(tc, BOX, [0, J.neck - 0.14 * s, 0.118 * s], [0.08, 0, 0], [0.08 * s, 0.2 * s, 0.02 * s], plain(look.top === 'shirt' ? [0.9, 0.9, 0.88] : [0.92, 0.9, 0.86], tc, 0.8));
+    A(tc, BOX, [0, J.neck - 0.14 * s, 0.112 * s], [0.08, 0, 0], [0.08 * s, 0.2 * s, 0.02 * s], plain(look.top === 'shirt' ? [0.9, 0.9, 0.88] : [0.92, 0.9, 0.86], tc, 0.8));
   }
-  if (look.cravat) A(tc, BOX, [0, J.neck - 0.08 * s, 0.12 * s], [0, 0, 0], [0.12 * s, 0.09 * s, 0.05 * s], plain([0.9, 0.88, 0.82], tc, 0.8));
+  if (look.cravat) A(tc, BOX, [0, J.neck - 0.08 * s, 0.11 * s], [0, 0, 0], [0.12 * s, 0.09 * s, 0.05 * s], plain([0.9, 0.88, 0.82], tc, 0.8));
   // coats and gowns hang from the hips as a skirt of cloth
   if (['coat', 'frock', 'labcoat', 'dress', 'qipao'].includes(look.top)) {
-    const len = look.top === 'dress' ? J.hipY - 0.05 : look.top === 'qipao' ? J.hipY * 0.75 : look.top === 'frock' ? 0.6 * s : 0.52 * s;
-    A(BONE.PELVIS, pCyl(14, false, false, 0.52, look.top === 'dress' ? 0.95 : 0.66), [0, -len / 2 + 0.06 * s, 0], [0, 0, 0], [0.4 * s * w, len, 0.3 * s], fabric(topC, BONE.PELVIS, 0.85));
+    const len = look.top === 'dress' ? (look.scientist ? J.hipY - 0.05 : 0.46 * s) : look.top === 'qipao' ? J.hipY * 0.75 : look.top === 'frock' ? 0.6 * s : 0.52 * s;
+    A(BONE.PELVIS, pCyl(lod ? 10 : 16, false, false, 0.52, look.top === 'dress' ? 0.95 : 0.66), [0, -len / 2 + 0.06 * s, 0], [0, 0, 0], [0.4 * s * w * hipK, len, 0.3 * s], fabric(topC, BONE.PELVIS, 0.85));
   }
   if (look.backpack) {
     const bc = lin(look.backpack).map((c) => c * 1.5);
-    A(tc, BOX, [0, J.shY - 0.2 * s, -0.19 * s], [0, 0, 0], [0.3 * s, 0.38 * s, 0.16 * s], fabric(bc, tc, 0.85));
-    A(tc, BOX, [0, J.shY - 0.03 * s, -0.19 * s], [0.4, 0, 0], [0.24 * s, 0.07 * s, 0.13 * s], fabric(bc.map((c) => c * 1.2), tc, 0.85));
+    A(tc, BOX, [0, J.shY - 0.2 * s, -0.18 * s], [0, 0, 0], [0.3 * s, 0.38 * s, 0.16 * s], fabric(bc, tc, 0.85));
+    A(tc, BOX, [0, J.shY - 0.03 * s, -0.18 * s], [0.4, 0, 0], [0.24 * s, 0.07 * s, 0.13 * s], fabric(bc.map((c) => c * 1.2), tc, 0.85));
+    for (const sx of [-1, 1]) A(tc, BOX, [sx * 0.1 * s, J.shY - 0.06 * s, 0.1 * s], [0.25, 0, 0], [0.035 * s, 0.22 * s, 0.012 * s], fabric(bc.map((c) => c * 0.8), tc, 0.85));
   }
-  if (look.scarf) A(tc, pTorus(0.35, 16, 6), [0, J.neck - 0.04 * s, 0], [0.15, 0, 0], [0.24 * s, 0.24 * s, 0.22 * s], fabric(lin(look.scarf).map((c) => c * 1.5), tc, 0.9));
+  if (look.scarf) A(tc, pTorus(0.35, lod ? 10 : 16, 6), [0, J.neck - 0.04 * s, 0], [0.15, 0, 0], [0.24 * s, 0.24 * s, 0.22 * s], fabric(lin(look.scarf).map((c) => c * 1.5), tc, 0.9));
   // ---------------- head ----------------
   const hb = BONE.HEAD;
-  A(hb, pCyl(10), [0, 0.03 * s, 0], [0, 0, 0], [0.1 * s, 0.1 * s, 0.1 * s], skinM(hb));
+  A(hb, pLathe([[-0.025 * s, 0.001, 0.001], [-0.02 * s, 0.056 * s, 0.05 * s, 0.054 * s], [0.04 * s, 0.05 * s, 0.047 * s, 0.05 * s], [0.09 * s, 0.05 * s, 0.047 * s, 0.05 * s], [0.11 * s, 0.001, 0.001]], lod ? 8 : 12), [0, 0, 0], [0, 0, 0], [1, 1, 1], skinM(hb));
   const hy = 0.16 * s;
-  A(hb, SPHERE, [0, hy, 0.005 * s], [0, 0, 0], [0.19 * s, 0.235 * s, 0.215 * s], skinM(hb));
+  A(hb, SPHERE_HI, [0, hy, 0.005 * s], [0, 0, 0], [0.19 * s, 0.235 * s, 0.215 * s], skinM(hb));
   A(hb, SPHERE_LO, [0, hy - 0.075 * s, 0.035 * s], [0, 0, 0], [0.15 * s, 0.1 * s, 0.14 * s], skinM(hb));      // jaw
-  A(hb, BOX, [0, hy - 0.005 * s, 0.108 * s], [0.25, 0, 0], [0.032 * s, 0.06 * s, 0.035 * s], skinM(hb));      // nose
-  A(hb, BOX, [0, hy - 0.06 * s, 0.1 * s], [0, 0, 0], [0.045 * s, 0.009 * s, 0.01 * s], plain(skin.map((c) => c * 0.55), hb, 0.5));   // mouth
-  for (const sx of [-1, 1]) {
+  if (!lod) A(hb, BOX, [0, hy - 0.005 * s, 0.108 * s], [0.25, 0, 0], [0.032 * s, 0.06 * s, 0.035 * s], skinM(hb));      // nose
+  if (!lod) A(hb, BOX, [0, hy - 0.06 * s, 0.1 * s], [0, 0, 0], [0.045 * s, 0.009 * s, 0.01 * s], plain(skin.map((c) => c * 0.55), hb, 0.5));   // mouth
+  if (!lod) for (const sx of [-1, 1]) {
     A(hb, SPHERE_LO, [sx * 0.098 * s, hy, 0], [0, 0, 0], [0.035 * s, 0.06 * s, 0.045 * s], skinM(hb));        // ears
-    A(hb, SPHERE_LO, [sx * 0.042 * s, hy + 0.028 * s, 0.093 * s], [0, 0, 0], [0.028 * s, 0.018 * s, 0.012 * s], plain([0.05, 0.04, 0.035], hb, 0.3));   // eyes
+    A(hb, SPHERE_LO, [sx * 0.041 * s, hy + 0.027 * s, 0.09 * s], [0, 0, 0], [0.034 * s, 0.022 * s, 0.014 * s], plain([0.75, 0.74, 0.72], hb, 0.3));   // eyes
+    A(hb, SPHERE_LO, [sx * 0.041 * s, hy + 0.026 * s, 0.096 * s], [0, 0, 0], [0.016 * s, 0.017 * s, 0.008 * s], plain([0.04, 0.03, 0.025], hb, 0.2));
     A(hb, BOX, [sx * 0.045 * s, hy + 0.058 * s, 0.098 * s], [0.1, 0, 0], [0.05 * s, 0.009 * s, 0.01 * s], plain(hairC.map((c) => c * 0.8), hb, 0.8));  // brows
   }
-  if (look.glasses) {
+  if (look.glasses && !lod) {
     for (const sx of [-1, 1]) A(hb, pTorus(0.12, 14, 4), [sx * 0.043 * s, hy + 0.025 * s, 0.103 * s], [Math.PI / 2, 0, 0], [0.05 * s, 0.05 * s, 0.05 * s], plain([0.1, 0.1, 0.1], hb, 0.3, 0.5));
     A(hb, BOX, [0, hy + 0.028 * s, 0.105 * s], [0, 0, 0], [0.03 * s, 0.006 * s, 0.006 * s], plain([0.1, 0.1, 0.1], hb, 0.3, 0.5));
   }
@@ -5993,9 +6109,9 @@ function buildCharacter(gl, look) {
   const hairStyle = look.hair;
   // a cap of hair that sits back from the forehead, with a little lift on top
   if (hairStyle !== 'bald') {
-    A(hb, SPHERE, [0, hy + 0.058 * s, -0.03 * s], [-0.25, 0, 0], [0.2 * s, 0.17 * s, 0.215 * s], hm);
+    A(hb, SPHERE_HI, [0, hy + 0.058 * s, -0.03 * s], [-0.25, 0, 0], [0.2 * s, 0.17 * s, 0.215 * s], hm);
     A(hb, SPHERE_LO, [0, hy + 0.1 * s, 0.0], [0, 0, 0], [0.16 * s, 0.07 * s, 0.17 * s], hm);
-    for (const sx of [-1, 1]) A(hb, BOX, [sx * 0.093 * s, hy + 0.02 * s, 0.02 * s], [0, 0, 0], [0.02 * s, 0.07 * s, 0.05 * s], hm);   // sideburns
+    if (!lod) for (const sx of [-1, 1]) A(hb, BOX, [sx * 0.093 * s, hy + 0.02 * s, 0.02 * s], [0, 0, 0], [0.02 * s, 0.07 * s, 0.05 * s], hm);   // sideburns
   }
   else A(hb, pTorus(0.25, 16, 5), [0, hy - 0.02 * s, -0.015 * s], [0.25, 0, 0], [0.2 * s, 0.2 * s, 0.21 * s], hm);
   if (hairStyle === 'long') A(hb, pCyl(12, false, true, 0.5, 0.58), [0, hy - 0.08 * s, -0.06 * s], [0.12, 0, 0], [0.215 * s, 0.34 * s, 0.15 * s], hm);
@@ -6009,26 +6125,74 @@ function buildCharacter(gl, look) {
   if (hairStyle === 'ringlets') for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) A(hb, SPHERE_LO, [sx * 0.1 * s, hy - 0.05 * s - i * 0.05 * s, -0.02 * s], [0, 0, 0], [0.06 * s, 0.06 * s, 0.06 * s], hm);
   if (look.beard) A(hb, SPHERE_LO, [0, hy - 0.085 * s, 0.05 * s], [0.2, 0, 0], [0.16 * s, 0.13 * s, 0.13 * s], hm);
   if (look.moustache) A(hb, BOX, [0, hy - 0.04 * s, 0.1 * s], [0, 0, 0], [0.08 * s, 0.02 * s, 0.03 * s], hm);
-  // ---------------- arms ----------------
-  const shortSleeve = look.top === 'tee';
-  for (const [U, F] of [[BONE.UARM_L, BONE.FARM_L], [BONE.UARM_R, BONE.FARM_R]]) {
-    A(U, cap(0.055 * s * w), [0, -J.ua / 2, 0], [0, 0, 0], [1, J.ua + 0.08 * s, 1], shortSleeve ? fabric(topC, U) : fabric(topC, U));
-    A(F, cap(0.045 * s * w), [0, -J.fa / 2 + 0.02 * s, 0], [0, 0, 0], [1, J.fa, 1], shortSleeve ? skinM(F) : fabric(topC, F));
-    if (!shortSleeve) A(F, pCyl(8), [0, -J.fa + 0.03 * s, 0], [0, 0, 0], [0.085 * s, 0.03 * s, 0.085 * s], fabric(topC.map((c) => c * 0.8), F));
-    A(F, BOX, [0, -J.fa - 0.035 * s, 0.005 * s], [0, 0, 0], [0.045 * s, 0.1 * s, 0.085 * s], skinM(F));     // hand
+  if (look.shades && !lod) {
+    const sm = plain([0.012, 0.012, 0.016], hb, 0.08, 0.4);
+    for (const sx of [-1, 1]) A(hb, BOX, [sx * 0.043 * s, hy + 0.026 * s, 0.101 * s], [0, 0, 0], [0.056 * s, 0.034 * s, 0.012 * s], sm);
+    A(hb, BOX, [0, hy + 0.034 * s, 0.103 * s], [0, 0, 0], [0.04 * s, 0.008 * s, 0.008 * s], sm);
+    for (const sx of [-1, 1]) A(hb, BOX, [sx * 0.094 * s, hy + 0.03 * s, 0.045 * s], [0, 0, 0], [0.008 * s, 0.008 * s, 0.1 * s], sm);
   }
-  return { mesh: b.upload(gl), J, look };
+  if (look.hat) {
+    const hc = lin(look.hatCol || '#1f2a44').map((c) => c * 1.5);
+    const hatM = fabric(hc, hb, 0.85);
+    if (look.hat === 'cap') {
+      A(hb, SPHERE_HI, [0, hy + 0.07 * s, -0.004 * s], [-0.12, 0, 0], [0.214 * s, 0.155 * s, 0.232 * s], hatM);
+      A(hb, BOX, [0, hy + 0.066 * s, 0.13 * s], [-0.12, 0, 0], [0.17 * s, 0.014 * s, 0.13 * s], hatM);
+    } else if (look.hat === 'beanie') {
+      A(hb, SPHERE_HI, [0, hy + 0.078 * s, -0.012 * s], [-0.15, 0, 0], [0.218 * s, 0.2 * s, 0.232 * s], hatM);
+      A(hb, pTorus(0.3, 16, 5), [0, hy + 0.05 * s, -0.012 * s], [-0.15, 0, 0], [0.225 * s, 0.225 * s, 0.24 * s], hatM);
+    } else {
+      A(hb, pCyl(16, true, true, 0.42, 0.5), [0, hy + 0.1 * s, -0.005 * s], [0, 0, 0], [0.22 * s, 0.11 * s, 0.23 * s], hatM);
+      A(hb, pCyl(18, true, true, 0.5, 0.5), [0, hy + 0.058 * s, -0.005 * s], [-0.05, 0, 0], [0.33 * s, 0.012 * s, 0.34 * s], hatM);
+    }
+  }
+  // ---------------- arms ----------------
+  const shortSleeve = look.top === 'tee' || look.top === 'vest' || (look.top === 'dress' && !look.scientist);
+  const bareArm = look.top === 'vest';
+  const ua = 0.29, fa = 0.27;
+  const upperRings = [[-ua - 0.03, 0.001, 0.001], [-ua - 0.012, 0.041, 0.043, 0.043], [-ua * 0.55, 0.049, 0.05, 0.05], [-0.05, 0.055, 0.055, 0.057], [0.03, 0.049, 0.05, 0.05], [0.06, 0.001, 0.001]];
+  const foreRings = [[-fa - 0.012, 0.001, 0.001], [-fa, 0.03, 0.028, 0.028], [-fa * 0.6, 0.037, 0.036, 0.035], [-fa * 0.25, 0.044, 0.042, 0.042], [0.0, 0.041, 0.041, 0.041], [0.03, 0.001, 0.001]];
+  for (const [U, F, side] of [[BONE.UARM_L, BONE.FARM_L, 1], [BONE.UARM_R, BONE.FARM_R, -1]]) {
+    A(U, lathe(upperRings), [0, 0, 0], [0, 0, 0], [1, 1, 1], shortSleeve ? skinM(U) : fabric(topC, U));
+    if (shortSleeve && !bareArm) {
+      // a short sleeve over the top of the arm
+      A(U, lathe([[-ua * 0.5, 0.001, 0.001], [-ua * 0.49, 0.06, 0.061, 0.061], [-0.05, 0.066, 0.066, 0.068], [0.04, 0.058, 0.06, 0.06], [0.07, 0.001, 0.001]]), [0, 0, 0], [0, 0, 0], [1, 1, 1], fabric(topC, U));
+    }
+    A(F, lathe(foreRings), [0, 0, 0], [0, 0, 0], [1, 1, 1], shortSleeve ? skinM(F) : fabric(topC, F));
+    if (!shortSleeve && !lod) A(F, pCyl(10), [0, -J.fa + 0.03 * s, 0], [0, 0, 0], [0.084 * s, 0.03 * s, 0.08 * s], fabric(topC.map((c) => c * 0.8), F));
+    // a hand: palm and fingers in one rounded mitt, and a thumb
+    A(F, SPHERE_LO, [0, -J.fa - 0.05 * s, 0.006 * s], [0, 0, 0], [0.042 * s, 0.1 * s, 0.078 * s], skinM(F));
+    if (!lod) A(F, SPHERE_LO, [-side * 0.006 * s, -J.fa - 0.03 * s, 0.04 * s], [0.5, 0, 0], [0.022 * s, 0.05 * s, 0.022 * s], skinM(F));
+  }
+  return { mesh: b.upload(gl), J };
 }
 
-/* ---------- posing ---------- */
-const _pm = { L: new Float32Array(16), T: new Float32Array(16) };
+/* ---------- posing ----------
+   A pose is a set of joint parameters. Each body state (standing, walking,
+   sitting, lying…) writes all of them, so two states can be blended while
+   someone sits down or lies back. Overlays — laughing, nodding, a phone,
+   a drink, clapping — are added on top, and hands that have somewhere to
+   be (a mouth, a phone, a guitar neck, handlebars) get there by two-bone IK. */
+const _pm = { L: new Float32Array(16), T: new Float32Array(16), U: new Float32Array(16), F: new Float32Array(16) };
 function setBone(out, i, parentIdx, tx, ty, tz, rx, ry, rz) {
   const L = xformTo(_pm.L, tx, ty, tz, rx, ry, rz);
   const o = out.subarray(i * 16, i * 16 + 16);
   if (parentIdx < 0) o.set(L);
   else M4.mul(o, out.subarray(parentIdx * 16, parentIdx * 16 + 16), L);
 }
-
+function setBoneL(out, i, parentIdx, L) {
+  const o = out.subarray(i * 16, i * 16 + 16);
+  if (parentIdx < 0) o.set(L);
+  else M4.mul(o, out.subarray(parentIdx * 16, parentIdx * 16 + 16), L);
+}
+/* T·Rx·Rz·Ry — flex, then abduct, then twist about the bone's own axis (hips) */
+function xformXZY(o, tx, ty, tz, rx, rz, ry) {
+  const cx = Math.cos(rx), sx = Math.sin(rx), cz = Math.cos(rz), sz = Math.sin(rz), cy = Math.cos(ry), sy = Math.sin(ry);
+  o[0] = cz * cy; o[1] = cx * sz * cy + sx * sy; o[2] = sx * sz * cy - cx * sy; o[3] = 0;
+  o[4] = -sz; o[5] = cx * cz; o[6] = sx * cz; o[7] = 0;
+  o[8] = cz * sy; o[9] = cx * sz * sy - sx * cy; o[10] = sx * sz * sy + cx * cy; o[11] = 0;
+  o[12] = tx; o[13] = ty; o[14] = tz; o[15] = 1;
+  return o;
+}
 /* 2-bone IK in the sagittal plane: returns [hipAngle, kneeBend] to put a foot
    at (fz forward, fy down) from the hip. Angles: forward swing positive. */
 function legIK(fz, fy, a, b) {
@@ -6040,96 +6204,361 @@ function legIK(fz, fy, a, b) {
   return [base + Math.acos(clamp(cosA, -1, 1)), knee];
 }
 
-/* P: { state, phase, speed (0..1 run blend), lean, turn, t, aim, talk, crank, seat } */
-function poseCharacter(ch, P, out) {
-  const J = ch.J, t = P.t || 0;
-  const st = P.state || 'idle';
-  let pelY = J.hipY, pelZ = 0, pelRx = 0, pelRy = 0, pelRz = 0, chestRx = 0, chestRy = 0;
-  let tL = 0, tR = 0, kL = 0.05, kR = 0.05, uaL = 0.05, uaR = 0.05, faL = 0.18, faR = 0.18, outL = 0.1, outR = 0.1, headRx = 0, headRy = 0;
-  let rollL = 0, rollR = 0;
+/* Two-bone arm IK in the chest frame. S shoulder, T target, pole a hint for
+   where the elbow points. Writes the upper-arm matrix (relative to the chest)
+   into Lu and returns the elbow flexion. The hand point sits phi off the
+   forearm's axis, which the flexion compensates for. */
+function armIK(Lu, S, T, pole, a, b, phi) {
+  let dx = T[0] - S[0], dy = T[1] - S[1], dz = T[2] - S[2];
+  let d = Math.hypot(dx, dy, dz);
+  if (d < 1e-5) { dx = 0; dy = -1; dz = 0; d = 1; }
+  const tx = dx / d, ty = dy / d, tz = dz / d;
+  const dc = clamp(d, Math.abs(a - b) + 0.02, a + b - 0.002);
+  const cosA = clamp((a * a + dc * dc - b * b) / (2 * a * dc), -1, 1), sinA = Math.sqrt(1 - cosA * cosA);
+  let px = pole[0], py = pole[1], pz = pole[2];
+  let pd = px * tx + py * ty + pz * tz;
+  px -= pd * tx; py -= pd * ty; pz -= pd * tz;
+  let pl = Math.hypot(px, py, pz);
+  if (pl < 1e-3) {
+    // pole along the reach: fall back to "elbow behind"
+    px = 0; py = 0; pz = -1; pd = pz * tz; px -= pd * tx; py -= pd * ty; pz -= pd * tz;
+    pl = Math.hypot(px, py, pz) || 1;
+  }
+  px /= pl; py /= pl; pz /= pl;
+  const ux = cosA * tx + sinA * px, uy = cosA * ty + sinA * py, uz = cosA * tz + sinA * pz;
+  const ex = S[0] + ux * a, ey = S[1] + uy * a, ez = S[2] + uz * a;
+  let fx = S[0] + tx * dc - ex, fy = S[1] + ty * dc - ey, fz = S[2] + tz * dc - ez;
+  const fu = fx * ux + fy * uy + fz * uz;
+  let wx = fx - fu * ux, wy = fy - fu * uy, wz = fz - fu * uz;
+  let wl = Math.hypot(wx, wy, wz);
+  if (wl < 1e-4) { wx = -px; wy = -py; wz = -pz; wl = 1; }
+  wx /= wl; wy /= wl; wz /= wl;
+  const Yx = -ux, Yy = -uy, Yz = -uz;
+  Lu[0] = Yy * wz - Yz * wy; Lu[1] = Yz * wx - Yx * wz; Lu[2] = Yx * wy - Yy * wx; Lu[3] = 0;
+  Lu[4] = Yx; Lu[5] = Yy; Lu[6] = Yz; Lu[7] = 0;
+  Lu[8] = wx; Lu[9] = wy; Lu[10] = wz; Lu[11] = 0;
+  Lu[12] = S[0]; Lu[13] = S[1]; Lu[14] = S[2]; Lu[15] = 1;
+  const cosG = clamp((a * a + b * b - dc * dc) / (2 * a * b), -1, 1);
+  return Math.max(0, Math.PI - Math.acos(cosG) - phi);
+}
+
+/* every body state writes all of these, so any two can be blended */
+const PK = ['pelX', 'pelY', 'pelZ', 'pelRx', 'pelRy', 'pelRz', 'rootRx', 'chestRx', 'chestRy', 'chestRz', 'headRx', 'headRy', 'headRz',
+  'tL', 'tR', 'kL', 'kR', 'sL', 'sR', 'wL', 'wR', 'uaL', 'uaR', 'faL', 'faR', 'outL', 'outR', 'rollL', 'rollR'];
+const _PA = {}, _PB = {};
+
+function baseParams(J, P, st, o) {
+  const t = P.t || 0, seed = P.seed || 0, sc = J.H / 1.75;
+  o.pelX = 0; o.pelY = J.hipY; o.pelZ = 0; o.pelRx = 0; o.pelRy = 0; o.pelRz = 0; o.rootRx = 0;
+  o.chestRx = 0; o.chestRy = 0; o.chestRz = 0; o.headRx = 0; o.headRy = 0; o.headRz = 0;
+  o.tL = 0; o.tR = 0; o.kL = 0.05; o.kR = 0.05; o.sL = 0.02; o.sR = 0.02; o.wL = 0; o.wR = 0;
+  o.uaL = 0.05; o.uaR = 0.05; o.faL = 0.18; o.faR = 0.18; o.outL = 0.1; o.outR = 0.1; o.rollL = 0; o.rollR = 0;
   if (st === 'walk' || st === 'run' || st === 'idle' || st === 'air') {
     const run = clamp(P.speed || 0, 0, 1);
     const moving = st === 'idle' ? 0 : 1;
     const ph = P.phase || 0;
     const s = Math.sin(ph), c = Math.cos(ph);
-    const At = lerp(0.42, 0.78, run) * moving, Ak = lerp(0.55, 1.35, run) * moving;
-    tL = At * s; tR = -At * s;
-    kL = 0.06 + Math.max(0, Math.sin(ph + 1.1)) * Ak * (1 - 0.2 * run) + Math.max(0, -s) * 0.15 * run * moving;
-    kR = 0.06 + Math.max(0, Math.sin(ph + Math.PI + 1.1)) * Ak * (1 - 0.2 * run) + Math.max(0, s) * 0.15 * run * moving;
-    pelY = J.hipY - Math.abs(c) * lerp(0.02, 0.06, run) * moving - run * 0.05 * moving;
-    pelRy = s * 0.1 * moving; chestRy = -s * 0.16 * moving;
-    pelRx = lerp(0.02, 0.2, run) * moving; chestRx = lerp(0.02, 0.1, run) * moving;
-    uaL = -At * 0.85 * s * lerp(0.7, 1.1, run); uaR = At * 0.85 * s * lerp(0.7, 1.1, run);
-    faL = lerp(0.25, 1.25, run * moving) + 0.1; faR = faL;
-    outL = 0.1; outR = 0.1;
-    // breathing and a little weight shift when still
+    const stride = P.stride || 1, swing = P.swing == null ? 1 : P.swing;
+    const At = lerp(0.42, 0.78, run) * moving * stride, Ak = lerp(0.55, 1.35, run) * moving;
+    o.tL = At * s; o.tR = -At * s;
+    o.kL = 0.06 + Math.max(0, Math.sin(ph + 1.1)) * Ak * (1 - 0.2 * run) + Math.max(0, -s) * 0.15 * run * moving;
+    o.kR = 0.06 + Math.max(0, Math.sin(ph + Math.PI + 1.1)) * Ak * (1 - 0.2 * run) + Math.max(0, s) * 0.15 * run * moving;
+    o.pelY = J.hipY - Math.abs(c) * lerp(0.02, 0.06, run) * moving - run * 0.05 * moving;
+    o.pelRy = s * 0.1 * moving; o.chestRy = -s * 0.16 * moving;
+    o.pelRz = -c * 0.03 * moving * (1 - run);
+    o.pelRx = lerp(0.02, 0.2, run) * moving; o.chestRx = lerp(0.02, 0.1, run) * moving;
+    o.uaL = -At * 0.85 * s * lerp(0.7, 1.1, run) * swing; o.uaR = At * 0.85 * s * lerp(0.7, 1.1, run) * swing;
+    o.faL = lerp(0.25, 1.25, run * moving) + 0.1; o.faR = o.faL;
+    o.outL = 0.1; o.outR = 0.1;
+    // standing still: breathing, a slow shift of weight from one leg to the other, a wandering gaze
     const idle = 1 - moving;
-    chestRx += Math.sin(t * 1.4) * 0.015 * idle;
-    pelRz = Math.sin(t * 0.5 + (P.seed || 0)) * 0.025 * idle;
-    headRy = Math.sin(t * 0.4 + (P.seed || 0) * 3) * 0.3 * idle;
-    if (st === 'air') { kL = 0.9; kR = 0.5; tL = 0.5; tR = 0.1; uaL = -0.4; uaR = -0.4; outL = 0.5; outR = 0.5; }
+    if (idle > 0) {
+      const side = clamp(Math.sin(t * 0.11 + seed * 5.3) * 2.4, -1, 1);
+      o.chestRx += Math.sin(t * 1.4 + seed) * 0.015;
+      o.pelRz += 0.045 * side; o.pelX += 0.028 * side;
+      o.kL += Math.max(0, -side) * 0.16; o.tL += Math.max(0, -side) * 0.07;
+      o.kR += Math.max(0, side) * 0.16; o.tR += Math.max(0, side) * 0.07;
+      o.sL += Math.max(0, -side) * 0.04; o.sR += Math.max(0, side) * 0.04;
+      o.chestRz -= 0.03 * side;
+      o.headRy = Math.sin(t * 0.4 + seed * 3) * 0.3;
+      o.headRx = Math.sin(t * 0.23 + seed * 1.7) * 0.05;
+    }
+    if (st === 'air') { o.kL = 0.9; o.kR = 0.5; o.tL = 0.5; o.tR = 0.1; o.uaL = -0.4; o.uaR = -0.4; o.outL = 0.5; o.outR = 0.5; }
   } else if (st === 'sit') {
-    pelY = (P.seat || 0.46) + 0.02; tL = tR = 1.45; kL = kR = 1.45; pelRx = -0.05; chestRx = 0.05;
-    uaL = uaR = 0.35; faL = faR = 0.9; outL = outR = 0.12; headRx = 0.1 + Math.sin(t * 0.3 + (P.seed || 0)) * 0.08;
-    headRy = Math.sin(t * 0.2 + (P.seed || 0)) * 0.25;
+    o.pelY = (P.seat || 0.46) + 0.02; o.tL = o.tR = 1.45; o.kL = o.kR = 1.45; o.pelRx = -0.05; o.chestRx = 0.05;
+    o.uaL = o.uaR = 0.35; o.faL = o.faR = 0.9; o.outL = o.outR = 0.12; o.headRx = 0.1 + Math.sin(t * 0.3 + seed) * 0.08;
+    o.headRy = Math.sin(t * 0.2 + seed) * 0.25;
+    if ((P.v || 0) & 1) { o.kL = 1.25; o.tL = 1.55; o.kR = 1.6; }            // one foot tucked back
   } else if (st === 'ride') {
     // on a bicycle: feet on a crank circle below and ahead of the saddle, hands on the bars
     const cr = P.crank || 0, seatY = P.seat || 0.92;
-    pelY = seatY; pelZ = -0.04; pelRx = 0.5; chestRx = 0.32;
-    const hipY = seatY - 0.05, bbZ = 0.24, bbY = seatY - 0.6, R = 0.17;
-    const foot = (a) => legIK(bbZ + Math.cos(a) * R - pelZ, hipY - (bbY + Math.sin(a) * R), J.th, J.sh);
+    o.pelY = seatY; o.pelZ = -0.04; o.pelRx = P.upright ? 0.12 : 0.5; o.chestRx = P.upright ? 0.08 : 0.32;
+    const hipY = seatY - 0.05, bbZ = P.bbZ == null ? 0.24 : P.bbZ, bbY = seatY - (P.bbDrop || 0.6), R = P.crankR || 0.17;
+    const foot = (a) => legIK(bbZ + Math.cos(a) * R - o.pelZ, hipY - (bbY + Math.sin(a) * R), J.th, J.sh);
     const iL = foot(cr), iR = foot(cr + Math.PI);
-    tL = iL[0]; kL = iL[1]; tR = iR[0]; kR = iR[1];
-    uaL = uaR = 1.0; faL = faR = 0.3; outL = outR = 0.2; headRx = 0.4;
+    o.tL = iL[0]; o.kL = iL[1]; o.tR = iR[0]; o.kR = iR[1];
+    o.uaL = o.uaR = 1.0; o.faL = o.faR = 0.3; o.outL = o.outR = 0.2; o.headRx = P.upright ? 0.1 : 0.4;
   } else if (st === 'sitGround') {
-    pelY = 0.16; pelRx = -0.2; chestRx = -0.12; tL = tR = 1.42; kL = 0.25; kR = 0.55;
-    uaL = uaR = -0.55; faL = faR = 0.1; outL = outR = 0.28; headRx = 0.05 + Math.sin(t * 0.3 + (P.seed || 0)) * 0.1;
-    headRy = Math.sin(t * 0.25 + (P.seed || 0) * 2) * 0.35;
+    // legs out, leaning back on the hands
+    o.pelY = 0.16; o.pelRx = -0.2; o.chestRx = -0.12; o.tL = o.tR = 1.42; o.kL = 0.25; o.kR = 0.55;
+    o.uaL = o.uaR = -0.55; o.faL = o.faR = 0.1; o.outL = o.outR = 0.28; o.headRx = 0.05 + Math.sin(t * 0.3 + seed) * 0.1;
+    o.headRy = Math.sin(t * 0.25 + seed * 2) * 0.35;
+    if ((P.v || 0) & 1) { o.tL = 2.1; o.kL = 2.2; }                          // one knee drawn up
+  } else if (st === 'cross') {
+    // cross-legged on the grass, leaning a little forward
+    o.pelY = 0.15 * sc + 0.01; o.pelRx = 0.08; o.chestRx = 0.06;
+    o.tL = o.tR = 1.32; o.sL = o.sR = 0.78; o.kL = o.kR = 2.62; o.wL = o.wR = -0.55;
+    o.uaL = o.uaR = 0.42; o.faL = o.faR = 0.55; o.outL = o.outR = 0.34;
+    o.headRx = -0.05 + Math.sin(t * 0.27 + seed) * 0.08; o.headRy = Math.sin(t * 0.21 + seed * 2) * 0.3;
+  } else if (st === 'lieBack') {
+    // on your back in the sun (or under the stars)
+    o.rootRx = -Math.PI / 2 + 0.07; o.pelY = 0.115 * sc + 0.012;
+    o.tL = o.tR = 0.03; o.kL = o.kR = 0.05; o.sL = 0.07; o.sR = 0.09;
+    o.uaL = o.uaR = 0.04; o.outL = o.outR = 0.32; o.faL = o.faR = 0.12;
+    o.headRy = Math.sin(t * 0.13 + seed * 2) * 0.25;
+    if ((P.v || 0) & 1) { o.tL = 1.0; o.kL = 2.0; o.sL = 0.12; }             // one knee up
+    if ((P.v || 0) & 2) { o.tR = 0.25; o.kR = 0.35; o.sR = -0.12; o.wR = 0.2; }   // ankles crossed-ish
+  } else if (st === 'lieFront') {
+    // on your front, up on the elbows, feet in the air
+    o.rootRx = Math.PI / 2 - 0.1; o.pelY = 0.115 * sc + 0.012;
+    o.chestRx = -0.52; o.headRx = -0.1 + Math.sin(t * 0.2 + seed) * 0.08; o.headRy = Math.sin(t * 0.17 + seed * 3) * 0.2;
+    o.tL = o.tR = -0.02; o.sL = o.sR = 0.06;
+    const kick = Math.sin(t * 1.9 + seed * 4);
+    o.kL = 1.25 + kick * 0.5; o.kR = 1.25 - kick * 0.5;
+    o.uaL = o.uaR = 0.9; o.faL = o.faR = 1.2; o.outL = o.outR = 0.25;
+  } else if (st === 'squat') {
+    o.pelY = J.hipY * 0.5; o.pelRx = 0.5; o.chestRx = 0.35; o.tL = o.tR = 1.85; o.kL = o.kR = 2.35; o.sL = o.sR = 0.25;
+    o.headRx = -0.2; o.uaL = o.uaR = 0.6; o.faL = o.faR = 0.5; o.outL = o.outR = 0.2;
+  } else if (st === 'kneel') {
+    o.pelY = J.sh + 0.07; o.tL = o.tR = 0.08; o.kL = o.kR = 1.62; o.chestRx = 0.05;
+    o.uaL = o.uaR = 0.2; o.faL = o.faR = 0.5;
   } else if (st === 'board') {
-    pelY = J.hipY - 0.16; pelRx = 0.25; chestRx = 0.1; tL = 0.55; tR = 0.35; kL = 0.95; kR = 0.8;
-    uaL = 0.3; uaR = 0.2; outL = 0.9 + (P.lean || 0) * 0.4; outR = 0.8 - (P.lean || 0) * 0.4; faL = faR = 0.5; headRy = -1.1;
+    o.pelY = J.hipY - 0.16; o.pelRx = 0.25; o.chestRx = 0.1; o.tL = 0.55; o.tR = 0.35; o.kL = 0.95; o.kR = 0.8;
+    o.uaL = 0.3; o.uaR = 0.2; o.outL = 0.9 + (P.lean || 0) * 0.4; o.outR = 0.8 - (P.lean || 0) * 0.4; o.faL = o.faR = 0.5; o.headRy = -1.1;
   } else if (st === 'drive') {
-    pelY = P.seat || 0.55; tL = tR = 1.35; kL = kR = 1.2; uaL = uaR = 0.95; faL = faR = 0.55; outL = outR = 0.15; headRx = -0.05;
+    o.pelY = P.seat || 0.55; o.tL = o.tR = 1.35; o.kL = o.kR = 1.2; o.uaL = o.uaR = 0.95; o.faL = o.faR = 0.55; o.outL = o.outR = 0.15; o.headRx = -0.05;
   }
-  // aiming: the right arm brings the book up to the chest, the left steadies it
-  const aim = P.aim || 0;
-  if (aim > 0) {
-    uaR = lerp(uaR, 1.25, aim); faR = lerp(faR, 1.35, aim); outR = lerp(outR, 0.25, aim); rollR = lerp(0, -0.4, aim);
-    uaL = lerp(uaL, 1.05, aim); faL = lerp(faL, 1.5, aim); outL = lerp(outL, 0.45, aim);
-    chestRy += 0.12 * aim;
-  } else if (P.hold) {
-    // carrying the book at the hip when not aiming
-    uaR = lerp(uaR, 0.1, 0.6); faR = lerp(faR, 1.05, 0.7); outR = 0.18;
+  return o;
+}
+
+/* hand targets: [x, y, z, poleX, poleY, poleZ, weight], accumulated per hand */
+const _hand = { L: new Float64Array(7), R: new Float64Array(7), tmp: new Float64Array(3), tmp2: new Float64Array(3) };
+function _accHand(acc, x, y, z, px, py, pz, w) {
+  if (!(w > 0.001)) return;
+  if (acc[6] <= 0.001) { acc[0] = x; acc[1] = y; acc[2] = z; acc[3] = px; acc[4] = py; acc[5] = pz; acc[6] = w; return; }
+  acc[0] += (x - acc[0]) * w; acc[1] += (y - acc[1]) * w; acc[2] += (z - acc[2]) * w;
+  acc[3] += (px - acc[3]) * w; acc[4] += (py - acc[4]) * w; acc[5] += (pz - acc[5]) * w;
+  acc[6] = acc[6] + (1 - acc[6]) * w;
+}
+/* point p in bone frame B (model space) → chest frame C; dir: rotation only */
+function _toChest(out, C, B, x, y, z, dir) {
+  let mx = x, my = y, mz = z;
+  if (B) {
+    mx = B[0] * x + B[4] * y + B[8] * z + (dir ? 0 : B[12]);
+    my = B[1] * x + B[5] * y + B[9] * z + (dir ? 0 : B[13]);
+    mz = B[2] * x + B[6] * y + B[10] * z + (dir ? 0 : B[14]);
   }
-  // talking: slow open-handed gestures
-  const talk = P.talk || 0;
-  if (talk > 0) {
-    const g = t * 1.3 + (P.seed || 0);
-    uaR = lerp(uaR, 0.5 + Math.sin(g) * 0.3, talk); faR = lerp(faR, 1.3 + Math.sin(g * 1.7) * 0.25, talk); outR = lerp(outR, 0.3, talk);
-    uaL = lerp(uaL, 0.3 + Math.sin(g * 0.8 + 1) * 0.2, talk * 0.7); faL = lerp(faL, 1.1, talk * 0.7);
-    headRx += Math.sin(g * 0.9) * 0.06 * talk; headRy += Math.sin(g * 0.5) * 0.15 * talk;
-  }
-  headRy += P.lookYaw || 0; headRx += P.lookPitch || 0;
-  // bones. A positive X rotation tips a bone's top forward, so a hanging limb's
-  // end swings forward under a negative one.
-  setBone(out, BONE.PELVIS, -1, 0, pelY, pelZ, pelRx * 0.5, pelRy, pelRz);
-  setBone(out, BONE.CHEST, BONE.PELVIS, 0, J.chest, 0, chestRx + pelRx * 0.5, chestRy, 0);
-  setBone(out, BONE.HEAD, BONE.CHEST, 0, J.neck, 0.01, -headRx - chestRx * 0.8 - pelRx * 0.8, headRy, 0);
-  setBone(out, BONE.UARM_L, BONE.CHEST, J.shX, J.shY, 0, -uaL - chestRx * 0.5, 0, outL);
-  setBone(out, BONE.FARM_L, BONE.UARM_L, 0, -J.ua, 0, -faL, 0, 0);
-  setBone(out, BONE.UARM_R, BONE.CHEST, -J.shX, J.shY, 0, -uaR - chestRx * 0.5, rollR, -outR);
-  setBone(out, BONE.FARM_R, BONE.UARM_R, 0, -J.ua, 0, -faR, 0, 0);
-  setBone(out, BONE.THIGH_L, BONE.PELVIS, J.hipX, -0.05, 0, -tL - pelRx * 0.5, 0, 0.02);
-  setBone(out, BONE.SHIN_L, BONE.THIGH_L, 0, -J.th, 0, kL, 0, 0);
-  setBone(out, BONE.THIGH_R, BONE.PELVIS, -J.hipX, -0.05, 0, -tR - pelRx * 0.5, 0, -0.02);
-  setBone(out, BONE.SHIN_R, BONE.THIGH_R, 0, -J.th, 0, kR, 0, 0);
-  setBone(out, BONE.HAND_R, BONE.FARM_R, 0, -J.fa - 0.06, 0.04, 0, 0, 0);
+  if (!dir) { mx -= C[12]; my -= C[13]; mz -= C[14]; }
+  out[0] = C[0] * mx + C[1] * my + C[2] * mz;
+  out[1] = C[4] * mx + C[5] * my + C[6] * mz;
+  out[2] = C[8] * mx + C[9] * my + C[10] * mz;
   return out;
 }
 
+/* P: { state, state2, blend, phase, speed, t, seed, v, lean, crank, seat, aim, hold, talk,
+        laugh, lv, nod, sway, jump, kick, phone, phone2, drink, eat, clap, cheer, handsHead, wave,
+        point, shade, crossArms, hipR, pockets, ikL, ikR, lookYaw, lookPitch, grip } */
+function poseCharacter(ch, P, out) {
+  const J = ch.J, t = P.t || 0, seed = P.seed || 0, sc = J.H / 1.75;
+  const st = P.state || 'idle';
+  const o = baseParams(J, P, st, _PA);
+  if (P.state2 && P.blend > 0.001) {
+    const B = baseParams(J, P, P.state2, _PB), k = Math.min(1, P.blend);
+    for (let i = 0; i < PK.length; i++) { const key = PK[i]; o[key] += (B[key] - o[key]) * k; }
+  }
+  const standing = o.rootRx === 0 && o.pelY > J.hipY * 0.75;
+
+  // ---- whole-body overlays ----
+  const laugh = P.laugh || 0, lv = P.lv || 0;
+  if (laugh > 0) {
+    const back = lv % 3 !== 1;
+    const shake = Math.sin(t * 19 + seed) * 0.05 + Math.sin(t * 11.3 + seed * 2) * 0.03;
+    o.chestRx += ((back ? -0.14 : 0.3) + shake * 0.7) * laugh;
+    o.headRx += ((back ? 0.34 : -0.16) + shake) * laugh;
+    o.headRy += Math.sin(t * 3.1 + seed) * 0.1 * laugh;
+    if (standing) { o.pelY += Math.abs(Math.sin(t * 9.5 + seed)) * 0.012 * laugh; o.kL += 0.08 * laugh; o.kR += 0.08 * laugh; }
+  }
+  if (P.nod) o.headRx += Math.sin(t * 7.5 + seed) * 0.11 * P.nod;
+  if (P.sway) {
+    o.pelRz += Math.sin(t * 2.6 + seed) * 0.035 * P.sway;
+    o.chestRz += Math.sin(t * 2.6 + seed + 0.6) * 0.05 * P.sway;
+    o.headRz += Math.sin(t * 2.6 + seed + 1.2) * 0.09 * P.sway;
+  }
+  if (P.jump) { o.pelY += P.jump; o.tL += P.jump * 1.4; o.tR += P.jump * 1.4; o.kL += P.jump * 2.8; o.kR += P.jump * 2.8; }
+  if (P.kick) {
+    // hacky sack: the inside of the foot comes up in front of the other knee
+    const k = Math.abs(P.kick), L = P.kick > 0;
+    if (L) { o.tL += 0.95 * k; o.sL += 0.55 * k; o.wL -= 0.9 * k; o.kL += 1.2 * k; o.kR += 0.12 * k; }
+    else { o.tR += 0.95 * k; o.sR += 0.55 * k; o.wR -= 0.9 * k; o.kR += 1.2 * k; o.kL += 0.12 * k; }
+    o.chestRx += 0.12 * k; o.headRx -= 0.35 * k; o.outL += 0.3 * k; o.outR += 0.3 * k;
+  }
+  if (P.phone) o.headRx -= 0.5 * P.phone;
+  if (P.drink) o.headRx += 0.28 * P.drink;
+  if (P.cheer) o.headRx += 0.2 * P.cheer;
+  if (P.handsHead) o.headRx -= 0.15 * P.handsHead;
+
+  // aiming: the right arm brings the book up to the chest, the left steadies it
+  const aim = P.aim || 0;
+  if (aim > 0) {
+    o.uaR = lerp(o.uaR, 1.25, aim); o.faR = lerp(o.faR, 1.35, aim); o.outR = lerp(o.outR, 0.25, aim); o.rollR = lerp(0, -0.4, aim);
+    o.uaL = lerp(o.uaL, 1.05, aim); o.faL = lerp(o.faL, 1.5, aim); o.outL = lerp(o.outL, 0.45, aim);
+    o.chestRy += 0.12 * aim;
+  } else if (P.hold) {
+    o.uaR = lerp(o.uaR, 0.1, 0.6); o.faR = lerp(o.faR, 1.05, 0.7); o.outR = 0.18;
+  }
+  // talking: open-handed gestures, one or both hands depending on the person
+  const talk = P.talk || 0;
+  if (talk > 0) {
+    const g = t * 1.3 + seed, beat = Math.max(0, Math.sin(t * 3.7 + seed * 5)) * 0.18;
+    o.uaR = lerp(o.uaR, 0.5 + Math.sin(g) * 0.3 + beat, talk); o.faR = lerp(o.faR, 1.3 + Math.sin(g * 1.7) * 0.25, talk); o.outR = lerp(o.outR, 0.3, talk);
+    const both = (lv + ((seed * 7) | 0)) % 2 === 0 ? 0.7 : 0.25;
+    o.uaL = lerp(o.uaL, 0.3 + Math.sin(g * 0.8 + 1) * 0.2 + beat * 0.6, talk * both); o.faL = lerp(o.faL, 1.1, talk * both);
+    o.headRx += Math.sin(g * 0.9) * 0.06 * talk; o.headRy += Math.sin(g * 0.5) * 0.15 * talk;
+  }
+  const ly = clamp(P.lookYaw || 0, -1.35, 1.35);
+  o.headRy += ly * 0.72; o.chestRy += ly * 0.28;
+  o.headRx += P.lookPitch || 0;
+
+  // ---- bones: spine ----
+  setBone(out, BONE.PELVIS, -1, o.pelX, o.pelY, o.pelZ, o.pelRx * 0.5 + o.rootRx, o.pelRy, o.pelRz);
+  setBone(out, BONE.CHEST, BONE.PELVIS, 0, J.chest, 0, o.chestRx + o.pelRx * 0.5, o.chestRy, o.chestRz);
+  setBone(out, BONE.HEAD, BONE.CHEST, 0, J.neck, 0.01, -o.headRx - o.chestRx * 0.8 - o.pelRx * 0.8, o.headRy, o.headRz);
+
+  // ---- arms: forward kinematics first ----
+  const UL = xformTo(_pm.U, J.shX, J.shY, 0, -o.uaL - o.chestRx * 0.5, -o.rollL, o.outL);
+  setBoneL(out, BONE.UARM_L, BONE.CHEST, UL);
+  setBone(out, BONE.FARM_L, BONE.UARM_L, 0, -J.ua, 0, -o.faL, 0, 0);
+  const UR = xformTo(_pm.F, -J.shX, J.shY, 0, -o.uaR - o.chestRx * 0.5, o.rollR, -o.outR);
+  setBoneL(out, BONE.UARM_R, BONE.CHEST, UR);
+  setBone(out, BONE.FARM_R, BONE.UARM_R, 0, -J.ua, 0, -o.faR, 0, 0);
+
+  // ---- hands that have somewhere to be ----
+  const C = out.subarray(BONE.CHEST * 16, BONE.CHEST * 16 + 16);
+  const Hd = out.subarray(BONE.HEAD * 16, BONE.HEAD * 16 + 16);
+  const Pv = out.subarray(BONE.PELVIS * 16, BONE.PELVIS * 16 + 16);
+  const aL = _hand.L, aR = _hand.R, v = _hand.tmp, q = _hand.tmp2;
+  aL[6] = 0; aR[6] = 0;
+  const shY = J.shY, hy = 0.16 * sc;
+  // a point in some frame (a bone matrix, 'root' for the character's own space,
+  // or null for the chest itself) into the chest frame, accumulated for one hand
+  const put = (acc, F, x, y, z, px, py, pz, w, pf) => {
+    if (!(w > 0.001)) return;
+    let X = x, Y = y, Z = z;
+    if (F) { const pp = _toChest(v, C, F === 'root' ? null : F, x, y, z, false); X = pp[0]; Y = pp[1]; Z = pp[2]; }
+    let qx = px, qy = py, qz = pz;
+    if (pf === 'root') { const d = _toChest(q, C, null, px, py, pz, true); qx = d[0]; qy = d[1]; qz = d[2]; }
+    _accHand(acc, X, Y, Z, qx, qy, qz, w);
+  };
+  const putC = (acc, x, y, z, px, py, pz, w) => _accHand(acc, x, y, z, px, py, pz, w);
+  if (P.pockets) { put(aL, Pv, 0.17 * sc, -0.07 * sc, 0.07 * sc, 1, 0, -0.5, P.pockets); put(aR, Pv, -0.17 * sc, -0.07 * sc, 0.07 * sc, -1, 0, -0.5, P.pockets); }
+  if (P.hipR) put(aR, Pv, -0.2 * sc, 0.03 * sc, 0.0, -1, 0.1, -0.7, P.hipR);
+  if (P.crossArms) { putC(aL, -0.1 * sc, 0.2 * sc, 0.15 * sc, 1, -0.6, 0, P.crossArms); putC(aR, 0.1 * sc, 0.23 * sc, 0.16 * sc, -1, -0.6, 0, P.crossArms); }
+  if (P.phone) {
+    putC(aR, -0.03 * sc, 0.33 * sc, 0.3 * sc, -1, -0.4, -0.5, P.phone);
+    if (P.phone2) putC(aL, 0.05 * sc, 0.32 * sc, 0.29 * sc, 1, -0.4, -0.5, P.phone * P.phone2);
+  }
+  if (P.eat) {
+    const up = smoothstep(clamp(Math.sin(t * 1.5 + seed) * 2.2 - 0.9, 0, 1));
+    put(aR, Hd, -0.03 * sc, hy - 0.06 * sc, 0.15 * sc, -1, -0.7, 0, P.eat * up);
+    putC(aR, -0.08 * sc, 0.12 * sc, 0.26 * sc, -1, -0.4, -0.3, P.eat * (1 - up) * 0.8);
+  }
+  if (P.drink) put(aR, Hd, -0.035 * sc, hy - 0.05 * sc, 0.16 * sc, -1, -0.8, 0.1, P.drink);
+  if (P.shade) put(aR, Hd, -0.02 * sc, hy + 0.08 * sc, 0.16 * sc, -1, 0.2, 0, P.shade);
+  if (laugh > 0.05) {
+    if (lv % 3 === 0) putC(aR, -0.04 * sc, 0.1 * sc, 0.16 * sc, -1, -0.3, 0, laugh * 0.9);        // hand on the belly
+    else if (lv % 3 === 1) put(aL, Hd, 0.02 * sc, hy - 0.05 * sc, 0.15 * sc, 1, -0.6, 0, laugh * 0.9);   // hand over the mouth
+  }
+  if (P.clap) {
+    const sep = 0.035 + 0.075 * Math.abs(Math.sin(t * 12.5 + seed));
+    putC(aL, sep, 0.33 * sc, 0.27 * sc, 1, -0.5, -0.3, P.clap); putC(aR, -sep, 0.33 * sc, 0.27 * sc, -1, -0.5, -0.3, P.clap);
+  }
+  if (P.cheer) {
+    const pump = Math.sin(t * 8 + seed) * 0.06;
+    putC(aL, 0.24 * sc, shY + 0.52 * sc + pump, 0.1 * sc, 1, 0, 0.1, P.cheer); putC(aR, -0.24 * sc, shY + 0.52 * sc - pump, 0.1 * sc, -1, 0, 0.1, P.cheer);
+  }
+  if (P.handsHead) { put(aL, Hd, 0.085 * sc, hy + 0.14 * sc, 0.0, 1, 0.5, 0.3, P.handsHead); put(aR, Hd, -0.085 * sc, hy + 0.14 * sc, 0.0, -1, 0.5, 0.3, P.handsHead); }
+  if (P.wave) putC(aR, -0.34 * sc + Math.sin(t * 9 + seed) * 0.08, shY + 0.3 * sc, 0.12 * sc, -1, -1, 0, P.wave);
+  if (P.point) putC(aR, -0.1 * sc, shY + 0.1 * sc, 0.62 * sc, -1, -0.5, 0, P.point);
+  if (P.grip) {
+    // hands on the handlebars (grip: [halfWidth, y, z] in the rider's root frame)
+    const g = P.grip;
+    put(aL, 'root', g[0], g[1], g[2], 1, -0.2, -1, 1, 'root'); put(aR, 'root', -g[0], g[1], g[2], -1, -0.2, -1, 1, 'root');
+  }
+  if (st === 'lieFront' || P.state2 === 'lieFront') {
+    // forearms flat on the ground in front of the shoulders
+    const k = st === 'lieFront' ? 1 - (P.state2 ? P.blend || 0 : 0) : P.blend || 0;
+    for (const [acc, sx] of [[aL, 1], [aR, -1]]) {
+      // shoulder in the root frame
+      const Sx = C[0] * sx * J.shX + C[4] * shY + C[12], Sy = C[1] * sx * J.shX + C[5] * shY + C[13], Sz = C[2] * sx * J.shX + C[6] * shY + C[14];
+      put(acc, 'root', Sx - sx * 0.02, 0.07, Sz + 0.3 * sc, sx, -1, 0, k, 'root');
+    }
+  }
+  const ik = (acc, E) => { if (E && E.w > 0.001) put(acc, E.f === 'root' ? 'root' : E.f === 'head' ? Hd : E.f === 'pelvis' ? Pv : null, E.x, E.y, E.z, E.px == null ? 0 : E.px, E.py == null ? -1 : E.py, E.pz == null ? 0 : E.pz, E.w, E.pf); };
+  ik(aL, P.ikL); ik(aR, P.ikR);
+
+  // ---- solve the arms that have targets, blending from their FK pose ----
+  const handLen = J.fa + 0.06, phi = Math.atan2(0.04, handLen), b = Math.hypot(handLen, 0.04);
+  for (const [acc, side, U, Ui, Fi] of [[aL, 1, UL, BONE.UARM_L, BONE.FARM_L], [aR, -1, UR, BONE.UARM_R, BONE.FARM_R]]) {
+    if (acc[6] <= 0.001) continue;
+    const w = Math.min(1, acc[6]);
+    // FK hand and elbow in the chest frame
+    const Fk = side > 0 ? o.faL : o.faR;
+    const cf = Math.cos(-Fk), sf = Math.sin(-Fk);
+    // hand point in the upper-arm frame: T(0,-ua,0)·Rx(-fa)·(0,-hl,0.04)
+    const hy2 = -handLen * cf - 0.04 * sf - J.ua, hz2 = -handLen * sf + 0.04 * cf;
+    const fx = U[4] * hy2 + U[8] * hz2 + U[12], fy = U[5] * hy2 + U[9] * hz2 + U[13], fz = U[6] * hy2 + U[10] * hz2 + U[14];
+    const ex = -U[4] * J.ua + U[12], ey = -U[5] * J.ua + U[13], ez = -U[6] * J.ua + U[14];
+    const Sx = side * J.shX, Sy = shY;
+    const T = [lerp(fx, acc[0], w), lerp(fy, acc[1], w), lerp(fz, acc[2], w)];
+    const pole = [lerp(ex - Sx, acc[3], w), lerp(ey - Sy, acc[4], w), lerp(ez, acc[5], w)];
+    const Lu = _pm.T;
+    const flex = armIK(Lu, [Sx, Sy, 0], T, pole, J.ua, b, phi);
+    setBoneL(out, Ui, BONE.CHEST, Lu);
+    setBone(out, Fi, Ui, 0, -J.ua, 0, -flex, 0, 0);
+  }
+
+  // ---- legs ----
+  setBoneL(out, BONE.THIGH_L, BONE.PELVIS, xformXZY(_pm.L, J.hipX, -0.05, 0, -o.tL - o.pelRx * 0.5, o.sL, o.wL));
+  setBone(out, BONE.SHIN_L, BONE.THIGH_L, 0, -J.th, 0, o.kL, 0, 0);
+  setBoneL(out, BONE.THIGH_R, BONE.PELVIS, xformXZY(_pm.L, -J.hipX, -0.05, 0, -o.tR - o.pelRx * 0.5, -o.sR, -o.wR));
+  setBone(out, BONE.SHIN_R, BONE.THIGH_R, 0, -J.th, 0, o.kR, 0, 0);
+  setBone(out, BONE.HAND_R, BONE.FARM_R, 0, -J.fa - 0.06, 0.04, 0, 0, 0);
+  setBone(out, BONE.HAND_L, BONE.FARM_L, 0, -J.fa - 0.06, 0.04, 0, 0, 0);
+  // Each bone's parent, carried straight on through the joint: vertices near a
+  // joint blend toward this, so elbows, knees, shoulders and hips bend smoothly.
+  if (out.length >= 448) {
+    const setP = (i, p, rx, ry, rz) => {
+      const pb = p * 16, o = 224 + i * 16;
+      for (let k = 0; k < 12; k++) out[o + k] = out[pb + k];
+      out[o + 12] = out[pb] * rx + out[pb + 4] * ry + out[pb + 8] * rz + out[pb + 12];
+      out[o + 13] = out[pb + 1] * rx + out[pb + 5] * ry + out[pb + 9] * rz + out[pb + 13];
+      out[o + 14] = out[pb + 2] * rx + out[pb + 6] * ry + out[pb + 10] * rz + out[pb + 14];
+      out[o + 15] = 1;
+    };
+    out.copyWithin(224, 0, 16);
+    setP(BONE.CHEST, BONE.PELVIS, 0, J.chest, 0); setP(BONE.HEAD, BONE.CHEST, 0, J.neck, 0.01);
+    setP(BONE.UARM_L, BONE.CHEST, J.shX, J.shY, 0); setP(BONE.FARM_L, BONE.UARM_L, 0, -J.ua, 0);
+    setP(BONE.UARM_R, BONE.CHEST, -J.shX, J.shY, 0); setP(BONE.FARM_R, BONE.UARM_R, 0, -J.ua, 0);
+    setP(BONE.THIGH_L, BONE.PELVIS, J.hipX, -0.05, 0); setP(BONE.SHIN_L, BONE.THIGH_L, 0, -J.th, 0);
+    setP(BONE.THIGH_R, BONE.PELVIS, -J.hipX, -0.05, 0); setP(BONE.SHIN_R, BONE.THIGH_R, 0, -J.th, 0);
+  }
+  return out;
+}
+
+/* 14 bone matrices, then their 14 parent-continuation matrices */
 function newBones() {
-  const b = new Float32Array(14 * 16);
-  for (let i = 0; i < 14; i++) b.set(M4.create(), i * 16);
+  const b = new Float32Array(28 * 16);
+  for (let i = 0; i < 28; i++) b.set(M4.create(), i * 16);
   return b;
 }
 
@@ -8207,6 +8636,1488 @@ function drawRadar(ctx, W, H, g, mapImg, route) {
 }
 
 
+/* ==== crowd.js ==== */
+/* ============================================================
+   crowd.js — campus life. Students do things together: talk in
+   circles and laugh at each other's stories, sunbathe, play beer
+   pong and frisbee, picnic, sing along to a guitar, take selfies at
+   the fountain, study on the grass, sit on benches and café chairs.
+
+   Each group is a scene with its own little state machine; the scene
+   sets what each member wants to be doing (a posture, overlays such
+   as laugh/talk/drink, where to look, what to hold) and every member
+   eases toward it, so nobody snaps between poses. Groups are also the
+   social network knowledge travels along: teach one member and they
+   pass it on to the rest (word of mouth, see Life.update).
+   ============================================================ */
+
+const LIN = (h) => hex2rgb(h).map((c) => Math.pow(c, 2.2));
+
+/* ---------- things people hold ---------- */
+function buildCrowdProps(gl) {
+  const P = {};
+  const mk = (fn, cap = 512) => { const b = new Builder(cap); fn(b); return b.upload(gl); };
+  const red = mat(0, LIN('#c8201c'), { rough: 0.35 }), white = mat(0, [0.82, 0.82, 0.8], { rough: 0.45 });
+  const amber = mat(0, LIN('#e0a83c'), { rough: 0.08, glow: 0.05 });
+  // party cup, origin at its base
+  P.cup = mk((b) => {
+    b.add(pCyl(14, false, true, 0.5, 0.36), xform([0, 0.06, 0], [0, 0, 0], [0.094, 0.12, 0.094]), red);
+    b.add(pTorus(0.09, 14, 4), xform([0, 0.12, 0], [0, 0, 0], [0.094, 0.094, 0.094]), white);
+    b.add(pCyl(14, true, false), xform([0, 0.1, 0], [0, 0, 0], [0.088, 0.004, 0.088]), amber);
+  });
+  // takeaway coffee
+  P.coffee = mk((b) => {
+    b.add(pCyl(14, true, true, 0.5, 0.4), xform([0, 0.065, 0], [0, 0, 0], [0.085, 0.13, 0.085]), white);
+    b.add(pCyl(14, false, false, 0.5, 0.46), xform([0, 0.06, 0], [0, 0, 0], [0.088, 0.05, 0.088]), mat(TX.FABRIC, LIN('#8a5a36'), { uv: 'local', tile: 0.2 }));
+    b.add(pCyl(14, true, true, 0.46, 0.52), xform([0, 0.138, 0], [0, 0, 0], [0.09, 0.018, 0.09]), mat(0, [0.05, 0.05, 0.05], { rough: 0.4 }));
+  });
+  // phone: screen faces +z, long side along y
+  P.phone = mk((b) => {
+    b.add(BOX, xform([0, 0, 0], [0, 0, 0], [0.074, 0.152, 0.009]), mat(0, [0.02, 0.02, 0.025], { rough: 0.25, metal: 0.4 }));
+    b.add(BOX, xform([0, 0, 0.0048], [0, 0, 0], [0.066, 0.138, 0.001]), mat(0, [0.35, 0.5, 0.75], { glow: 0.55, rough: 0.1 }));
+  });
+  // an open book, spine along y, pages facing +z
+  P.book = mk((b) => {
+    const cover = mat(0, LIN('#2a4a7a'), { rough: 0.7 }), page = mat(0, [0.85, 0.83, 0.76], { rough: 0.9 });
+    for (const s of [-1, 1]) {
+      b.add(BOX, xform([s * 0.075, 0, -0.012], [0, s * 0.22, 0], [0.15, 0.21, 0.006]), cover);
+      b.add(BOX, xform([s * 0.072, 0, -0.004], [0, s * 0.22, 0], [0.14, 0.2, 0.012]), page);
+    }
+  });
+  P.laptop = mk((b) => {
+    const alu = mat(0, [0.55, 0.56, 0.58], { rough: 0.35, metal: 0.8 });
+    b.add(BOX, xform([0, 0.009, 0], [0, 0, 0], [0.32, 0.018, 0.22]), alu);
+    b.add(BOX, xform([0, 0.11, -0.13], [-0.3, 0, 0], [0.32, 0.21, 0.01]), alu);
+    b.add(BOX, xform([0, 0.11, -0.124], [-0.3, 0, 0], [0.29, 0.18, 0.002]), mat(0, [0.4, 0.55, 0.8], { glow: 0.6, rough: 0.1 }));
+  });
+  // guitar: body at the origin, neck along +x, strings facing +z
+  P.guitar = mk((b) => {
+    const wood = mat(TX.WOOD, LIN('#b87a3a'), { uv: 'local', tile: 0.3, rough: 0.35 });
+    const dark = mat(0, LIN('#2a1a10'), { rough: 0.5 });
+    b.add(SPHERE, xform([-0.07, 0, 0], [0, 0, 0], [0.38, 0.34, 0.1]), wood);
+    b.add(SPHERE, xform([0.14, 0, 0], [0, 0, 0], [0.28, 0.26, 0.1]), wood);
+    b.add(pCyl(16), xform([0.04, 0, 0.049], [Math.PI / 2, 0, 0], [0.09, 0.004, 0.09]), dark);
+    b.add(BOX, xform([0.5, 0, 0.03], [0, 0, 0], [0.5, 0.05, 0.028]), dark);
+    b.add(BOX, xform([0.8, 0, 0.02], [0, 0, 0.12], [0.16, 0.075, 0.022]), wood);
+    b.add(BOX, xform([-0.15, 0, 0.05], [0, 0, 0], [0.03, 0.09, 0.012]), dark);
+  });
+  P.frisbee = mk((b) => {
+    const c = mat(0, LIN('#f2a51c'), { rough: 0.4, glow: 0.04 });
+    b.add(pCyl(20, true, true, 0.5, 0.46), xform([0, 0, 0], [0, 0, 0], [0.27, 0.024, 0.27]), c);
+    b.add(pTorus(0.07, 20, 5), xform([0, -0.008, 0], [0, 0, 0], [0.27, 0.27, 0.27]), c);
+  });
+  P.sack = mk((b) => {
+    b.add(SPHERE_LO, xform([0, 0, 0], [0, 0, 0], [0.06, 0.055, 0.06]), mat(TX.FABRIC, LIN('#3a7ac8'), { uv: 'local', tile: 0.05 }));
+    b.add(SPHERE_LO, xform([0, 0.004, 0], [0.5, 0, 0], [0.061, 0.03, 0.061]), mat(TX.FABRIC, LIN('#e0b020'), { uv: 'local', tile: 0.05 }));
+  });
+  P.ball = mk((b) => b.add(SPHERE_LO, xform([0, 0, 0], [0, 0, 0], [0.04, 0.04, 0.04]), mat(0, [0.95, 0.93, 0.88], { rough: 0.3, glow: 0.08 })));
+  P.bottle = mk((b) => {
+    const g = mat(0, LIN('#2f6a3a'), { rough: 0.08, metal: 0.1 });
+    b.add(pCyl(12), xform([0, 0.075, 0], [0, 0, 0], [0.062, 0.15, 0.062]), g);
+    b.add(pCyl(12, true, true, 0.2, 0.5), xform([0, 0.17, 0], [0, 0, 0], [0.062, 0.04, 0.062]), g);
+    b.add(pCyl(10), xform([0, 0.21, 0], [0, 0, 0], [0.026, 0.05, 0.026]), g);
+  });
+  P.sandwich = mk((b) => {
+    b.add(TRI, xform([0, 0, 0], [Math.PI / 2, 0, 0], [0.11, 0.035, 0.1]), mat(0, LIN('#e6cf9a'), { rough: 0.9 }));
+    b.add(TRI, xform([0, 0, 0.001], [Math.PI / 2, 0, 0], [0.1, 0.037, 0.092]), mat(0, LIN('#6aa84a'), { rough: 0.9 }));
+  });
+  P.can = mk((b) => {
+    b.add(pCyl(12), xform([0, 0.06, 0], [0, 0, 0], [0.066, 0.12, 0.066]), mat(0, LIN('#d8322a'), { rough: 0.3, metal: 0.6 }));
+    b.add(pCyl(12), xform([0, 0.121, 0], [0, 0, 0], [0.06, 0.004, 0.06]), mat(0, [0.7, 0.7, 0.72], { rough: 0.3, metal: 0.9 }));
+  });
+  // held item poses in the hand frame (right hand; the left mirrors x)
+  P.hold = {
+    cup:      { t: [0.035, -0.035, -0.06], r: [Math.PI / 2, 0, 0], s: 1 },
+    coffee:   { t: [0.035, -0.035, -0.065], r: [Math.PI / 2, 0, 0], s: 1 },
+    can:      { t: [0.035, -0.035, -0.06], r: [Math.PI / 2, 0, 0], s: 1 },
+    bottle:   { t: [0.03, -0.03, -0.1], r: [Math.PI / 2, 0, 0], s: 1 },
+    phone:    { t: [0.01, -0.07, 0.0], r: [-Math.PI / 2, Math.PI, 0], s: 1 },
+    book:     { t: [0.07, -0.06, 0.02], r: [-Math.PI / 2, Math.PI, 0], s: 1 },
+    sandwich: { t: [0.02, -0.06, 0.02], r: [0, 0, 0], s: 1 },
+    frisbee:  { t: [0.0, -0.09, 0.04], r: [0, 0, Math.PI / 2], s: 1 },
+    sack:     { t: [0.0, -0.05, 0.02], r: [0, 0, 0], s: 1 },
+    ball:     { t: [0.0, -0.035, 0.03], r: [0, 0, 0], s: 1 },
+  };
+  return P;
+}
+
+/* ---------- things that stay put: towels, blankets, the pong tables ---------- */
+function crowdTowel(b, x, y, z, yaw, cA, cB) {
+  const F = (lx, lz) => [x + lx * Math.cos(yaw) + lz * Math.sin(yaw), y, z - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+  const A = mat(TX.FABRIC, LIN(cA), { uv: 'local', tile: 0.4, rough: 0.95 }), B2 = mat(TX.FABRIC, LIN(cB), { uv: 'local', tile: 0.4, rough: 0.95 });
+  b.add(BOX, xform(F(0, 0), [0, yaw, 0], [0.82, 0.014, 1.86]), A);
+  for (const lz of [-0.62, 0, 0.62]) { const p = F(0, lz); p[1] += 0.005; b.add(BOX, xform(p, [0, yaw, 0], [0.822, 0.014, 0.14]), B2); }
+}
+function crowdBlanket(b, x, y, z, yaw, cA, cB, size = 2.1) {
+  const F = (lx, lz) => [x + lx * Math.cos(yaw) + lz * Math.sin(yaw), y, z - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+  const A = mat(TX.FABRIC, LIN(cA), { uv: 'local', tile: 0.5, rough: 0.95 }), B2 = mat(TX.FABRIC, LIN(cB), { uv: 'local', tile: 0.5, rough: 0.95 });
+  b.add(BOX, xform(F(0, 0), [0, yaw, 0], [size, 0.012, size]), A);
+  const n = 6, q = size / n;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+    if ((i + j) % 2) continue;
+    const p = F(-size / 2 + (i + 0.5) * q, -size / 2 + (j + 0.5) * q); p[1] += 0.004;
+    b.add(BOX, xform(p, [0, yaw, 0], [q, 0.012, q]), B2);
+  }
+}
+function crowdBasket(b, x, y, z, yaw) {
+  const wicker = mat(TX.WOOD, LIN('#9a6a38'), { uv: 'local', tile: 0.15, rough: 0.9 });
+  b.add(BOX, xform([x, y + 0.12, z], [0, yaw, 0], [0.44, 0.24, 0.3]), wicker);
+  b.add(pTorus(0.04, 16, 4), xform([x, y + 0.24, z], [Math.PI / 2, yaw, 0], [0.34, 0.34, 0.34]), wicker);
+  b.add(pCyl(12), xform([x + 0.4 * Math.cos(yaw), y + 0.007, z - 0.4 * Math.sin(yaw)], [0, 0, 0], [0.24, 0.014, 0.24]), mat(0, [0.85, 0.85, 0.82], { rough: 0.4 }));
+  b.add(SPHERE_LO, xform([x + 0.4 * Math.cos(yaw), y + 0.04, z - 0.4 * Math.sin(yaw)], [0, 0, 0], [0.07, 0.06, 0.07]), mat(0, LIN('#b0282a'), { rough: 0.4 }));
+  b.add(SPHERE_LO, xform([x + 0.45 * Math.cos(yaw) + 0.05, y + 0.04, z - 0.45 * Math.sin(yaw)], [0, 0, 0], [0.06, 0.055, 0.06]), mat(0, LIN('#7ab040'), { rough: 0.4 }));
+}
+function crowdPongTable(b, x, y, z, yaw) {
+  const top = mat(0, [0.78, 0.78, 0.76], { rough: 0.45 }), leg = mat(0, [0.15, 0.15, 0.16], { rough: 0.4, metal: 0.6 });
+  const F = (lx, ly, lz) => [x + lx * Math.cos(yaw) + lz * Math.sin(yaw), y + ly, z - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+  b.add(BOX, xform(F(0, 0.72, 0), [0, yaw, 0], [0.62, 0.035, 2.44]), top);
+  b.add(BOX, xform(F(0, 0.739, 0), [0, yaw, 0], [0.62, 0.004, 0.05]), mat(0, LIN('#1f3a8a'), { rough: 0.5 }));
+  for (const lz of [-1.05, 1.05]) for (const lx of [-0.26, 0.26]) b.add(BOX, xform(F(lx, 0.36, lz), [0, yaw, 0], [0.035, 0.72, 0.035]), leg);
+  for (const lz of [-1.05, 1.05]) b.add(BOX, xform(F(0, 0.12, lz), [0, yaw, 0], [0.52, 0.03, 0.03]), leg);
+  // a cool box and a little speaker by the table
+  const cb = F(0.75, 0, 1.6);
+  b.add(BOX, xform([cb[0], y + 0.19, cb[2]], [0, yaw + 0.3, 0], [0.55, 0.36, 0.36]), mat(0, LIN('#2a6ab8'), { rough: 0.4 }));
+  b.add(BOX, xform([cb[0], y + 0.39, cb[2]], [0, yaw + 0.3, 0], [0.57, 0.05, 0.38]), mat(0, [0.85, 0.85, 0.83], { rough: 0.4 }));
+  const sp = F(-0.72, 0, -1.55);
+  b.add(pCyl(14), xform([sp[0], y + 0.08, sp[2]], [0, yaw, Math.PI / 2], [0.14, 0.26, 0.14]), mat(TX.FABRIC, [0.05, 0.05, 0.055], { uv: 'local', tile: 0.1 }));
+}
+function crowdGuitarCase(b, x, y, z, yaw) {
+  b.add(BOX, xform([x, y + 0.04, z], [0, yaw, 0], [0.42, 0.08, 1.05]), mat(0, [0.03, 0.03, 0.035], { rough: 0.5 }));
+  b.add(BOX, xform([x, y + 0.075, z], [0, yaw, 0], [0.36, 0.01, 0.98]), mat(TX.FABRIC, LIN('#8a1a2a'), { uv: 'local', tile: 0.2 }));
+}
+
+/* ---------- where the groups are ----------
+   type · x z · yaw · n (members) · extra. Positions are nudged at build time
+   until they are clear of buildings, trees, lamps, paths and water. */
+const CROWD_SCENES = [
+  // the Great Court lawns and the fountain
+  { type: 'pong', x: -17, z: 18, yaw: Math.PI / 4, n: 7 },
+  { type: 'guitar', x: -18, z: -17, yaw: 0.4, n: 5 },
+  { type: 'sunbathe', x: 19, z: -18, yaw: 0.25, n: 3 },
+  { type: 'frisbee', x: 12, z: 27, x2: 26, z2: 14, n: 2 },
+  { type: 'chat', x: 23, z: 25, yaw: 0, n: 4 },
+  { type: 'picnic', x: 8.5, z: -22, yaw: 0.6, n: 3 },
+  { type: 'selfie', x: -7.2, z: 7.8, yaw: Math.atan2(-0.68, 0.73), n: 3 },
+  { type: 'rim', x: 0, z: 0, n: 2, a0: 2.25 },
+  { type: 'chat', x: 9, z: 38.5, yaw: 0, n: 3 },
+  { type: 'chat', x: -26, z: -37.5, yaw: 0, n: 2 },
+  // the Backs
+  { type: 'pong', x: -100, z: 30, yaw: 0.1, n: 7 },
+  { type: 'sunbathe', x: -142, z: -26, yaw: 0.4, n: 4 },
+  { type: 'frisbee', x: -120, z: -38, x2: -103, z2: -24, n: 3 },
+  { type: 'picnic', x: -172, z: 20, yaw: 0.2, n: 4 },
+  { type: 'hacky', x: -84, z: -28, yaw: 0, n: 4 },
+  { type: 'chat', x: -197, z: -42, yaw: 0, n: 3 },
+  { type: 'study', x: -128, z: 30, yaw: -0.4, n: 2 },
+  { type: 'bank', x: -226, z: -18, yaw: -Math.PI / 2, n: 2 },
+  { type: 'guitar', x: -160, z: 44, yaw: 2.4, n: 4 },
+  // the playing fields and the pavilion
+  { type: 'frisbee', x: -48, z: -254, x2: -26, z2: -240, n: 3 },
+  { type: 'chat', x: 16, z: -210, yaw: 0, n: 4 },
+  { type: 'picnic', x: 46, z: -232, yaw: -0.3, n: 3 },
+  { type: 'sunbathe', x: -72, z: -226, yaw: 0.1, n: 2 },
+  { type: 'hacky', x: 72, z: -262, yaw: 0, n: 3 },
+  // the Engine House roof
+  { type: 'pong', dept: 'engine', roof: true, n: 6 },
+];
+/* two groups outside each department, on the side you walk up from */
+const DEPT_SCENES = {
+  foundry:     [{ type: 'chat', n: 4 }, { type: 'picnic', n: 3 }],
+  observatory: [{ type: 'sunbathe', n: 3 }, { type: 'study', n: 2 }, { type: 'chat', n: 2 }],
+  helix:       [{ type: 'frisbee', n: 2 }, { type: 'chat', n: 3 }, { type: 'sunbathe', n: 2 }],
+  lattice:     [{ type: 'hacky', n: 4 }, { type: 'sunbathe', n: 2 }],
+  engine:      [{ type: 'chat', n: 3 }, { type: 'selfie', n: 3 }],
+};
+
+/* ============================================================ */
+const ACT_KEYS = ['talk', 'laugh', 'nod', 'phone', 'drink', 'eat', 'clap', 'cheer', 'handsHead', 'wave', 'point', 'shade', 'crossArms', 'pockets', 'hipR', 'sway'];
+const newAct = () => { const o = {}; for (const k of ACT_KEYS) o[k] = 0; return o; };
+const POST_STATE = { stand: 'idle', seat: 'sit', cross: 'cross', sitGround: 'sitGround', lieBack: 'lieBack', lieFront: 'lieFront', squat: 'squat', kneel: 'kneel' };
+const SURF_LIFT = 0.06;        // lawns +0.078, paths +0.07, paving +0.035 above groundH
+const PONG_CUPS = [[-0.094, 1.12], [0, 1.12], [0.094, 1.12], [-0.047, 1.039], [0.047, 1.039], [0, 0.958]];
+const TABLE_TOP = 0.7375;
+
+class Crowd {
+  constructor(gl, life, game) {
+    this.gl = gl; this.life = life; this.game = game;
+    this.rnd = mulberry(80801);
+    this.props = buildCrowdProps(gl);
+    this.scenes = [];
+    this.flying = [];          // balls, discs and sacks in the air
+    this.bubbles = [];         // speech bubbles over heads
+    this.bubbleTex = new Map();
+    this.m = M4.create(); this.m2 = M4.create(); this.m3 = M4.create();
+    const B = new ChunkedBuilder(64);
+    this.B = B;
+    for (const def of CROWD_SCENES) this.addScene(def);
+    for (const d of DISTRICTS) {
+      const list = DEPT_SCENES[d.id] || [];
+      list.forEach((def, k) => { if (!def.roof) this.addScene(Object.assign({ dept: d.id, k, m: list.length }, def)); });
+    }
+    this.addSeats();
+    this.staticChunks = B.upload(gl);
+    this.B = null;
+  }
+
+  /* ---------- placement ---------- */
+  clearAt(x, z, r, paths) {
+    if (!isWalkable(x, z) || Math.abs(x - riverX(z)) < 13.5 + r) return false;
+    if (Math.abs(x) > WORLD_HALF - 10 || Math.abs(z) > WORLD_HALF - 10) return false;
+    for (const c of this.game.colliders) {
+      if (c.obb) {
+        const dx = x - c.x, dz = z - c.z, co = Math.cos(c.yaw), si = Math.sin(c.yaw);
+        const lx = dx * co - dz * si, lz = dx * si + dz * co;
+        if (Math.abs(lx) < c.hw + r && Math.abs(lz) < c.hd + r) return false;
+      } else if ((x - c.x) ** 2 + (z - c.z) ** 2 < (c.r + r) ** 2) return false;
+    }
+    if (paths) for (const p of this.game.world.paths) {
+      for (let k = 0; k < p.pts.length - 1; k++) {
+        const [x0, z0] = p.pts[k], [x1, z1] = p.pts[k + 1];
+        const vx = x1 - x0, vz = z1 - z0, L2 = vx * vx + vz * vz || 1;
+        const u = clamp(((x - x0) * vx + (z - z0) * vz) / L2, 0, 1);
+        if (Math.hypot(x - (x0 + vx * u), z - (z0 + vz * u)) < p.w / 2 + r + 0.6) return false;
+      }
+    }
+    for (const sc of this.scenes) if (Math.hypot(x - sc.x, z - sc.z) < sc.r + r + 1.5) return false;
+    for (const d of DISTRICTS) if (Math.hypot(x - d.cx, z - d.cz) < 13 + r) return false;
+    return true;
+  }
+  nudge(x, z, r, paths = true) {
+    if (this.clearAt(x, z, r, paths)) return [x, z];
+    for (let rad = 1.5; rad < 30; rad += 1.5) {
+      const n = Math.max(8, Math.round(rad * 3));
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * TAU + rad;
+        const nx = x + Math.cos(a) * rad, nz = z + Math.sin(a) * rad;
+        if (this.clearAt(nx, nz, r, paths)) return [nx, nz];
+      }
+    }
+    return null;
+  }
+
+  /* a new member of a scene: a student with a place, a posture and a routine */
+  member(sc, x, z, yaw, post, o = {}) {
+    const L = this.life, R = this.rnd;
+    const s = L.makeStudent(L.students.length, x, z, yaw);
+    s.scene = sc; s.state = 'scene';
+    s.post = post; s.postFrom = post; s.pblend = 1;
+    s.hx = x; s.hz = z; s.faceYaw = yaw; s.yaw = yaw;
+    s.y0 = o.y0 == null ? null : o.y0;
+    s.seat = o.seat || 0.46; s.v = o.v == null ? (R() * 4) | 0 : o.v;
+    s.hold = { R: o.holdR || null, L: o.holdL || null };
+    s.act = newAct(); s.W = newAct(); s.base = newAct();
+    s.lv = (R() * 3) | 0; s.look = null; s.ly = 0; s.lp = 0;
+    s.laughFrom = 0; s.laughUntil = 0; s.laughAmp = 1;
+    s.lookOpts = { summer: !!o.summer, mixed: !o.summer, pack: o.pack !== false && post === 'stand' };
+    s.goal = null; s.moving = false; s.ikL = null; s.ikR = null; s.kickNow = 0; s.jumpNow = 0;
+    s.idle = R() * 6; s.sipT = 3 + R() * 10;
+    // standing habits: some people fold their arms, some keep their hands in their pockets
+    if (post === 'stand' && !o.holdR) {
+      const h = R();
+      if (h < 0.22) s.base.crossArms = 0.9; else if (h < 0.4) s.base.pockets = 0.9; else if (h < 0.5) s.base.hipR = 0.8;
+    }
+    sc.members.push(s);
+    L.students.push(s);
+    return s;
+  }
+
+  addScene(def) {
+    const R = this.rnd, B = this.B;
+    let x = def.x, z = def.z, yaw = def.yaw || 0, y0 = null;
+    if (def.dept) {
+      const D = DEPT[def.dept], d = DISTRICTS.find((q) => q.id === def.dept);
+      if (def.roof) { x = D.bx; z = D.bz; yaw = D.yaw; y0 = 11.1; }
+      else {
+        // out on the approach side of the forecourt, spread either side of the path
+        let ax = d.cx - D.bx, az = d.cz - D.bz; const al = Math.hypot(ax, az) || 1; ax /= al; az /= al;
+        const lat = (def.k - (def.m - 1) / 2) * 15;
+        x = d.cx + ax * (24 + (def.k % 2) * 5) + az * lat; z = d.cz + az * (24 + (def.k % 2) * 5) - ax * lat;
+        yaw = Math.atan2(ax, az) + (R() - 0.5);
+      }
+    }
+    const radius = { pong: 2.6, chat: 1.3, sunbathe: 1.2 * (def.n || 2) + 0.6, picnic: 1.9, frisbee: 1.2, hacky: 1.4, selfie: 1.0, guitar: 2.2, study: 1.4, bank: 1.6, rim: 0 }[def.type] || 1.5;
+    if (def.type === 'frisbee' && def.x2 == null) {
+      // a department's frisbee pair: a line across the lawn
+      const a = yaw + Math.PI / 2;
+      def = Object.assign({}, def, { x: x - Math.sin(a) * 7, z: z - Math.cos(a) * 7, x2: x + Math.sin(a) * 7, z2: z + Math.cos(a) * 7 });
+      x = def.x; z = def.z;
+    }
+    if (y0 == null && def.type !== 'rim' && def.type !== 'bank') {
+      const p = this.nudge(x, z, radius, def.type !== 'chat' || !!def.dept);
+      if (!p) return null;
+      x = p[0]; z = p[1];
+    }
+    const sc = { type: def.type, x, z, yaw, y0, r: radius, members: [], clock: R() * 10, near: false, dist: 999, def };
+    // lawns and paths sit a few centimetres above the terrain height
+    const gy = (px, pz) => (y0 == null ? groundH(px, pz) + SURF_LIFT : y0);
+    const F = (lx, lz) => [x + lx * Math.cos(yaw) + lz * Math.sin(yaw), z - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+    const n = def.n || 3;
+    const TOWELS = [['#e84a5f', '#ffffff'], ['#2a9df4', '#ffe066'], ['#3ac47d', '#ffffff'], ['#f7a440', '#8a3ab9'], ['#ffffff', '#1f5fa8'], ['#ff7eb6', '#fff3b0']];
+    switch (def.type) {
+      case 'chat': {
+        const rr = 0.55 + n * 0.14;
+        for (let i = 0; i < n; i++) {
+          const a = yaw + (i / n) * TAU + (R() - 0.5) * 0.3;
+          const px = x + Math.sin(a) * rr, pz = z + Math.cos(a) * rr;
+          const hold = R() < 0.35 ? (R() < 0.5 ? 'coffee' : 'cup') : null;
+          this.member(sc, px, pz, Math.atan2(x - px, z - pz) + (R() - 0.5) * 0.25, 'stand', { holdR: hold, y0, summer: R() < 0.4 });
+        }
+        break;
+      }
+      case 'pong': {
+        const p0 = [x, z];
+        crowdPongTable(B.at(x, z), x, gy(x, z), z, yaw);
+        sc.cups = [];
+        for (const side of [1, -1]) for (const [lx, lz] of PONG_CUPS) sc.cups.push({ lx: lx * side, lz: lz * side, side, up: true });
+        const spots = [[0.36, 1.55, Math.PI], [-0.36, 1.55, Math.PI], [0.36, -1.55, 0], [-0.36, -1.55, 0],
+          [1.3, 0.45, -Math.PI / 2], [-1.35, -0.3, Math.PI / 2], [1.35, -0.55, -Math.PI / 2], [-1.3, 0.6, Math.PI / 2]];
+        for (let i = 0; i < Math.min(n, spots.length); i++) {
+          const [lx, lz, ly] = spots[i], p = F(lx + (i >= 4 ? (R() - 0.5) * 0.3 : 0), lz);
+          this.member(sc, p[0], p[1], yaw + ly + (i >= 4 ? (R() - 0.5) * 0.4 : 0), 'stand', { y0, summer: R() < 0.6, holdR: i >= 4 && R() < 0.6 ? 'cup' : null, pack: false });
+        }
+        sc.pong = { team: 0, shooter: 0, phase: 'aim', timer: 2 + R() * 2, streak: 0 };
+        void p0;
+        break;
+      }
+      case 'sunbathe': {
+        for (let i = 0; i < n; i++) {
+          const lx = (i - (n - 1) / 2) * 1.15, p = F(lx, (R() - 0.5) * 0.4);
+          const col = TOWELS[(i + Math.abs((x * 7) | 0)) % TOWELS.length];
+          crowdTowel(B.at(p[0], p[1]), p[0], gy(p[0], p[1]) + 0.028, p[1], yaw, col[0], col[1]);
+          const front = R() < 0.35;
+          // shift the pelvis toward the head end so the whole body lies on the towel
+          const sh = front ? 0.1 : -0.1;
+          const m = this.member(sc, p[0] + Math.sin(yaw) * sh, p[1] + Math.cos(yaw) * sh, yaw, front ? 'lieFront' : 'lieBack', { y0, summer: true, pack: false, holdR: front ? (R() < 0.5 ? 'book' : 'phone') : null });
+          m.routine = 0; m.nextT = 4 + R() * 16;
+        }
+        break;
+      }
+      case 'picnic': {
+        crowdBlanket(B.at(x, z), x, gy(x, z) + 0.026, z, yaw, R() < 0.5 ? '#c8283a' : '#2a5ab8', '#f2efe6');
+        crowdBasket(B.at(x, z), x + 0.2, gy(x, z) + 0.03, z - 0.1, yaw + 0.4);
+        const posts = ['cross', 'sitGround', 'cross', 'lieFront', 'sitGround'];
+        for (let i = 0; i < n; i++) {
+          const a = yaw + (i / n) * TAU + 0.3;
+          const rr = posts[i % posts.length] === 'lieFront' ? 1.35 : 1.0;
+          const px = x + Math.sin(a) * rr, pz = z + Math.cos(a) * rr;
+          const post = posts[i % posts.length];
+          const faceIn = Math.atan2(x - px, z - pz);
+          this.member(sc, px, pz, post === 'lieFront' ? faceIn : faceIn, post, { y0, summer: R() < 0.7, pack: false, holdR: R() < 0.5 ? (R() < 0.5 ? 'can' : 'sandwich') : null });
+        }
+        break;
+      }
+      case 'frisbee': {
+        const pts = [[def.x, def.z], [def.x2, def.z2]];
+        if (n >= 3) {
+          const mx = (def.x + def.x2) / 2, mz = (def.z + def.z2) / 2, dx = def.x2 - def.x, dz = def.z2 - def.z;
+          pts.push([mx - dz * 0.55, mz + dx * 0.55]);
+        }
+        const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length, cz = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+        sc.x = cx; sc.z = cz;
+        pts.forEach(([px, pz], i) => {
+          const q = y0 == null ? (this.nudge(px, pz, 0.8, true) || [px, pz]) : [px, pz];
+          const m = this.member(sc, q[0], q[1], Math.atan2(cx - q[0], cz - q[1]), 'stand', { y0, summer: true, pack: false, holdR: i === 0 ? 'frisbee' : null });
+          m.base.crossArms = 0; m.base.pockets = 0; m.base.hipR = 0;
+        });
+        sc.fr = { holder: 0, phase: 'hold', timer: 1.5 + R() * 2, target: 1 };
+        break;
+      }
+      case 'hacky': {
+        for (let i = 0; i < n; i++) {
+          const a = yaw + (i / n) * TAU, px = x + Math.sin(a) * 1.05, pz = z + Math.cos(a) * 1.05;
+          const m = this.member(sc, px, pz, Math.atan2(x - px, z - pz), 'stand', { y0, summer: R() < 0.5, pack: false });
+          m.base.crossArms = 0; m.base.pockets = 0; m.base.hipR = 0;
+        }
+        sc.hk = { kicker: 0, phase: 'toss', timer: 1 + R(), sack: null, count: 0 };
+        break;
+      }
+      case 'selfie': {
+        const offs = [[0, 0.25], [-0.55, 0], [0.55, 0], [-0.3, -0.45], [0.3, -0.45]];
+        for (let i = 0; i < n; i++) {
+          const [lx, lz] = offs[i], p = F(lx, lz);
+          const m = this.member(sc, p[0], p[1], yaw + (R() - 0.5) * 0.2 - lx * 0.4, 'stand', { y0, holdR: i === 0 ? 'phone' : null, summer: R() < 0.5, pack: false });
+          m.base.crossArms = 0; m.base.pockets = 0;
+        }
+        sc.sf = { phase: 'pose', timer: 2 + R() * 2 };
+        break;
+      }
+      case 'guitar': {
+        crowdGuitarCase(B.at(x, z), x + Math.cos(yaw) * 0.9, gy(x, z) + 0.02, z - Math.sin(yaw) * 0.9, yaw + 0.3);
+        const g = this.member(sc, x, z, yaw, 'cross', { y0, pack: false, v: 0 });
+        g.guitar = true;
+        const posts = ['sitGround', 'cross', 'lieFront', 'sitGround', 'cross'];
+        for (let i = 1; i < n; i++) {
+          const a = yaw + (i - n / 2) * 0.62, rr = 1.9 + (i % 2) * 0.35;
+          const px = x + Math.sin(a) * rr, pz = z + Math.cos(a) * rr;
+          const post = posts[(i - 1) % posts.length];
+          this.member(sc, px, pz, Math.atan2(x - px, z - pz), post, { y0, summer: R() < 0.5, pack: false, holdR: R() < 0.35 ? 'can' : null });
+        }
+        sc.gu = { playing: false, timer: 3 + R() * 4, beat: 0, chord: 0, song: (R() * 3) | 0 };
+        break;
+      }
+      case 'study': {
+        for (let i = 0; i < n; i++) {
+          const p = F((i - (n - 1) / 2) * 1.4, 0);
+          const lap = i % 2 === 0;
+          const m = this.member(sc, p[0], p[1], yaw + (R() - 0.5) * 0.6, lap ? 'cross' : 'lieFront', { y0, pack: false, holdR: lap ? null : 'book' });
+          m.laptop = lap;
+        }
+        break;
+      }
+      case 'bank': {
+        // sitting on the bank above the river, feet toward the water
+        for (let i = 0; i < n; i++) {
+          const zz = z + i * 1.3, xx = riverX(zz) + 14.6;
+          this.member(sc, xx, zz, -Math.PI / 2 + (R() - 0.5) * 0.3, 'sitGround', { summer: R() < 0.5, pack: false, holdR: R() < 0.5 ? 'bottle' : null });
+        }
+        sc.x = riverX(z) + 14.6;
+        break;
+      }
+      case 'rim': {
+        // on the fountain's rim, facing out
+        for (let i = 0; i < n; i++) {
+          const a = (def.a0 || 2.3) + i * 0.3, rr = 5.05;
+          const px = Math.cos(a) * rr, pz = Math.sin(a) * rr;
+          this.member(sc, px, pz, Math.atan2(px, pz), 'seat', { seat: 0.78, y0: 0.035, holdR: i === 0 ? 'coffee' : 'phone' });
+        }
+        sc.x = Math.cos(def.a0 || 2.3) * 5; sc.z = Math.sin(def.a0 || 2.3) * 5;
+        break;
+      }
+    }
+    if (!sc.members.length) return null;
+    this.scenes.push(sc);
+    return sc;
+  }
+
+  /* benches and café chairs from the world, some of them occupied */
+  addSeats() {
+    const R = this.rnd, seats = this.game.world.seats || [];
+    let benches = 0, cafes = 0;
+    for (const st of seats) {
+      if (st.kind === 'bench') {
+        if (benches >= 12 || R() > 0.3) continue;
+        if (st.x < -300 || Math.abs(st.z - 205) < 12) continue;
+        benches++;
+        const sc = { type: 'seat', x: st.x, z: st.z, yaw: st.yaw, y0: null, r: 1, members: [], clock: R() * 10, near: false, dist: 999, def: {} };
+        const two = R() < 0.55;
+        const places = two ? [-0.42, 0.42] : [(R() - 0.5) * 0.6];
+        for (const lx of places) {
+          const px = st.x + Math.cos(st.yaw) * lx - Math.sin(st.yaw) * 0.05, pz = st.z - Math.sin(st.yaw) * lx - Math.cos(st.yaw) * 0.05;
+          const pick = R();
+          this.member(sc, px, pz, st.yaw, 'seat', { seat: 0.44, holdR: pick < 0.3 ? 'book' : pick < 0.55 ? 'phone' : pick < 0.75 ? 'coffee' : pick < 0.85 ? 'sandwich' : null });
+        }
+        this.scenes.push(sc);
+      } else if (st.kind === 'cafe') {
+        if (cafes >= 9 || R() > 0.75) continue;
+        cafes++;
+        const sc = { type: 'seat', x: st.x, z: st.z, yaw: st.yaw, y0: null, r: 1, members: [], clock: R() * 10, near: false, dist: 999, def: {}, cafe: st.table };
+        // café chairs are grouped per table: find the table's scene if it exists
+        const same = this.scenes.find((q) => q.cafe === st.table && q.members.length < 2);
+        const host = same || sc;
+        this.member(host, st.x, st.z, st.yaw, 'seat', { seat: 0.45, holdR: R() < 0.7 ? 'coffee' : 'phone' });
+        if (!same) this.scenes.push(sc);
+      }
+    }
+  }
+
+  /* ---------- every frame ---------- */
+  update(dt, t) {
+    const G = this.game, px = G.cam.x, pz = G.cam.z;
+    this.night = G.env ? G.env.night || 0 : 0;
+    for (const sc of this.scenes) {
+      sc.dist = Math.hypot(sc.x - px, sc.z - pz);
+      sc.near = sc.dist < 45;
+      sc.acc = (sc.acc || 0) + dt;
+      // far-off groups carry on at a gentler tick; nobody can see them anyway
+      if (sc.dist > 150 && sc.acc < 0.25) continue;
+      const sdt = Math.min(sc.acc, 0.3);
+      sc.acc = 0;
+      sc.clock += sdt;
+      for (const m of sc.members) {
+        const A = m.act, B0 = m.base;
+        for (const k of ACT_KEYS) A[k] = B0[k];
+        m.look = null; m.ikL = null; m.ikR = null; m.jumpNow = 0; m.kickNow = 0; m.readDown = 0;
+      }
+      const fn = this['up_' + sc.type];
+      if (fn) fn.call(this, sc, sdt, sc.clock);
+      for (const m of sc.members) this.react(m, sc, sdt, t);
+      for (const m of sc.members) this.ease(m, sdt);
+    }
+    this.updateFlying(dt);
+    for (const b of this.bubbles) b.t += dt;
+    this.bubbles = this.bubbles.filter((b) => b.t < b.dur);
+  }
+
+  /* ---------- small helpers ---------- */
+  baseY(s) { return s.y0 != null ? s.y0 : groundH(s.x, s.z) + (s.post === 'seat' ? 0 : SURF_LIFT); }
+  head(s) {
+    if (s.hw) return s.hw;
+    const k = s.post === 'stand' ? 1.55 : s.post === 'seat' ? 1.2 : s.post === 'lieBack' || s.post === 'lieFront' ? 0.35 : 0.85;
+    return [s.x, this.baseY(s) + k, s.z];
+  }
+  hand(s) { return s.handR || [s.x + Math.sin(s.yaw) * 0.3, this.baseY(s) + 1.3, s.z + Math.cos(s.yaw) * 0.3]; }
+  sceneP(sc, lx, lz) { return [sc.x + lx * Math.cos(sc.yaw) + lz * Math.sin(sc.yaw), sc.z - lx * Math.sin(sc.yaw) + lz * Math.cos(sc.yaw)]; }
+  /* a world point in someone's own (root) frame */
+  toRoot(s, wx, wy, wz) {
+    const dx = wx - s.x, dz = wz - s.z, c = Math.cos(s.yaw), n = Math.sin(s.yaw);
+    return [dx * c - dz * n, wy - this.baseY(s), dx * n + dz * c];
+  }
+  ik(s, side, x, y, z, w, px, py, pz, f) {
+    const key = side > 0 ? 'IKL' : 'IKR';
+    const o = s[key] || (s[key] = {});
+    o.x = x; o.y = y; o.z = z; o.w = w; o.px = px; o.py = py; o.pz = pz; o.f = f || null; o.pf = f === 'root' ? 'root' : null;
+    if (side > 0) s.ikL = o; else s.ikR = o;
+  }
+  setPost(s, post) { if (s.post === post) return; s.postFrom = s.post; s.post = post; s.pblend = 0; }
+  say(s, text, dur = 3.2) {
+    if (!text || !s) return;
+    const G = this.game;
+    if (Math.hypot(G.cam.x - s.x, G.cam.z - s.z) > 26) return;
+    this.bubbles = this.bubbles.filter((b) => b.s !== s);
+    if (this.bubbles.length >= 5) this.bubbles.shift();
+    this.bubbles.push({ s, text, t: 0, dur });
+  }
+  chatter(s, sc) {
+    const pool = CHATTER[sc.type] || CHATTER.chat;
+    const night = (this.night || 0) > 0.55;
+    let line;
+    if (s.taught > 0 && s.lastConcept && this.rnd() < 0.5) line = pick(CHATTER.learned, this.rnd).replace('{c}', s.lastConcept);
+    else if (sc.members.some((m) => m.confused > 0) && this.rnd() < 0.5) line = pick(CHATTER.feed, this.rnd);
+    else if (night && CHATTER[sc.type + 'Night'] && this.rnd() < 0.6) line = pick(CHATTER[sc.type + 'Night'], this.rnd);
+    else line = pick(this.rnd() < 0.3 ? CHATTER.chat : pool, this.rnd);
+    this.say(s, line);
+  }
+  groupLaugh(sc, M, t) {
+    let n = 0;
+    for (const m of M) {
+      if (m.confused > 0) continue;
+      const d = this.rnd() * 0.45;
+      m.laughFrom = t + d; m.laughUntil = t + d + 1.1 + this.rnd() * 1.9; m.laughAmp = 0.65 + this.rnd() * 0.35;
+      n++;
+    }
+    if (n && sc.dist < 30) CrowdAudio.laughGroup(this.game, M);
+    if (n && sc.near && this.rnd() < 0.3) this.say(M[(this.rnd() * M.length) | 0], pick(CHATTER.laugh, this.rnd), 1.8);
+  }
+
+  /* conversation: someone holds the floor, the others look at them and nod,
+     and every so often a punchline sets the whole group off */
+  social(sc, dt, t, M) {
+    if (!M.length) return;
+    const S = sc.soc || (sc.soc = { speaker: 0, speakT: 1 + this.rnd() * 3, laughAt: 1e9 });
+    if (M.length > 1) {
+      S.speakT -= dt;
+      if (S.speakT <= 0) {
+        if (this.rnd() < 0.4) S.laughAt = t + 0.2 + this.rnd() * 0.5;
+        let nx = S.speaker;
+        for (let k = 0; k < 5 && nx === S.speaker; k++) nx = (this.rnd() * M.length) | 0;
+        S.speaker = nx; S.speakT = 2.5 + this.rnd() * 5;
+        if (sc.near && this.rnd() < 0.6) this.chatter(M[nx], sc);
+      }
+      if (t >= S.laughAt) { S.laughAt = 1e9; this.groupLaugh(sc, M, t); }
+    }
+    for (let i = 0; i < M.length; i++) {
+      const m = M[i], A = m.act;
+      const lying = m.post === 'lieBack' || m.post === 'lieFront';
+      if (M.length > 1 && i === S.speaker % M.length) {
+        A.talk = Math.max(A.talk, m.post === 'stand' ? 0.85 : 0.5);
+        A.crossArms = 0; A.pockets *= 0.3; A.hipR = 0;
+        if (!m.lookT || t > m.lookT) { m.lookT = t + 0.8 + this.rnd() * 2; m.lookIdx = (i + 1 + ((this.rnd() * (M.length - 1)) | 0)) % M.length; }
+        if (!lying) m.look = this.head(M[m.lookIdx % M.length]);
+      } else if (M.length > 1) {
+        if (!lying) m.look = this.head(M[S.speaker % M.length]);
+        if (Math.sin(t * 0.9 + m.phase * 3) > 0.6) A.nod = Math.max(A.nod, 0.6);
+      }
+      if (t > m.laughFrom && t < m.laughUntil) { A.laugh = m.laughAmp; A.talk = 0; }
+    }
+  }
+  /* drinks get drunk and sandwiches eaten */
+  sips(sc, dt, t) {
+    for (const m of sc.members) {
+      const h = m.hold.R;
+      if (!h) continue;
+      if (h === 'sandwich') { m.act.eat = Math.max(m.act.eat, 0.9); continue; }
+      if (h !== 'cup' && h !== 'coffee' && h !== 'can' && h !== 'bottle') continue;
+      m.sipT -= dt;
+      if (m.sipT <= 0) { m.sipUntil = t + 1.2 + this.rnd() * 0.6; m.sipT = 7 + this.rnd() * 12; }
+      if (t < (m.sipUntil || 0)) { m.act.drink = 1; m.act.talk = 0; m.act.laugh *= 0.3; }
+    }
+  }
+  /* phones come out between other things */
+  fidget(sc, dt, t) {
+    for (const m of sc.members) {
+      if (m.hold.R && m.hold.R !== 'phone') continue;
+      m.idle -= dt;
+      if (m.idle <= 0) { m.idle = 8 + this.rnd() * 20; m.phoneUntil = t + 3 + this.rnd() * 5; }
+      if (t < (m.phoneUntil || 0) && m.act.talk < 0.1) { m.act.phone = 0.85; m.holdTmp2 = 'phone'; }
+      else m.holdTmp2 = null;
+    }
+  }
+
+  up_chat(sc, dt, t) { this.social(sc, dt, t, sc.members); this.sips(sc, dt, t); this.fidget(sc, dt, t); }
+  up_rim(sc, dt, t) { this.up_seat(sc, dt, t); }
+  up_bank(sc, dt, t) { this.social(sc, dt, t, sc.members); this.sips(sc, dt, t); }
+
+  up_seat(sc, dt, t) {
+    this.social(sc, dt, t, sc.members);
+    this.sips(sc, dt, t);
+    for (const m of sc.members) {
+      const J = m.ch ? m.ch.J : null;
+      if (!J) continue;
+      if (m.hold.R === 'book' && m.act.talk < 0.2 && !(t > m.laughFrom && t < m.laughUntil)) {
+        // reading: the book held open in both hands, eyes down
+        this.ik(m, -1, -0.07, J.shY - 0.14, 0.3, 0.95, -1, -0.5, -0.3);
+        this.ik(m, 1, 0.07, J.shY - 0.14, 0.3, 0.95, 1, -0.5, -0.3);
+        m.act.phone = 0; m.lp = 0; m.look = null; m.readDown = 0.45;
+      } else if (m.hold.R === 'phone' && m.act.talk < 0.2) { m.act.phone = 0.8; m.readDown = 0; }
+      else m.readDown = 0;
+    }
+  }
+
+  up_picnic(sc, dt, t) {
+    this.social(sc, dt, t, sc.members);
+    this.sips(sc, dt, t);
+    // now and then someone leans in for something from the basket
+    for (const m of sc.members) {
+      if (m.post === 'lieFront') continue;
+      m.reachT = (m.reachT || 5 + this.rnd() * 15) - dt;
+      if (m.reachT <= 0) { m.reachT = 9 + this.rnd() * 18; m.reachUntil = t + 1.4; }
+      if (t < (m.reachUntil || 0)) {
+        const r = this.toRoot(m, sc.x, this.baseY(m) + 0.12, sc.z);
+        const k = Math.sin(clamp((m.reachUntil - t) / 1.4, 0, 1) * Math.PI);
+        this.ik(m, -1, r[0] * 0.7, 0.14, Math.min(r[2] * 0.75, 0.75), k, -1, 0, -0.4, 'root');
+      }
+    }
+  }
+
+  up_sunbathe(sc, dt, t) {
+    const night = (this.night || 0) > 0.55;
+    const M = sc.members;
+    for (let i = 0; i < M.length; i++) {
+      const m = M[i], A = m.act, J = m.ch ? m.ch.J : null;
+      m.nextT -= dt;
+      if (m.nextT <= 0) {
+        m.nextT = 8 + this.rnd() * 20;
+        if (m.post === 'lieFront') m.routine = this.rnd() < 0.7 ? 0 : 1;          // read / chat
+        else m.routine = night ? (this.rnd() < 0.3 ? 3 : 0) : [0, 0, 1, 2, 2][(this.rnd() * 5) | 0];   // rest, chat, sit up for a drink / stargaze
+        if (m.routine === 2) m.nextT = 5 + this.rnd() * 5;
+      }
+      if (m.post !== 'lieFront') this.setPost(m, m.routine === 2 ? 'sitGround' : 'lieBack');
+      const nb = M[i + 1] || M[i - 1];
+      if (m.routine === 1 && nb) {
+        if (m.post !== 'lieBack') m.look = this.head(nb);
+        A.talk = Math.max(A.talk, 0.35);
+        if (m.post === 'lieBack') m.lySet = (i + 1 < M.length ? -0.9 : 0.9);
+      } else m.lySet = 0;
+      if (m.routine === 0 && m.post === 'lieBack' && J && (m.v & 2) === 0) {
+        // hands behind the head
+        this.ik(m, 1, 0.1, J.neck + 0.2, -0.1, 0.9, 1, 0.4, 0);
+        this.ik(m, -1, -0.1, J.neck + 0.2, -0.1, 0.9, -1, 0.4, 0);
+      }
+      if (m.routine === 2) {
+        if (!m.hold.R) m.holdTmp2 = 'bottle';
+        if (Math.sin(t * 0.7 + m.phase) > 0.5) A.drink = 1; else if (!night) A.shade = 0.8;
+      } else m.holdTmp2 = null;
+      if (m.routine === 3) A.point = Math.sin(t * 0.5 + m.phase) > 0.3 ? 0.9 : 0;
+      if (m.post === 'lieFront' && m.hold.R === 'book' && m.routine === 0) m.readDown = 0.2;
+      if (t > m.laughFrom && t < m.laughUntil) A.laugh = m.laughAmp;
+    }
+    if (M.length > 1) {
+      sc.lt = (sc.lt || 10 + this.rnd() * 20) - dt;
+      if (sc.lt <= 0) { sc.lt = 14 + this.rnd() * 26; this.groupLaugh(sc, M, t); if (sc.near) this.chatter(M[(this.rnd() * M.length) | 0], sc); }
+    }
+  }
+
+  up_study(sc, dt, t) {
+    for (const m of sc.members) {
+      const J = m.ch ? m.ch.J : null;
+      if (!J) continue;
+      m.stretchT = (m.stretchT || 12 + this.rnd() * 30) - dt;
+      if (m.stretchT <= 0) { m.stretchT = 25 + this.rnd() * 40; m.stretchUntil = t + 2.2; if (sc.near && this.rnd() < 0.5) this.say(m, pick(CHATTER.study, this.rnd)); }
+      if (t < (m.stretchUntil || 0)) { m.act.cheer = 0.8; m.act.laugh = 0; continue; }
+      if (m.laptop) {
+        // typing: hands over the keys, fingers busy
+        const jig = Math.sin(t * 17 + m.phase) * 0.012;
+        this.ik(m, 1, 0.1, 0.22 + jig, 0.34, 1, 1, -0.3, -0.6, 'root');
+        this.ik(m, -1, -0.1, 0.22 - jig, 0.34, 1, -1, -0.3, -0.6, 'root');
+        m.readDown = 0.5;
+      } else m.readDown = 0.2;
+    }
+    this.social(sc, dt, t, sc.members.length > 1 && Math.sin(t * 0.05 + sc.x) > 0.4 ? sc.members : []);
+  }
+
+  up_selfie(sc, dt, t) {
+    const F = sc.sf, M = sc.members, h = M[0], J = h.ch ? h.ch.J : null;
+    F.timer -= dt;
+    const phone = [h.x + Math.sin(h.yaw) * 0.55, this.baseY(h) + 2.0, h.z + Math.cos(h.yaw) * 0.55];
+    if (F.phase === 'pose' || F.phase === 'snap') {
+      if (J) this.ik(h, -1, -0.14, J.shY + 0.36, 0.48, 1, -1, -0.6, 0);
+      for (let i = 1; i < M.length; i++) {
+        const m = M[i], Jm = m.ch ? m.ch.J : null;
+        m.look = phone;
+        if (Jm && i % 2) this.ik(m, i % 4 === 1 ? 1 : -1, (i % 4 === 1 ? 1 : -1) * 0.17, Jm.shY + 0.3, 0.12, 1, i % 4 === 1 ? 1 : -1, -0.8, 0);   // a peace sign by the face
+      }
+      h.look = phone;
+      if (F.phase === 'pose' && F.timer <= 0) {
+        F.phase = 'snap'; F.timer = 0.5;
+        if (sc.dist < 40) this.game.particles.burst(phone[0], phone[1] - 0.2, phone[2], 10, { col: [1, 1, 1], speed: 0.6, life: 0.25, size: 0.35, grav: 0, drag: 3 });
+        if (sc.dist < 20) CrowdAudio.click(this.game, h);
+      } else if (F.phase === 'snap' && F.timer <= 0) { F.phase = 'look'; F.timer = 3.5 + this.rnd() * 2; if (this.rnd() < 0.6) this.groupLaugh(sc, M, t); if (sc.near && this.rnd() < 0.5) this.say(M[(this.rnd() * M.length) | 0], pick(CHATTER.selfie, this.rnd)); }
+    } else {
+      // everyone crowds round the screen to see how it came out
+      h.act.phone = 1;
+      const scr = [h.x + Math.sin(h.yaw) * 0.3, this.baseY(h) + 1.35, h.z + Math.cos(h.yaw) * 0.3];
+      for (let i = 1; i < M.length; i++) M[i].look = scr;
+      if (F.timer <= 0) { F.phase = 'pose'; F.timer = 2.5 + this.rnd() * 3; }
+      for (const m of M) if (t > m.laughFrom && t < m.laughUntil) m.act.laugh = m.laughAmp;
+    }
+  }
+
+  up_guitar(sc, dt, t) {
+    const U = sc.gu, M = sc.members, g = M[0], J = g.ch ? g.ch.J : null;
+    U.timer -= dt;
+    if (U.timer <= 0) {
+      if (U.playing) {
+        U.playing = false; U.timer = 7 + this.rnd() * 6; U.clapUntil = t + 2.6;
+        if (sc.near) this.say(M[1 + ((this.rnd() * (M.length - 1)) | 0)], pick(CHATTER.guitarEnd, this.rnd));
+      } else { U.playing = true; U.timer = 34 + this.rnd() * 16; U.song = (U.song + 1) % 3; U.bar = 0; }
+    }
+    const strum = U.playing ? Math.sin(t * TAU * 2.2) : 0;
+    if (J) {
+      // left hand on the neck, right hand over the sound hole
+      this.ik(g, 1, 0.34, 0.2, 0.26, 1, 1, -0.6, -0.4, 'pelvis');
+      this.ik(g, -1, -0.02, 0.08 + strum * 0.05, 0.28, 1, -1, -0.4, -0.3, 'pelvis');
+      if (g.ikL) g.ikL.f = 'pelvis'; if (g.ikR) g.ikR.f = 'pelvis';
+    }
+    g.act.sway = U.playing ? 0.55 : 0; g.act.nod = U.playing ? 0.3 : 0;
+    if (!U.playing) this.social(sc, dt, t, M);
+    for (let i = 1; i < M.length; i++) {
+      const m = M[i];
+      if (U.playing) {
+        m.look = this.head(g);
+        m.act.sway = 0.7; m.act.talk = Math.sin(t * 0.8 + i) > 0.7 ? 0.3 : 0;    // singing along, some of it
+      } else if (t < (U.clapUntil || 0)) { m.act.clap = 1; m.look = this.head(g); }
+    }
+    if (U.playing && sc.dist < 38) CrowdAudio.guitar(this.game, sc, t);
+  }
+
+  up_frisbee(sc, dt, t) {
+    const F = sc.fr, M = sc.members, R = this.rnd;
+    const hold = M[F.holder], tgt = M[F.target % M.length];
+    for (const m of M) { m.act.crossArms = 0; m.act.pockets = 0; }
+    if (F.phase === 'hold' || F.phase === 'windup') {
+      hold.hold.R = 'frisbee';
+      hold.faceYaw = Math.atan2(tgt.x - hold.x, tgt.z - hold.z);
+      hold.look = this.head(tgt);
+      for (const m of M) if (m !== hold) m.look = this.head(hold);
+      F.timer -= dt;
+      const J = hold.ch ? hold.ch.J : null;
+      if (F.phase === 'hold' && F.timer <= 0) { F.phase = 'windup'; F.timer = 0.38; }
+      if (F.phase === 'windup' && J) {
+        // backhand: the disc comes across the body, then snaps out
+        const k = 1 - F.timer / 0.38;
+        this.ik(hold, -1, lerp(0.05, 0.2, k), J.shY - 0.12, lerp(0.35, 0.18, k), 1, -1, 0.2, -0.3);
+        if (F.timer <= 0) {
+          const d = Math.hypot(tgt.hx - hold.x, tgt.hz - hold.z);
+          const lat = (R() - 0.5) * 5, dep = (R() - 0.5) * 3.5;
+          const dx = (tgt.hx - hold.x) / d, dz = (tgt.hz - hold.z) / d;
+          const cx = tgt.hx + dx * dep - dz * lat, cz = tgt.hz + dz * dep + dx * lat;
+          const dur = clamp(d / 8.5, 1.1, 2.4);
+          const from = this.hand(hold);
+          const to = [cx, this.baseY(tgt) + 1.15 + R() * 0.5, cz];
+          this.flying.push({ kind: 'frisbee', p0: from, p1: to, t: 0, dur, h: 1.2 + R() * 1.4, curve: (R() - 0.5) * 2.2, sc, spin: 0 });
+          hold.hold.R = null; F.phase = 'fly'; F.throwT = t;
+          // the catcher sets off at once; a long way off is a dive or a drop
+          tgt.goal = [cx - dx * 0.35, cz - dz * 0.35]; tgt.goalSpeed = Math.min(4.8, Math.hypot(cx - tgt.x, cz - tgt.z) / (dur * 0.9) + 0.4);
+          F.canCatch = Math.hypot(cx - tgt.x, cz - tgt.z) / (dur * 0.9) < 4.6 && R() < 0.86;
+        }
+      }
+    } else if (F.phase === 'fly') {
+      const disc = this.flying.find((f) => f.kind === 'frisbee' && f.sc === sc);
+      for (const m of M) if (disc) m.look = [disc.x, disc.y, disc.z];
+      if (disc && disc.t / disc.dur > 0.72 && F.canCatch) {
+        // reach for it
+        const r = this.toRoot(tgt, disc.x, disc.y, disc.z);
+        const k = clamp((disc.t / disc.dur - 0.72) / 0.2, 0, 1);
+        this.ik(tgt, -1, r[0], Math.min(r[1], 2.1), Math.max(0.25, r[2]), k, -1, -0.4, -0.2, 'root');
+        this.ik(tgt, 1, r[0] + 0.12, Math.min(r[1], 2.1), Math.max(0.25, r[2]), k * 0.8, 1, -0.4, -0.2, 'root');
+      }
+      if (!disc) { F.phase = 'hold'; F.timer = 1; }
+    } else if (F.phase === 'caught') {
+      F.timer -= dt;
+      if (F.timer <= 0) { tgt.goal = [tgt.hx, tgt.hz]; tgt.goalSpeed = 1.3; F.phase = 'return'; }
+    } else if (F.phase === 'return') {
+      if (!tgt.goal) {
+        F.holder = F.target % M.length;
+        let nx = F.holder;
+        for (let k = 0; k < 5 && nx === F.holder; k++) nx = (R() * M.length) | 0;
+        F.target = nx === F.holder ? (F.holder + 1) % M.length : nx;
+        F.phase = 'hold'; F.timer = 0.8 + R() * 2;
+      }
+    } else if (F.phase === 'dropped') {
+      const disc = F.disc;
+      if (!tgt.goal && disc) {
+        tgt.faceYaw = Math.atan2(disc[0] - tgt.x, disc[2] - tgt.z);
+        F.pick = (F.pick || 0) + dt;
+        this.setPost(tgt, 'squat');
+        if (F.pick > 0.9) { this.setPost(tgt, 'stand'); tgt.hold.R = 'frisbee'; F.disc = null; F.pick = 0; tgt.goal = [tgt.hx, tgt.hz]; tgt.goalSpeed = 1.3; F.phase = 'return'; }
+      }
+    }
+  }
+  /* a frisbee or ball reached the end of its arc */
+  land(f) {
+    const sc = f.sc;
+    if (f.kind === 'frisbee') {
+      const F = sc.fr, tgt = sc.members[F.target % sc.members.length];
+      const d = Math.hypot(tgt.x - f.p1[0], tgt.z - f.p1[2]);
+      if (F.canCatch && d < 1.3) {
+        tgt.hold.R = 'frisbee'; tgt.goal = null; F.phase = 'caught'; F.timer = 0.5 + this.rnd() * 0.6;
+        if (sc.near && this.rnd() < 0.35) this.say(sc.members[F.holder], pick(CHATTER.frisbeeGood, this.rnd), 1.8);
+        if (this.rnd() < 0.3) for (const m of sc.members) if (m !== tgt) m.act.clap = 1;
+        return true;
+      }
+      // it skids to a stop on the grass; somebody has to go and get it
+      const dx = f.p1[0] - f.p0[0], dz = f.p1[2] - f.p0[2], L = Math.hypot(dx, dz) || 1;
+      const gx = f.p1[0] + dx / L * (1 + this.rnd() * 2.5), gz = f.p1[2] + dz / L * (1 + this.rnd() * 2.5);
+      F.disc = [gx, groundH(gx, gz) + SURF_LIFT + 0.02, gz];
+      F.phase = 'dropped';
+      tgt.goal = [gx - dx / L * 0.5, gz - dz / L * 0.5]; tgt.goalSpeed = 2.2;
+      if (sc.near && this.rnd() < 0.5) this.say(tgt, pick(CHATTER.frisbeeMiss, this.rnd), 1.8);
+      if (this.rnd() < 0.5) this.groupLaugh(sc, sc.members, sc.clock);
+      return true;
+    }
+    return true;
+  }
+
+  up_hacky(sc, dt, t) {
+    const H = sc.hk, M = sc.members, R = this.rnd;
+    for (const m of M) { m.act.crossArms = 0; m.act.pockets = 0; m.faceYaw = Math.atan2(sc.x - m.x, sc.z - m.z); }
+    const sack = H.sack;
+    if (sack) for (const m of M) m.look = [sack.x, sack.y, sack.z];
+    if (H.phase === 'toss') {
+      H.timer -= dt;
+      const k = M[H.kicker];
+      k.hold.R = 'sack';
+      if (H.timer <= 0) {
+        k.hold.R = null;
+        const from = this.hand(k), to = this.footPt(k, 1);
+        this.flying.push({ kind: 'sack', p0: from, p1: to, t: 0, dur: 0.55, h: 0.5, sc, to: H.kicker, side: 1 });
+        H.phase = 'fly'; H.count = 0;
+      }
+    } else if (H.phase === 'fly') {
+      const f = this.flying.find((q) => q.kind === 'sack' && q.sc === sc);
+      if (f) {
+        const m = M[f.to], u = f.t / f.dur;
+        m.kickNow = u > 0.55 ? Math.sin(clamp((u - 0.55) / 0.55, 0, 1) * Math.PI) * f.side : 0;
+      }
+    } else if (H.phase === 'dropped') {
+      H.timer -= dt;
+      const m = M[H.kicker];
+      if (H.timer < 1.6 && H.timer > 0.5) this.setPost(m, 'squat');
+      else this.setPost(m, 'stand');
+      if (H.timer <= 0) { H.sack = null; H.phase = 'toss'; H.timer = 0.6; }
+    }
+  }
+  footPt(m, side) {
+    const fx = Math.sin(m.yaw), fz = Math.cos(m.yaw), rx = Math.cos(m.yaw), rz = -Math.sin(m.yaw);
+    return [m.x + fx * 0.28 + rx * 0.06 * side, this.baseY(m) + 0.38, m.z + fz * 0.28 + rz * 0.06 * side];
+  }
+  landSack(f) {
+    const sc = f.sc, H = sc.hk, M = sc.members;
+    H.count++;
+    if (this.rnd() < 0.13 && H.count > 2) {
+      // dropped: it falls at their feet and the circle laughs
+      const m = M[f.to], p = this.footPt(m, f.side);
+      H.sack = { x: p[0], y: this.baseY(m) + 0.03, z: p[2] };
+      H.phase = 'dropped'; H.timer = 2.4; H.kicker = f.to;
+      this.groupLaugh(sc, M, sc.clock);
+      if (sc.near && this.rnd() < 0.4) this.say(M[(f.to + 1) % M.length], pick(CHATTER.hacky, this.rnd), 1.8);
+      if (sc.dist < 25) CrowdAudio.tok(this.game, p, 0.4);
+      return;
+    }
+    let nx = f.to;
+    if (this.rnd() > 0.25) { for (let k = 0; k < 5 && nx === f.to; k++) nx = (this.rnd() * M.length) | 0; }
+    const side = this.rnd() < 0.5 ? 1 : -1;
+    const from = this.footPt(M[f.to], f.side), to = this.footPt(M[nx], side);
+    const same = nx === f.to;
+    this.flying.push({ kind: 'sack', p0: from, p1: to, t: 0, dur: same ? 0.62 : 0.8 + this.rnd() * 0.15, h: same ? 0.55 : 1.0 + this.rnd() * 0.5, sc, to: nx, side });
+    if (sc.dist < 22) CrowdAudio.tok(this.game, from, 0.25);
+  }
+
+  up_pong(sc, dt, t) {
+    const P = sc.pong, M = sc.members, R = this.rnd;
+    const si = P.team * 2 + P.shooter, sh = M[si];
+    if (!sc.spect) sc.spect = M.slice(4);
+    const ball = this.flying.find((f) => f.kind === 'ball' && f.sc === sc);
+    for (let i = 0; i < M.length; i++) {
+      const m = M[i];
+      m.act.crossArms = i < 4 ? 0 : m.act.crossArms;
+      if (i !== si) m.look = ball ? [ball.x, ball.y, ball.z] : this.head(sh);
+    }
+    if (P.phase !== 'fly' && P.phase !== 'aim') this.social(sc, dt, t, sc.spect);
+    else for (const m of sc.spect) if (t > m.laughFrom && t < m.laughUntil) m.act.laugh = m.laughAmp;
+    this.sips(sc, dt, t);
+    const J = sh.ch ? sh.ch.J : null;
+    const defSide = P.team === 0 ? -1 : 1;
+    if (P.phase === 'aim') {
+      P.timer -= dt;
+      sh.hold.R = 'ball';
+      sh.act.drink = 0; sh.act.talk = 0;
+      const cups = sc.cups.filter((c) => c.side === defSide && c.up);
+      if (!P.aimCup || !P.aimCup.up || P.aimCup.side !== defSide) P.aimCup = cups[(R() * cups.length) | 0];
+      if (P.aimCup) { const w = this.sceneP(sc, P.aimCup.lx, P.aimCup.lz); sh.look = [w[0], (sc.y0 == null ? groundH(w[0], w[1]) + SURF_LIFT : sc.y0) + TABLE_TOP, w[1]]; }
+      if (J) {
+        // ball cocked in front of the face, a little bounce of the wrist
+        const bob = Math.sin(t * 6) * 0.025 * clamp(P.timer, 0, 1);
+        this.ik(sh, -1, -0.12, J.shY + 0.2 + bob, 0.3, 1, -1, -0.8, 0);
+      }
+      if (P.timer <= 0) this.pongThrow(sc);
+    } else if (P.phase === 'fly') {
+      P.since += dt;
+      if (J) this.ik(sh, -1, -0.08, J.shY + 0.14, 0.55, Math.max(0, 1 - P.since * 1.5), -1, -0.6, 0);
+    } else if (P.phase === 'react') {
+      P.timer -= dt; P.since += dt;
+      const make = P.result === 'make';
+      for (let i = 0; i < M.length; i++) {
+        const m = M[i], team = i < 2 ? 0 : i < 4 ? 1 : -1;
+        if (make) {
+          if (team === P.team && P.since < 1.7) { m.act.cheer = 1; m.jumpNow = Math.max(0, Math.sin(P.since * 10)) * 0.07 * (P.since < 1 ? 1 : 0); m.act.drink = 0; }
+          else if (team === -1 && P.since < 1.6) { if (i % 2) m.act.clap = 1; else m.act.cheer = 0.9; }
+          else if (team === 1 - P.team && m !== P.drinker && P.since < 1.0) m.act.handsHead = 1;
+        } else if (i === si && P.since < 0.8 && P.dramatic) m.act.handsHead = 1;
+      }
+      // the defender nearest the cup picks it up and drinks it
+      if (make && P.drinker && P.cup) {
+        const d = P.drinker, J2 = d.ch ? d.ch.J : null;
+        if (P.since > 0.8 && P.since < 1.35 && P.cup.up) {
+          const w = this.sceneP(sc, P.cup.lx, P.cup.lz);
+          const r = this.toRoot(d, w[0], (sc.y0 == null ? groundH(w[0], w[1]) + SURF_LIFT : sc.y0) + TABLE_TOP + 0.08, w[1]);
+          this.ik(d, -1, r[0], r[1], r[2], Math.sin(clamp((P.since - 0.8) / 0.55, 0, 1) * Math.PI) + 0.01, -1, -0.5, -0.3, 'root');
+          d.look = [w[0], this.baseY(d) + TABLE_TOP, w[1]];
+        }
+        if (P.since >= 1.35 && P.cup.up) { P.cup.up = false; d.hold.R = 'cup'; d.tmpCup = true; }
+        if (P.since > 1.45 && P.since < 2.8) { d.act.drink = 1; d.act.handsHead = 0; }
+        if (P.since >= 2.8 && d.tmpCup) { d.hold.R = null; d.tmpCup = false; }
+        void J2;
+      }
+      if (P.timer <= 0) {
+        if (P.drinker && P.drinker.tmpCup) { P.drinker.hold.R = null; P.drinker.tmpCup = false; }
+        if (P.cup && P.cup.up && make) P.cup.up = false;
+        const left = sc.cups.filter((c) => c.side === defSide && c.up).length;
+        if (!left) {
+          P.phase = 'rerack'; P.timer = 3.4; P.winner = P.team; P.since = 0;
+          if (sc.near) this.say(M[P.team * 2], pick(CHATTER.pongWin, R), 2.4);
+          if (sc.dist < 30) CrowdAudio.cheer(this.game, M[P.team * 2], 3);
+        } else {
+          P.shooter++;
+          if (P.shooter > 1) { P.shooter = 0; P.team = 1 - P.team; }
+          P.phase = 'aim'; P.timer = 1.0 + R() * 1.2; P.aimCup = null;
+        }
+      }
+    } else if (P.phase === 'rerack') {
+      P.timer -= dt; P.since += dt;
+      for (let i = 0; i < M.length; i++) {
+        const m = M[i], team = i < 2 ? 0 : i < 4 ? 1 : -1;
+        if (team === P.winner) { m.act.cheer = P.since < 2 ? 1 : 0; m.jumpNow = P.since < 1.2 ? Math.max(0, Math.sin(P.since * 10)) * 0.08 : 0; }
+        else if (team === -1) m.act.clap = P.since < 2.2 ? 1 : 0;
+        else m.act.handsHead = P.since < 1.2 ? 1 : 0;
+      }
+      if (P.timer <= 0) {
+        for (const c of sc.cups) c.up = true;
+        P.team = 1 - P.winner; P.shooter = 0; P.phase = 'aim'; P.timer = 1.6;
+        if (sc.near) this.say(M[4] || M[0], 'Rerack!', 1.6);
+      }
+    }
+  }
+  pongThrow(sc) {
+    const P = sc.pong, M = sc.members, R = this.rnd;
+    const sh = M[P.team * 2 + P.shooter];
+    const defSide = P.team === 0 ? -1 : 1;
+    const cups = sc.cups.filter((c) => c.side === defSide && c.up);
+    const cup = P.aimCup && P.aimCup.up ? P.aimCup : cups[(R() * cups.length) | 0];
+    const make = !!cup && R() < 0.3 + (6 - cups.length) * 0.015;
+    const baseY = sc.y0 == null ? groundH(sc.x, sc.z) + SURF_LIFT : sc.y0;
+    const from = this.hand(sh).slice();
+    let to;
+    if (make) { const w = this.sceneP(sc, cup.lx, cup.lz); to = [w[0], baseY + TABLE_TOP + 0.09, w[1]]; }
+    else {
+      const a = R() * TAU, r = 0.13 + R() * 0.22;
+      const lx = (cup ? cup.lx : 0) + Math.cos(a) * r, lz = (cup ? cup.lz : defSide) + Math.sin(a) * r * 0.8;
+      const w = this.sceneP(sc, clamp(lx, -0.28, 0.28), clamp(lz, -1.2, 1.2));
+      to = [w[0], baseY + TABLE_TOP + 0.02, w[1]];
+    }
+    const dist = Math.hypot(to[0] - from[0], to[2] - from[2]);
+    this.flying.push({ kind: 'ball', p0: from, p1: to, t: 0, dur: 0.62 + dist * 0.07, h: 0.42 + R() * 0.2, sc, make, cup: make ? cup : null });
+    sh.hold.R = null;
+    P.phase = 'fly'; P.since = 0; P.dramatic = R() < 0.5;
+    // the drinker, if it goes in: whichever defender stands nearer the cup
+    const d0 = M[(1 - P.team) * 2], d1 = M[(1 - P.team) * 2 + 1];
+    if (cup) { const w = this.sceneP(sc, cup.lx, cup.lz); P.drinker = Math.hypot(d0.x - w[0], d0.z - w[1]) < Math.hypot(d1.x - w[0], d1.z - w[1]) ? d0 : d1; }
+  }
+  landBall(f) {
+    const sc = f.sc, P = sc.pong;
+    if (f.make) {
+      P.phase = 'react'; P.result = 'make'; P.timer = 3.1; P.since = 0; P.cup = f.cup;
+      if (sc.dist < 60) this.game.particles.burst(f.p1[0], f.p1[1] + 0.02, f.p1[2], 12, { col: [1, 0.85, 0.5], speed: 1.1, life: 0.35, size: 0.035, grav: 6, drag: 1 });
+      if (sc.dist < 30) { CrowdAudio.plip(this.game, f.p1); CrowdAudio.cheer(this.game, sc.members[P.team * 2], 2); }
+      if (sc.near && this.rnd() < 0.7) this.say(sc.members[P.team * 2 + (1 - P.shooter)] || sc.members[0], pick(CHATTER.pongMake, this.rnd), 1.8);
+      return true;
+    }
+    // it hits the table and bounces away
+    P.phase = 'react'; P.result = 'miss'; P.timer = 1.5; P.since = 0; P.cup = null;
+    if (sc.dist < 30) CrowdAudio.tok(this.game, f.p1, 0.8);
+    if (sc.near && this.rnd() < 0.3) this.say(sc.spect && sc.spect[0] || sc.members[0], pick(CHATTER.pongMiss, this.rnd), 1.6);
+    const dx = f.p1[0] - f.p0[0], dz = f.p1[2] - f.p0[2], L = Math.hypot(dx, dz) || 1, sp = L / f.dur;
+    f.phys = { vx: dx / L * sp * 0.6 + (this.rnd() - 0.5), vy: 2.4, vz: dz / L * sp * 0.6 + (this.rnd() - 0.5), life: 2.2, top: f.p1[1] - 0.001, bounces: 0 };
+    return false;
+  }
+
+  /* ---------- per-member reactions, easing and movement ---------- */
+  react(m, sc, dt, t) {
+    const G = this.game, A = m.act;
+    m.holdTmp = null;
+    if (m.confused > 0) {
+      // the feed has them: head down, thumb scrolling
+      for (const k of ACT_KEYS) A[k] = 0;
+      A.phone = 1; m.holdTmp = 'phone'; m.look = null; m.ikL = null; m.ikR = null;
+      return;
+    }
+    if (m.tellT > 0) {
+      m.tellT -= dt;
+      A.talk = 1; A.laugh = 0; A.drink = 0; A.phone = 0; A.crossArms = 0; A.pockets = 0;
+      const o = sc.members.find((q) => q !== m);
+      if (o && m.post !== 'lieBack' && m.post !== 'lieFront') m.look = this.head(o);
+    }
+    if (m.hearT > 0) { m.hearT -= dt; A.nod = 1; A.talk = 0; if (m.teller && m.post !== 'lieBack' && m.post !== 'lieFront') m.look = this.head(m.teller); }
+    if (m.sparkT > 0.5) { A.point = 0.75; A.phone = 0; m.look = [G.cam.x, G.cam.y, G.cam.z]; }
+    const dp = Math.hypot(G.cam.x - m.x, G.cam.z - m.z);
+    if (dp < 3.4 && !m.moving && ((m.id % 3) !== 0 || dp < 1.7) && m.post !== 'lieFront') m.look = [G.cam.x, G.cam.y, G.cam.z];
+    if (m.bumpT > 0) { m.bumpT -= dt; m.look = [G.cam.x, G.cam.y, G.cam.z]; A.talk = 0; if (m.bumpT > 0.5) A.handsHead = 0.3; }
+    // a drone low overhead gets looked at, and filmed
+    const dr = G.life.nearDrone(m.x, m.z, 15);
+    if (dr && dr.y - this.baseY(m) < 16 && m.post !== 'lieFront') {
+      m.look = [dr.x, dr.y, dr.z];
+      if (m.id % 4 === 0 && !m.hold.R) { A.phone = 0.7; m.holdTmp = 'phone'; }
+    }
+  }
+  ease(m, dt) {
+    const W = m.W, A = m.act, k = 1 - Math.exp(-6 * dt);
+    for (const key of ACT_KEYS) W[key] += (A[key] - W[key]) * k;
+    if (m.pblend < 1) m.pblend = Math.min(1, m.pblend + dt / 0.9);
+    // turn the head (and a little of the chest) toward whatever they are looking at
+    let ly = 0, lp = 0;
+    const lying = m.post === 'lieBack' || m.post === 'lieFront';
+    if (m.look && !lying) {
+      const h = m.hw || this.head(m);
+      const dx = m.look[0] - m.x, dz = m.look[2] - m.z;
+      let a = Math.atan2(dx, dz) - m.yaw;
+      while (a > Math.PI) a -= TAU; while (a < -Math.PI) a += TAU;
+      ly = clamp(a, -1.3, 1.3);
+      lp = clamp(Math.atan2(m.look[1] - h[1], Math.hypot(dx, dz) + 0.01), -0.7, 0.9);
+      if (Math.abs(a) > 1.5) { ly = 0; lp = 0; }
+    }
+    if (lying) ly = m.lySet || 0;
+    lp -= m.readDown || 0;
+    m.ly += (ly - m.ly) * (1 - Math.exp(-4 * dt));
+    m.lp += (lp - m.lp) * (1 - Math.exp(-4 * dt));
+    // walking somewhere (a catcher, someone fetching a ball), then turning to face the right way
+    if (m.goal) {
+      const dx = m.goal[0] - m.x, dz = m.goal[1] - m.z, d = Math.hypot(dx, dz);
+      if (d < 0.12) { m.goal = null; m.moving = false; }
+      else {
+        const sp = Math.min(m.goalSpeed || 1.3, d / Math.max(dt, 1e-3));
+        m.x += dx / d * sp * dt; m.z += dz / d * sp * dt;
+        m.moving = true; m.moveSpeed = sp; m.bob += dt * sp * 3.4;
+        const want = Math.atan2(dx, dz);
+        let a = want - m.yaw; while (a > Math.PI) a -= TAU; while (a < -Math.PI) a += TAU;
+        m.yaw += a * Math.min(1, dt * 7);
+      }
+    } else {
+      m.moving = false;
+      let a = m.faceYaw - m.yaw; while (a > Math.PI) a -= TAU; while (a < -Math.PI) a += TAU;
+      m.yaw += a * Math.min(1, dt * 4);
+    }
+  }
+
+  /* ---------- arcs: pong balls, frisbees, hacky sacks ---------- */
+  updateFlying(dt) {
+    for (const f of this.flying) {
+      if (f.phys) {
+        // a missed pong ball: bounce off the table, then off the ground
+        const p = f.phys;
+        p.life -= dt; p.vy -= 9.8 * dt;
+        f.x += p.vx * dt; f.y += p.vy * dt; f.z += p.vz * dt;
+        const sc = f.sc, r = this.toRoot({ x: sc.x, z: sc.z, yaw: sc.yaw, y0: sc.y0 }, f.x, f.y, f.z);
+        const onTable = Math.abs(r[0]) < 0.31 && Math.abs(r[2]) < 1.22;
+        const floor = onTable ? p.top : (sc.y0 == null ? groundH(f.x, f.z) + SURF_LIFT : sc.y0) + 0.02;
+        if (f.y < floor && p.vy < 0) {
+          f.y = floor; p.vy *= -0.55; p.vx *= 0.8; p.vz *= 0.8; p.bounces++;
+          if (Math.abs(p.vy) > 0.6 && sc.dist < 25) CrowdAudio.tok(this.game, [f.x, f.y, f.z], onTable ? 0.6 : 0.3);
+        }
+        f.dead = p.life <= 0;
+        continue;
+      }
+      f.t += dt;
+      const u = Math.min(1, f.t / f.dur);
+      f.x = lerp(f.p0[0], f.p1[0], u); f.z = lerp(f.p0[2], f.p1[2], u);
+      f.y = lerp(f.p0[1], f.p1[1], u) + 4 * f.h * u * (1 - u);
+      if (f.kind === 'frisbee') {
+        // a backhand hyzer: the flight bends off to one side and floats at the top
+        const dx = f.p1[0] - f.p0[0], dz = f.p1[2] - f.p0[2], L = Math.hypot(dx, dz) || 1;
+        const bend = Math.sin(u * Math.PI) * f.curve;
+        f.x += -dz / L * bend; f.z += dx / L * bend;
+        f.spin += dt * 22;
+      }
+      if (u >= 1) {
+        if (f.kind === 'frisbee') { this.land(f); f.dead = true; }
+        else if (f.kind === 'sack') { this.landSack(f); f.dead = true; }
+        else if (f.kind === 'ball') { f.dead = this.landBall(f); }
+      }
+    }
+    this.flying = this.flying.filter((f) => !f.dead);
+  }
+
+  /* ---------- word of mouth ----------
+     Teach one member of a group and they turn and tell the others. */
+  spread(s, concept, col, hex) {
+    const sc = s.scene;
+    if (!sc) return 0;
+    const others = sc.members.filter((m) => m !== s && m.hearAt == null);
+    if (!others.length) return 0;
+    s.tellT = 2.6; s.lastConcept = concept;
+    this.say(s, pick(CHATTER.tell, this.rnd).replace('{c}', concept), 3.6);
+    others.forEach((m, i) => { m.hearAt = 1.1 + i * 0.4; m.teller = s; m.hearCol = col; m.hearHex = hex; m.hearConcept = concept; });
+    return others.length;
+  }
+  tickHearing(dt) {
+    for (const m of this.life.students) {
+      if (m.hearAt == null) continue;
+      m.hearAt -= dt;
+      if (m.hearAt <= 0) { m.hearAt = null; m.hearT = 1.6; this.life.hear(m, m.teller, m.hearCol, m.hearHex, m.hearConcept); }
+    }
+  }
+
+  /* ---------- drawing ---------- */
+  poseInto(s, P, t) {
+    const W = s.W;
+    for (const k of ACT_KEYS) P[k] = W[k];
+    P.t = t; P.seed = s.phase; P.v = s.v; P.lv = s.lv; P.seat = s.seat;
+    P.phone2 = W.phone > 0.1 && (s.id % 2 === 0) ? 1 : 0;
+    P.lookYaw = s.ly; P.lookPitch = s.lp;
+    P.ikL = s.ikL; P.ikR = s.ikR; P.kick = s.kickNow; P.jump = s.jumpNow;
+    P.aim = 0; P.hold = false; P.grip = null; P.crank = 0; P.lean = 0; P.upright = false; P.stride = 1; P.swing = 1;
+    if (s.moving) {
+      P.state = s.moveSpeed > 2.6 ? 'run' : 'walk'; P.phase = s.bob * 1.15; P.speed = clamp((s.moveSpeed - 1.6) / 3, 0, 1);
+      P.state2 = null; P.blend = 0;
+    } else {
+      const to = POST_STATE[s.post] || 'idle';
+      if (s.pblend < 1) { P.state = POST_STATE[s.postFrom] || 'idle'; P.state2 = to; P.blend = smoothstep(s.pblend); }
+      else { P.state = to; P.state2 = null; P.blend = 0; }
+      P.phase = 0; P.speed = 0;
+    }
+  }
+  drawInHand(R, s, bm, key, side) {
+    const mesh = this.props[key], H = this.props.hold[key];
+    if (!mesh || !H) return;
+    const bone = side < 0 ? BONE.HAND_R : BONE.HAND_L;
+    M4.mul(this.m, bm, s.bones.subarray(bone * 16, bone * 16 + 16));
+    const L = xformTo(this.m3, side < 0 ? H.t[0] : -H.t[0], H.t[1], H.t[2], H.r[0], side < 0 ? H.r[1] : -H.r[1], side < 0 ? H.r[2] : -H.r[2]);
+    R.drawMesh(mesh, M4.mul(this.m2, this.m, L), { noShadow: true });
+  }
+  drawHeld(R, s, bm) {
+    const hk = s.holdTmp || s.holdTmp2 || s.hold.R;
+    if (hk) this.drawInHand(R, s, bm, hk, -1);
+    if (s.hold.L) this.drawInHand(R, s, bm, s.hold.L, 1);
+    if (s.guitar) {
+      M4.mul(this.m, bm, s.bones.subarray(BONE.PELVIS * 16, BONE.PELVIS * 16 + 16));
+      R.drawMesh(this.props.guitar, M4.mul(this.m2, this.m, xformTo(this.m3, 0.02, 0.1, 0.2, 0.1, 0, 0.32)), { noShadow: true });
+    }
+    if (s.laptop) {
+      R.drawMesh(this.props.laptop, M4.mul(this.m2, bm, xformTo(this.m3, 0, s.post === 'cross' ? 0.13 : 0.02, 0.36, 0.08, Math.PI, 0)), { noShadow: true });
+    }
+  }
+  drawScene(R, cam) {
+    if (this.staticChunks.length) R.drawChunks(this.staticChunks);
+    if (R.shadowPass) return;
+    for (const sc of this.scenes) {
+      if (sc.dist > 95) continue;
+      if (sc.cups) {
+        const by = sc.y0 == null ? groundH(sc.x, sc.z) + SURF_LIFT : sc.y0;
+        for (const c of sc.cups) {
+          if (!c.up) continue;
+          const w = this.sceneP(sc, c.lx, c.lz);
+          M4.trs(this.m, w[0], by + TABLE_TOP, w[1], 0, 1, 1, 1);
+          R.drawMesh(this.props.cup, this.m);
+        }
+      }
+      if (sc.fr && sc.fr.disc) { M4.trs(this.m, sc.fr.disc[0], sc.fr.disc[1], sc.fr.disc[2], 0, 1, 1, 1); R.drawMesh(this.props.frisbee, this.m); }
+      if (sc.hk && sc.hk.sack && sc.hk.phase === 'dropped') { M4.trs(this.m, sc.hk.sack.x, sc.hk.sack.y, sc.hk.sack.z, 0, 1, 1, 1); R.drawMesh(this.props.sack, this.m); }
+    }
+    for (const f of this.flying) {
+      if ((f.x - cam.x) ** 2 + (f.z - cam.z) ** 2 > 90 * 90) continue;
+      const mesh = this.props[f.kind];
+      if (f.kind === 'frisbee') xformTo(this.m, f.x, f.y, f.z, 0.12, f.spin, 0.22);
+      else M4.trs(this.m, f.x, f.y, f.z, (f.t || 0) * 9, 1, 1, 1);
+      R.drawMesh(mesh, this.m);
+    }
+  }
+  bubbleTexture(text) {
+    let e = this.bubbleTex.get(text);
+    if (e) return e;
+    const cv = document.createElement('canvas'), c = cv.getContext('2d');
+    const font = '600 30px "Helvetica Neue", Helvetica, Arial, sans-serif';
+    c.font = font;
+    const tw = Math.ceil(c.measureText(text).width);
+    const W = Math.max(90, tw + 46), H = 66, T = 16;
+    cv.width = W; cv.height = H + T;
+    c.font = font;
+    const r = 24;
+    c.beginPath();
+    c.moveTo(r, 2); c.lineTo(W - r, 2); c.quadraticCurveTo(W - 2, 2, W - 2, r); c.lineTo(W - 2, H - r); c.quadraticCurveTo(W - 2, H - 2, W - r, H - 2);
+    c.lineTo(W / 2 + 12, H - 2); c.lineTo(W / 2 - 4, H + T - 2); c.lineTo(W / 2 - 6, H - 2);
+    c.lineTo(r, H - 2); c.quadraticCurveTo(2, H - 2, 2, H - r); c.lineTo(2, r); c.quadraticCurveTo(2, 2, r, 2); c.closePath();
+    c.fillStyle = 'rgba(252,250,244,0.96)'; c.fill();
+    c.lineWidth = 2.5; c.strokeStyle = 'rgba(30,36,48,0.55)'; c.stroke();
+    c.fillStyle = '#1b2330'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(text, W / 2, H / 2 + 1);
+    e = { tex: texFromCanvas(this.gl, cv), w: W / 210, h: (H + T) / 210 };
+    if (this.bubbleTex.size > 300) this.bubbleTex.clear();
+    this.bubbleTex.set(text, e);
+    return e;
+  }
+  drawBubbles(R, cam, basis) {
+    if (!this.bubbles.length) return;
+    const gl = R.gl;
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    const k = this.game.env && this.game.env.night > 0.5 ? 0.75 : 1.35;
+    for (const b of this.bubbles) {
+      const s = b.s, h = s.hw || this.head(s);
+      const d = Math.hypot(h[0] - cam.x, h[1] - cam.y, h[2] - cam.z);
+      if (d > 30) continue;
+      const e = this.bubbleTexture(b.text);
+      const a = Math.min(1, b.t * 6, (b.dur - b.t) * 3) * clamp((30 - d) / 6, 0, 1);
+      if (a <= 0.01) continue;
+      const sc = 0.7 + Math.min(d / 18, 1) * 0.55;
+      R.drawBillboard(e.tex, [h[0], h[1] + 0.34 + e.h * sc * 0.5, h[2]], e.w * sc, e.h * sc, [k, k, k, a], 0, basis);
+    }
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+  }
+}
+
+/* ============================================================
+   CrowdAudio — voices without samples. Laughter is a train of
+   voiced "ha" syllables through two formant filters; a cheer is a
+   rising "woo"; the guitar is Karplus-Strong plucked strings.
+   ============================================================ */
+const CrowdAudio = {
+  ok() { return Sfx.on && Sfx.ctx && Sfx.ctx.state !== 'suspended'; },
+  // distance falloff and left/right placement relative to where you are looking
+  out(game, p, gain) {
+    const ctx = Sfx.ctx;
+    const dx = p[0] - game.cam.x, dz = p[2] - game.cam.z, d = Math.hypot(dx, dz);
+    const g = ctx.createGain(); g.gain.value = gain / (1 + (d / 7) * (d / 7));
+    let node = g;
+    if (ctx.createStereoPanner) {
+      const pn = ctx.createStereoPanner();
+      const yaw = game.view && game.view.yaw != null ? game.view.yaw : game.cam.yaw;
+      const rx = Math.cos(yaw), rz = -Math.sin(yaw);        // the camera's right
+      pn.pan.value = clamp((dx * rx + dz * rz) / (d + 1), -0.85, 0.85);
+      g.connect(pn); pn.connect(ctx.destination);
+      node = g;
+    } else g.connect(ctx.destination);
+    return { node, d };
+  },
+  noise() {
+    if (this._noise) return this._noise;
+    const ctx = Sfx.ctx, n = ctx.sampleRate, b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    return (this._noise = b);
+  },
+  laugh(game, s, delay = 0) {
+    if (!this.ok()) return;
+    const ctx = Sfx.ctx, t0 = ctx.currentTime + delay;
+    const p = s.hw || [s.x, 1.5, s.z];
+    const { node, d } = this.out(game, p, 0.075);
+    if (d > 34) return;
+    const high = !s.ch || s.ch.J.H < 1.72;
+    const f0 = (high ? 230 : 135) * (0.88 + ((s.id * 37) % 10) / 40);
+    const n = 4 + ((s.id + Math.floor(t0 * 3)) % 4), rate = 5.2 + ((s.id * 13) % 7) / 6;
+    const osc = ctx.createOscillator(); osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f0 * 1.12, t0); osc.frequency.linearRampToValueAtTime(f0 * 0.86, t0 + n / rate);
+    const f1 = ctx.createBiquadFilter(); f1.type = 'bandpass'; f1.frequency.value = high ? 900 : 720; f1.Q.value = 5;
+    const f2 = ctx.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = high ? 1500 : 1180; f2.Q.value = 7;
+    const env = ctx.createGain(); env.gain.value = 0;
+    osc.connect(f1); osc.connect(f2); f1.connect(env); f2.connect(env); env.connect(node);
+    // breath between the syllables
+    const nz = ctx.createBufferSource(); nz.buffer = this.noise();
+    const hp = ctx.createBiquadFilter(); hp.type = 'bandpass'; hp.frequency.value = 1600; hp.Q.value = 0.8;
+    const ne = ctx.createGain(); ne.gain.value = 0;
+    nz.connect(hp); hp.connect(ne); ne.connect(node);
+    for (let i = 0; i < n; i++) {
+      const ts = t0 + i / rate, amp = 1 - i / (n + 2);
+      ne.gain.setValueAtTime(0, ts); ne.gain.linearRampToValueAtTime(0.35 * amp, ts + 0.02); ne.gain.linearRampToValueAtTime(0, ts + 0.06);
+      env.gain.setValueAtTime(0, ts + 0.02); env.gain.linearRampToValueAtTime(amp, ts + 0.045); env.gain.exponentialRampToValueAtTime(0.001, ts + 0.16);
+    }
+    const end = t0 + n / rate + 0.2;
+    osc.start(t0); osc.stop(end); nz.start(t0); nz.stop(end);
+  },
+  laughGroup(game, M) {
+    const list = M.filter((m) => m.confused <= 0).slice(0, 4);
+    list.forEach((m, i) => this.laugh(game, m, 0.05 + i * 0.13 + Math.random() * 0.15));
+  },
+  cheer(game, s, voices = 2) {
+    if (!this.ok()) return;
+    const ctx = Sfx.ctx;
+    const p = s.hw || [s.x, 1.5, s.z];
+    for (let v = 0; v < voices; v++) {
+      const t0 = ctx.currentTime + v * 0.09 + Math.random() * 0.05;
+      const { node, d } = this.out(game, p, 0.05);
+      if (d > 40) return;
+      const f = (v % 2 ? 330 : 190) * (0.9 + Math.random() * 0.2);
+      const o = ctx.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f, t0); o.frequency.linearRampToValueAtTime(f * 1.45, t0 + 0.28); o.frequency.linearRampToValueAtTime(f * 1.2, t0 + 0.75);
+      const lfo = ctx.createOscillator(); lfo.frequency.value = 6.5; const lg = ctx.createGain(); lg.gain.value = f * 0.03; lfo.connect(lg); lg.connect(o.frequency);
+      const a = ctx.createBiquadFilter(); a.type = 'bandpass'; a.frequency.value = 380; a.Q.value = 4;
+      const b = ctx.createBiquadFilter(); b.type = 'bandpass'; b.frequency.value = 850; b.Q.value = 6;
+      const e = ctx.createGain(); e.gain.value = 0;
+      o.connect(a); o.connect(b); a.connect(e); b.connect(e); e.connect(node);
+      e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(1, t0 + 0.08); e.gain.setValueAtTime(1, t0 + 0.5); e.gain.linearRampToValueAtTime(0, t0 + 0.8);
+      o.start(t0); o.stop(t0 + 0.85); lfo.start(t0); lfo.stop(t0 + 0.85);
+    }
+  },
+  tok(game, p, g = 0.6) {
+    if (!this.ok()) return;
+    const ctx = Sfx.ctx, t0 = ctx.currentTime;
+    const { node, d } = this.out(game, p, 0.05 * g);
+    if (d > 30) return;
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(2300, t0); o.frequency.exponentialRampToValueAtTime(1200, t0 + 0.04);
+    const e = ctx.createGain(); e.gain.setValueAtTime(1, t0); e.gain.exponentialRampToValueAtTime(0.001, t0 + 0.06);
+    o.connect(e); e.connect(node); o.start(t0); o.stop(t0 + 0.07);
+  },
+  plip(game, p) {
+    if (!this.ok()) return;
+    const ctx = Sfx.ctx, t0 = ctx.currentTime;
+    const { node } = this.out(game, p, 0.05);
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(900, t0); o.frequency.exponentialRampToValueAtTime(260, t0 + 0.09);
+    const e = ctx.createGain(); e.gain.setValueAtTime(0.9, t0); e.gain.exponentialRampToValueAtTime(0.001, t0 + 0.12);
+    o.connect(e); e.connect(node); o.start(t0); o.stop(t0 + 0.13);
+  },
+  bell(game, s) {
+    if (!this.ok()) return;
+    const ctx = Sfx.ctx;
+    const { node, d } = this.out(game, [s.x, 1.2, s.z], 0.045);
+    if (d > 25) return;
+    for (const dt of [0, 0.16]) {
+      const t0 = ctx.currentTime + dt;
+      for (const [f, a] of [[2350, 1], [3390, 0.5], [5120, 0.25]]) {
+        const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        const e = ctx.createGain(); e.gain.setValueAtTime(a, t0); e.gain.exponentialRampToValueAtTime(0.001, t0 + 0.55);
+        o.connect(e); e.connect(node); o.start(t0); o.stop(t0 + 0.6);
+      }
+    }
+  },
+  click(game, s) {
+    if (!this.ok()) return;
+    const ctx = Sfx.ctx, t0 = ctx.currentTime;
+    const { node } = this.out(game, s.hw || [s.x, 1.5, s.z], 0.05);
+    for (const dt of [0, 0.07]) {
+      const nz = ctx.createBufferSource(); nz.buffer = this.noise();
+      const e = ctx.createGain(); e.gain.setValueAtTime(0.8, t0 + dt); e.gain.exponentialRampToValueAtTime(0.001, t0 + dt + 0.03);
+      nz.connect(e); e.connect(node); nz.start(t0 + dt); nz.stop(t0 + dt + 0.04);
+    }
+  },
+  /* plucked strings: Karplus-Strong, rendered once per chord and strum direction */
+  CHORDS: {
+    C: [130.81, 164.81, 196.0, 261.63, 329.63], G: [98.0, 123.47, 146.83, 196.0, 246.94, 392.0],
+    Am: [110.0, 164.81, 220.0, 261.63, 329.63], F: [87.31, 130.81, 174.61, 220.0, 261.63, 349.23],
+    D: [146.83, 220.0, 293.66, 369.99], Em: [82.41, 123.47, 164.81, 196.0, 246.94, 329.63],
+  },
+  SONGS: [['C', 'G', 'Am', 'F'], ['G', 'D', 'Em', 'C'], ['Am', 'F', 'C', 'G']],
+  strumBuf(name, up) {
+    this._strums = this._strums || {};
+    const key = name + (up ? 'u' : 'd');
+    if (this._strums[key]) return this._strums[key];
+    const ctx = Sfx.ctx, sr = ctx.sampleRate, len = Math.floor(sr * 2.0);
+    const buf = ctx.createBuffer(1, len, sr), out = buf.getChannelData(0);
+    let notes = this.CHORDS[name];
+    if (up) notes = notes.slice(-3).reverse();
+    notes.forEach((f, i) => {
+      const N = Math.max(2, Math.round(sr / f)), ring = new Float32Array(N);
+      for (let k = 0; k < N; k++) ring[k] = Math.random() * 2 - 1;
+      const off = Math.floor(sr * (up ? 0.009 : 0.014) * i), amp = (up ? 0.55 : 0.8) / notes.length;
+      let idx = 0, prev = 0;
+      for (let k = off; k < len; k++) {
+        const cur = ring[idx];
+        const nxt = 0.4985 * (cur + ring[(idx + 1) % N]);
+        ring[idx] = nxt; idx = (idx + 1) % N;
+        const s = cur * amp; out[k] += s * 0.7 + prev * 0.3; prev = s;
+      }
+    });
+    return (this._strums[key] = buf);
+  },
+  guitar(game, sc, t) {
+    if (!this.ok()) return;
+    const ctx = Sfx.ctx, U = sc.gu;
+    const eighth = 60 / 92 / 2;
+    if (!U.next || U.next < ctx.currentTime - 0.3) { U.next = ctx.currentTime + 0.05; U.step = 0; }
+    const pattern = ['d', '', 'd', 'u', '', 'u', 'd', 'u'];
+    const g = sc.members[0];
+    const p = g.hw || [sc.x, 1, sc.z];
+    while (U.next < ctx.currentTime + 0.12) {
+      const st = pattern[U.step % 8];
+      const bar = Math.floor(U.step / 8) % 4;
+      if (st) {
+        const buf = this.strumBuf(this.SONGS[U.song % 3][bar], st === 'u');
+        const src = ctx.createBufferSource(); src.buffer = buf;
+        const { node, d } = this.out(game, p, st === 'u' ? 0.16 : 0.22);
+        if (d < 40) { src.connect(node); src.start(U.next); src.stop(U.next + 1.9); }
+      }
+      U.step++; U.next += eighth;
+    }
+  },
+};
+
+/* ============================================================
+   Overheard. Short, so they fit a speech bubble; written for this game.
+   ============================================================ */
+const CHATTER = {
+  chat: [
+    'The lab meeting ran two hours over.', 'Is the problem set due Friday?', 'The pigeons here have tenure.',
+    'Who books a seminar at 8 a.m.?', 'My flatmate labels her oat milk now.', 'I had one espresso. I can hear colours.',
+    'Wait, there was a reading?', 'He said "interesting". That means wrong.', 'I emailed my supervisor a meme.',
+    'Office hours are just therapy with graphs.', 'Library closes at ten, right?', 'I only came for the free pizza.',
+    'My code works and I don\'t know why.', 'Is it a formal? Do I need a tie?', 'Sorry, I was thinking about lunch.',
+    'She reviewed my essay in green ink.', 'We should do this every day.', 'Have you seen the chapel ceiling?',
+    'Twelve pages. Single spaced.', 'I think the cat in the porter\'s lodge likes me.',
+  ],
+  feed: ['I saw a video about this…', 'Everyone\'s sharing it, so…', 'It had a chart. Charts are real.',
+    'My feed says the opposite of yours.', 'Apparently one study proved it.', 'A doctor said it. On a podcast.'],
+  learned: ['Apparently: {c}.', 'Someone explained {c} to me.', 'Okay, {c} actually makes sense now.', 'Did you know about {c}?'],
+  tell: ['Guys — {c}!', 'Listen: {c}.', 'So it turns out, {c}.', 'You have to hear this: {c}.'],
+  laugh: ['HAHA', 'Stop it!', 'I can\'t!', 'No way!', 'Hahaha!', 'Dead.'],
+  pong: ['You\'re on!', 'Elbows!', 'Bounce it!', 'Aim for the middle.'],
+  pongMake: ['LET\'S GO!', 'Drink up!', 'He\'s heating up!', 'Clutch!', 'Nothing but cup!', 'Too easy.'],
+  pongMiss: ['Airball!', 'Ooh, so close.', 'Rim!', 'Shake it off.'],
+  pongWin: ['GAME!', 'Rerack!', 'Who\'s next?', 'Undefeated!'],
+  sunbathe: ['Ten more minutes.', 'Is it rude to nap here?', 'Sun cream?', 'I\'m not moving till June.', 'This is my revision.'],
+  sunbatheNight: ['Is that Jupiter?', 'That one\'s a satellite.', 'Make a wish.', 'The stars are so clear tonight.'],
+  picnic: ['Pass the grapes?', 'Who brought only crisps?', 'This is the best sandwich.', 'Is there any more?'],
+  frisbee: ['Yours!', 'Heads up!'], frisbeeGood: ['Nice grab!', 'Beautiful!', 'Show-off!'],
+  frisbeeMiss: ['Sorry! My bad!', 'Wind got it!', 'Oops!'],
+  hacky: ['So close!', 'Keep it up!', 'Twenty-three!', 'Ugh, my fault.'],
+  selfie: ['Send me that.', 'I blinked!', 'One more!', 'That\'s the one.'],
+  guitar: ['Play Wonderwall!', 'Do the one from last week!'], guitarEnd: ['Encore!', 'Play another!', 'You\'re so good!', 'Again!'],
+  study: ['I\'ve read this line six times.', 'Five more pages.', 'Is it Tuesday?', '*yawn*'],
+  seat: ['This bench is the best on campus.', 'Just five minutes of sun.', 'Wait, look at this.'],
+  bump: ['Oi!', 'Watch it!', 'Excuse you!', 'Sorry — oh, hi.', 'Careful!'],
+  bike: ['Bell! Use your bell!', 'Whoa!', 'Slow down!'],
+  greet: ['Hi!', 'Hey.', 'Morning!', 'Alright?'],
+  rim: ['This fountain is older than my college.', 'I dropped a coin in for the exam.'],
+  bank: ['Want to go punting later?', 'That duck is staring at me.', 'The river smells like summer.'],
+};
+
+
 /* ==== life.js ==== */
 /* ============================================================
    life.js — everything that moves and isn't the player:
@@ -8219,11 +10130,12 @@ function drawRadar(ctx, W, H, g, mapImg, route) {
    technique, so combat is a knowledge check, never a reflex check.
    ============================================================ */
 
-const STUDENT_COUNT = 26;
 const SUMMIT_STUDENTS = 14;
 const DRONE_MAX = 4;
 const DRONE_MAX_UNARMED = 2;
-const WALKERS = 18;    // before you can answer back, the feed only works the crowd
+const WALKERS = 26;      // passers-by on the paths: some on phones, some with coffee, some in pairs
+const CYCLISTS = 7;      // students riding the paths and the lane
+const WALKER_STYLES = ['plain', 'phone', 'coffee', 'pair', 'pockets', 'straps', 'jog', 'plain', 'phone', 'pair', 'straps', 'coffee', 'pockets', 'pair'];
 
 /* Education is the win condition, so it has to be legible at a glance.
    Each tier adds an unmistakable silhouette cue and more agency in a fight. */
@@ -8431,29 +10343,68 @@ class Life {
     this.misinfoBolt = buildBoltMesh(gl, hex2rgb('#ff45a6'), 2.0);
     this.studentBolt = buildBoltMesh(gl, hex2rgb('#9fe8c0'), 1.6);
 
-    // Every student has a home district so "educate this district" is countable.
-    // Four per district, the remainder loitering in the atrium.
     this.students = [];
     if (this.mode === 'ride') {
       // grad students strung down the run, each looping their own stretch of it
       for (let i = 0; i < SUMMIT_STUDENTS; i++) this.students.push(this.spawnRider(i));
-    } else {
-      for (let i = 0; i < STUDENT_COUNT; i++) {
-        const home = i < DISTRICTS.length * 4 ? DISTRICTS[i % DISTRICTS.length] : null;
-        this.students.push(this.spawnStudent(i, home));
+      for (const s of this.students) {
+        s.ch = buildCharacter(gl, studentLook(900 + s.id * 137 + 5000));
+        s.bones = newBones(); s.sit = false;
       }
-      // passers-by: they walk the campus paths between buildings, like pedestrians on a street
+    } else {
+      // groups doing things together (crowd.js), then the people passing between them
+      this.crowd = new Crowd(gl, this, game);
       for (let i = 0; i < WALKERS; i++) {
-        const s = this.spawnStudent(STUDENT_COUNT + i, null);
-        s.walker = true; s.path = null; s.pi = 0; s.speed = 1.25 + this.rnd() * 0.45;
+        const style = WALKER_STYLES[i % WALKER_STYLES.length];
+        const s = this.spawnStudent(this.students.length, null);
+        s.walker = true; s.path = null; s.pi = 0; s.style = style;
+        s.speed = style === 'jog' ? 3.0 + this.rnd() * 0.7 : 1.15 + this.rnd() * 0.45;
+        s.act = newAct(); s.W = newAct(); s.hold = { R: style === 'coffee' ? 'coffee' : style === 'phone' ? 'phone' : null, L: null };
+        s.stride = 0.9 + this.rnd() * 0.25; s.swing = style === 'pockets' ? 0.15 : 0.8 + this.rnd() * 0.45;
+        s.lookOpts = { mixed: true, pack: style !== 'jog' };
+        this.students.push(s);
+        if (style === 'pair') {
+          // a friend walking alongside, talking
+          const f = this.spawnStudent(this.students.length, null);
+          f.walker = true; f.follow = s; f.act = newAct(); f.W = newAct(); f.hold = { R: null, L: null };
+          f.stride = s.stride; f.swing = 0.9; f.lookOpts = { mixed: true, pack: true }; f.style = 'friend';
+          const pair = { type: 'pair', members: [s, f], x: s.x, z: s.z, clock: 0, dist: 999, near: false };
+          s.scene = pair; f.scene = pair;
+          this.students.push(f);
+        }
+      }
+      this.bikeMeshes = [[0.08, 0.1, 0.12], [0.45, 0.06, 0.05], [0.08, 0.22, 0.4], [0.75, 0.74, 0.7], [0.12, 0.3, 0.16]]
+        .map((c, i) => buildBikeMesh(gl, c, i % 2 === 0));
+      for (let i = 0; i < CYCLISTS; i++) {
+        const s = this.spawnStudent(this.students.length, null);
+        s.cyclist = true; s.path = null; s.pi = 0; s.speed = 4.2 + this.rnd() * 1.8; s.v0 = s.speed;
+        s.act = newAct(); s.W = newAct(); s.hold = { R: null, L: null };
+        s.crank = 0; s.lean = 0; s.bikeMesh = this.bikeMeshes[i % this.bikeMeshes.length];
+        s.lookOpts = { mixed: true, pack: true };
         this.students.push(s);
       }
-    }
-
-    for (const s of this.students) {
-      s.ch = buildCharacter(gl, studentLook(900 + s.id * 137 + (this.mode === 'ride' ? 5000 : 0)));
-      s.bones = newBones();
-      s.sit = false;
+      // character meshes are shared from a pool of looks; bones are per person
+      this.lookPool = new Map();
+      for (const s of this.students) {
+        const o = s.lookOpts || {};
+        const kind = o.summer ? 'S' : 'M';
+        const n = kind === 'S' ? 40 : 64, idx = (s.id * 7) % n;
+        const key = kind + idx + (o.pack === false ? 'n' : '');
+        let ch = this.lookPool.get(key);
+        if (!ch) {
+          ch = buildCharacter(gl, studentLook((kind === 'S' ? 3100 : 5200) + idx * 137, { summer: kind === 'S', mixed: kind === 'M', pack: o.pack }));
+          this.lookPool.set(key, ch);
+        }
+        s.ch = ch; s.bones = newBones(); s.sit = false;
+      }
+      // a group near a department counts toward educating that department
+      for (const s of this.students) {
+        s.home = null;
+        if (!s.scene || s.walker) continue;
+        let best = null, bd = R_PLATFORM + 40;
+        for (const d of DISTRICTS) { const dd = Math.hypot(s.x - d.cx, s.z - d.cz); if (dd < bd) { bd = dd; best = d; } }
+        if (best) s.home = best.id;
+      }
     }
     this.gainPlates = {};        // "+1" / "+2" motes, built lazily
     this.drones = [];
@@ -8479,6 +10430,73 @@ class Life {
       wants: (this.rnd() * 5) | 0,          // the question type that helps them most
       line: '', lineT: 0,
     };
+  }
+
+  makeStudent(i, x, z, yaw) {
+    return {
+      id: i, home: null, hx: x, hz: z, roam: 0, x, z, yaw, tx: x, tz: z,
+      speed: 1.2 + this.rnd() * 0.6, state: 'idle', timer: this.rnd() * 4,
+      taught: 0, confused: 0, sparkT: 0, sparkCol: [1, 1, 1],
+      phase: this.rnd() * TAU, bob: 0, fireCd: 3 + this.rnd() * 5,
+      wants: (this.rnd() * 5) | 0, line: '', lineT: 0,
+    };
+  }
+
+  /* the nearest live drone within r (horizontal), or null */
+  nearDrone(x, z, r) {
+    let best = null, bd = r * r;
+    for (const d of this.drones) {
+      if (d.dead) continue;
+      const dd = (d.x - x) ** 2 + (d.z - z) ** 2;
+      if (dd < bd) { bd = dd; best = d; }
+    }
+    return best;
+  }
+
+  baseY(s) { return s.y0 != null ? s.y0 : groundH(s.x, s.z) + (s.post === 'seat' ? 0 : SURF_LIFT); }
+
+  /* heard it from a friend: half as good as hearing it from you, and it
+     can take someone as far as Informed but not to Graduate */
+  hear(m, from, col, hex, concept) {
+    const before = this.tier(m);
+    const wasConfused = m.confused > 0;
+    m.confused = 0;
+    if (m.taught < 3) m.taught += 1;
+    m.sparkT = 1.3; m.sparkCol = col || [0.6, 1, 0.8];
+    m.lastConcept = concept;
+    const y = this.baseY(m);
+    this.addMote(m.x, y + 2.0, m.z, '+1', hex || '#9fe8c0');
+    if (from && this.game.particles) {
+      const a = from.hw || [from.x, this.baseY(from) + 1.5, from.z], b = m.hw || [m.x, y + 1.5, m.z];
+      for (let i = 0; i < 10; i++) {
+        const k = i / 10;
+        this.game.particles.emit({ x: lerp(a[0], b[0], k), y: lerp(a[1], b[1], k) + Math.sin(k * Math.PI) * 0.4, z: lerp(a[2], b[2], k),
+          vx: (b[0] - a[0]) * 0.6, vy: 0.3, vz: (b[2] - a[2]) * 0.6, life: 0.5 + k * 0.4, size: 0.1,
+          r: col ? col[0] : 0.6, g: col ? col[1] : 1, b: col ? col[2] : 0.8, a0: 0.9, grav: 0, drag: 2 });
+      }
+    }
+    if (this.game.onHeard) this.game.onHeard(m, before, wasConfused);
+  }
+
+  /* you walked into someone: you stop, they react */
+  bumpCheck(px, pz, r, footY, moving) {
+    let ox = px, oz = pz;
+    for (const s of this.students) {
+      if (s.cyclist) continue;
+      const dx = ox - s.x, dz = oz - s.z;
+      if (Math.abs(dx) > 1.6 || Math.abs(dz) > 1.6) continue;
+      const lying = s.post === 'lieBack' || s.post === 'lieFront';
+      const rr = r + (lying ? 0.45 : 0.3);
+      const d = Math.hypot(dx, dz);
+      if (d >= rr || Math.abs(this.baseY(s) - footY) > 1.4) continue;
+      const k = (rr - d) / (d || 1);
+      ox += dx * k; oz += dz * k;
+      if (moving && (s.bumpT || 0) <= 0 && s.confused <= 0) {
+        s.bumpT = 1.5;
+        if (this.crowd) this.crowd.say(s, pick(CHATTER.bump, this.rnd), 1.6);
+      }
+    }
+    return [ox, oz];
   }
 
   spawnRider(i) {
@@ -8533,11 +10551,148 @@ class Life {
     if (matched) s.wants = (s.wants + 1 + ((this.rnd() * 4) | 0)) % 5;
     s.sparkT = 1.6;
     s.sparkCol = conceptCol;
-    s.state = 'idle';
-    s.timer = 1.4;
+    if (!s.scene && !s.walker && !s.cyclist) { s.state = 'idle'; s.timer = 1.4; }
     s.line = line;
     s.lineT = 3.2;
     return wasConfused;
+  }
+
+  /* ---------- passers-by ---------- */
+  lookToward(s, dt, p) {
+    let ly = 0, lp = 0;
+    if (p) {
+      const dx = p[0] - s.x, dz = p[2] - s.z;
+      let a = Math.atan2(dx, dz) - s.yaw;
+      while (a > Math.PI) a -= TAU; while (a < -Math.PI) a += TAU;
+      if (Math.abs(a) < 1.6) { ly = clamp(a, -1.25, 1.25); lp = clamp(Math.atan2(p[1] - (this.baseY(s) + 1.55), Math.hypot(dx, dz) + 0.01), -0.6, 0.9); }
+    }
+    s.ly = (s.ly || 0) + (ly - (s.ly || 0)) * (1 - Math.exp(-4 * dt));
+    s.lp = (s.lp || 0) + (lp - (s.lp || 0)) * (1 - Math.exp(-4 * dt));
+  }
+  easeAct(s, dt) {
+    const W = s.W, A = s.act, k = 1 - Math.exp(-6 * dt);
+    for (const key of ACT_KEYS) W[key] += (A[key] - W[key]) * k;
+  }
+  updateWalker(s, dt, t) {
+    const G = this.game, A = s.act;
+    for (const k of ACT_KEYS) A[k] = 0;
+    s.ikL = null; s.ikR = null;
+    let look = null;
+    const J = s.ch ? s.ch.J : null;
+    if (s.follow) {
+      // beside the friend they are walking with, a touch behind
+      const L = s.follow;
+      const lx = Math.cos(L.yaw), lz = -Math.sin(L.yaw), fx = Math.sin(L.yaw), fz = Math.cos(L.yaw);
+      const wx = L.x + lx * 0.72 - fx * 0.12, wz = L.z + lz * 0.72 - fz * 0.12;
+      const dx = wx - s.x, dz = wz - s.z;
+      if (Math.hypot(dx, dz) > 3) { s.x = wx; s.z = wz; } else { s.x += dx * Math.min(1, dt * 5); s.z += dz * Math.min(1, dt * 5); }
+      s.yaw = L.yaw; s.moving = L.moving !== false; s.bob = L.bob + 0.45; s.state = 'walk';
+    } else {
+      if (!s.path || s.pi >= s.path.length) {
+        if (!s.path) { const n0 = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0]; s.x = n0.x; s.z = n0.z; }
+        const n = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0];
+        s.path = G.nav.route(s.x, s.z, n.x, n.z); s.pi = 1;
+        s.side = (this.rnd() - 0.5) * 1.6;
+      }
+      const [tx0, tz0] = s.path[Math.min(s.pi, s.path.length - 1)];
+      const dx = tx0 - s.x, dz = tz0 - s.z, d = Math.hypot(dx, dz);
+      if (d < 1.2) s.pi++;
+      else {
+        let sp = s.speed * (s.confused > 0 ? 0.55 : 1) * (s.W.phone > 0.5 ? 0.85 : 1);
+        let nx = dx / d, nz = dz / d;
+        // step round the player instead of walking through them
+        const px = G.cam.x - s.x, pz = G.cam.z - s.z, pd = Math.hypot(px, pz);
+        if (pd < 2.4 && px * nx + pz * nz > 0) {
+          const sx = -nz, sz = nx, away = (px * sx + pz * sz) > 0 ? -1 : 1;
+          nx += sx * away * 0.9; nz += sz * away * 0.9;
+          const nl = Math.hypot(nx, nz); nx /= nl; nz /= nl;
+          if (pd < 1.2) sp *= 0.35;
+          if (pd < 3) look = [G.cam.x, G.cam.y, G.cam.z];
+        }
+        s.x += (nx - nz * s.side * 0.05) * sp * dt; s.z += (nz + nx * s.side * 0.05) * sp * dt;
+        s.bob += dt * sp * (s.style === 'jog' ? 2.2 : 3.4);
+        const want = Math.atan2(nx, nz);
+        let diff = want - s.yaw; while (diff > Math.PI) diff -= TAU; while (diff < -Math.PI) diff += TAU;
+        s.yaw += diff * Math.min(1, dt * 5);
+        s.moving = true;
+      }
+      s.state = 'walk';
+    }
+    if (s.pair || s.scene) {
+      // a pair walking together talk in turns, look at each other and laugh
+      const pr = s.scene, other = pr.members[0] === s ? pr.members[1] : pr.members[0];
+      if (pr.members[0] === s) {
+        pr.x = s.x; pr.z = s.z; pr.clock += dt;
+        pr.dist = Math.hypot(G.cam.x - s.x, G.cam.z - s.z); pr.near = pr.dist < 30;
+        pr.speakT = (pr.speakT || 2) - dt;
+        if (pr.speakT <= 0) {
+          pr.speakT = 2.5 + this.rnd() * 4; pr.speaker = pr.speaker ? 0 : 1;
+          if (this.rnd() < 0.3) { pr.laughT = pr.clock + 0.3; }
+          if (pr.near && this.rnd() < 0.5 && this.crowd) this.crowd.say(pr.members[pr.speaker], pick(CHATTER.chat, this.rnd));
+        }
+        if (pr.laughT && pr.clock > pr.laughT) {
+          pr.laughT = 0; pr.laughUntil = pr.clock + 1.4 + this.rnd();
+          if (pr.dist < 28) CrowdAudio.laughGroup(G, pr.members);
+        }
+      }
+      const speaking = pr.members[pr.speaker || 0] === s;
+      A.talk = speaking ? 0.55 : 0;
+      if (pr.laughUntil && pr.clock < pr.laughUntil) A.laugh = 0.8;
+      if (!look) look = other.hw || [other.x, this.baseY(other) + 1.55, other.z];
+    }
+    // habits
+    if (s.style === 'phone') { A.phone = 0.85; }
+    else if (s.style === 'coffee' && J) {
+      s.sipT = (s.sipT || 5) - dt;
+      if (s.sipT <= 0) { s.sipT = 7 + this.rnd() * 9; s.sipUntil = t + 1.3; }
+      if (t < (s.sipUntil || 0)) A.drink = 1;
+      else { const o = s.IKR || (s.IKR = {}); Object.assign(o, { x: -0.1, y: J.shY - 0.2, z: 0.26, w: 0.9, px: -1, py: -0.7, pz: 0, f: null }); s.ikR = o; }
+    } else if (s.style === 'pockets') A.pockets = 0.9;
+    else if (s.style === 'straps' && J && s.ch.look.backpack) {
+      const oL = s.IKL || (s.IKL = {}), oR = s.IKR || (s.IKR = {});
+      Object.assign(oL, { x: 0.1, y: J.shY - 0.06, z: 0.13, w: 0.85, px: 1, py: -0.8, pz: 0, f: null });
+      Object.assign(oR, { x: -0.1, y: J.shY - 0.06, z: 0.13, w: 0.85, px: -1, py: -0.8, pz: 0, f: null });
+      s.ikL = oL; s.ikR = oR;
+    }
+    if (s.confused > 0) { A.phone = 1; A.talk = 0; }
+    // a drone overhead turns heads
+    const dr = this.nearDrone(s.x, s.z, 14);
+    if (dr) look = [dr.x, dr.y, dr.z];
+    if ((s.bumpT || 0) > 0) look = [G.cam.x, G.cam.y, G.cam.z];
+    this.lookToward(s, dt, look);
+    this.easeAct(s, dt);
+  }
+  updateCyclist(s, dt, t) {
+    const G = this.game;
+    if (!s.path || s.pi >= s.path.length) {
+      if (!s.path) { const n0 = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0]; s.x = n0.x; s.z = n0.z; }
+      let n = null;
+      for (let k = 0; k < 6; k++) { n = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0]; if (Math.hypot(n.x - s.x, n.z - s.z) > 80) break; }
+      s.path = G.nav.route(s.x, s.z, n.x, n.z); s.pi = 1;
+    }
+    const [tx0, tz0] = s.path[Math.min(s.pi, s.path.length - 1)];
+    const dx = tx0 - s.x, dz = tz0 - s.z, d = Math.hypot(dx, dz);
+    if (d < 2.2) { s.pi++; return; }
+    // slow right down (and ring) for anyone in the way
+    const px = G.cam.x - s.x, pz = G.cam.z - s.z, pd = Math.hypot(px, pz);
+    const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw);
+    let want = s.v0 * (s.confused > 0 ? 0.6 : 1);
+    if (pd < 8 && (px * fx + pz * fz) / (pd || 1) > 0.55 && !G.vehicle) {
+      want = pd < 3.2 ? 0 : 1.6;
+      if (!s.rang || t - s.rang > 5) { s.rang = t; CrowdAudio.bell(G, s); if (this.crowd && this.rnd() < 0.5) this.crowd.say(s, pick(['Coming through!', 'On your left!', 'Sorry!'], this.rnd), 1.6); }
+    }
+    s.speed += (want - s.speed) * (1 - Math.exp(-(want < s.speed ? 5 : 1.5) * dt));
+    const wantYaw = Math.atan2(dx, dz);
+    let diff = wantYaw - s.yaw; while (diff > Math.PI) diff -= TAU; while (diff < -Math.PI) diff += TAU;
+    const turn = clamp(diff * 2.5, -1.6, 1.6) * dt;
+    s.yaw += turn;
+    s.x += Math.sin(s.yaw) * s.speed * dt; s.z += Math.cos(s.yaw) * s.speed * dt;
+    const lean = clamp(Math.atan((turn / Math.max(dt, 1e-3)) * s.speed / 9.8), -0.45, 0.45);
+    s.lean += (lean - s.lean) * (1 - Math.exp(-5 * dt));
+    s.crank += s.speed * dt / 0.34 * 0.5;
+    s.state = 'ride';
+    const dr = this.nearDrone(s.x, s.z, 14);
+    this.lookToward(s, dt, dr ? [dr.x, dr.y, dr.z] : pd < 6 ? [G.cam.x, G.cam.y, G.cam.z] : null);
   }
 
   /* ---------- drones ---------- */
@@ -8941,6 +11096,7 @@ class Life {
     this.motes = this.motes.filter((m) => m.t < 2.4);
 
     /* students */
+    if (this.crowd) this.crowd.update(dt, t);
     for (const s of this.students) {
       s.timer -= dt;
       if (s.lineT > 0) s.lineT -= dt;
@@ -8991,64 +11147,45 @@ class Life {
         continue;
       }
 
-      if (s.walker && G.nav) {
-        // follow a sat-nav route to somewhere else on campus, then choose another
-        if (!s.path || s.pi >= s.path.length) {
-          if (!s.path) { const n0 = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0]; s.x = n0.x; s.z = n0.z; }
-          const n = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0];
-          s.path = G.nav.route(s.x, s.z, n.x, n.z); s.pi = 1;
-          // stay on the paths, a little to one side like real people
-          s.side = (this.rnd() - 0.5) * 1.6;
+      if (s.cyclist) { if (G.nav) this.updateCyclist(s, dt, t); }
+      else if (s.walker) { if (G.nav) this.updateWalker(s, dt, t); }
+      else if (s.scene) { /* crowd.js moves and poses them */ }
+      else {
+        if (s.state === 'idle' && s.timer <= 0) {
+          s.sit = false;
+          const p = this.randomPoint(s.hx, s.hz, s.roam);
+          s.tx = p.x; s.tz = p.z;
+          s.state = 'walk';
         }
-        const [tx0, tz0] = s.path[Math.min(s.pi, s.path.length - 1)];
-        const dx = tx0 - s.x, dz = tz0 - s.z, d = Math.hypot(dx, dz);
-        if (d < 1.2) s.pi++;
-        else {
-          const sp = s.speed * (s.confused > 0 ? 0.55 : 1);
-          const nx = dx / d, nz = dz / d;
-          s.x += (nx - nz * s.side * 0.05) * sp * dt; s.z += (nz + nx * s.side * 0.05) * sp * dt;
-          s.bob += dt * sp * 3.4;
-          const want = Math.atan2(dx, dz);
-          let diff = want - s.yaw; while (diff > Math.PI) diff -= TAU; while (diff < -Math.PI) diff += TAU;
-          s.yaw += diff * Math.min(1, dt * 5);
-        }
-        s.state = 'walk';
-        if (s.confused > 0) s.confused -= dt;
-        continue;
-      }
-      if (s.state === 'idle' && s.timer <= 0) {
-        s.sit = false;
-        const p = this.randomPoint(s.hx, s.hz, s.roam);
-        s.tx = p.x; s.tz = p.z;
-        s.state = 'walk';
-      }
-      if (s.state === 'walk') {
-        const dx = s.tx - s.x, dz = s.tz - s.z;
-        const d = Math.hypot(dx, dz);
-        if (d < 0.6) {
-          s.state = 'idle'; s.timer = 1.5 + this.rnd() * 5;
-          if (this.rnd() < 0.28) { s.sit = true; s.timer = 10 + this.rnd() * 18; }
-        }
-        else {
-          const sp = s.speed * (s.confused > 0 ? 0.55 : 1);
-          const nx = s.x + (dx / d) * sp * dt, nz = s.z + (dz / d) * sp * dt;
-          let ok = isWalkable(nx, nz);
-          if (ok) {
-            for (const c of G.colliders) {
-              const rr = c.r + 0.7;
-              if ((nx - c.x) ** 2 + (nz - c.z) ** 2 < rr * rr) { ok = false; break; }
+        if (s.state === 'walk') {
+          const dx = s.tx - s.x, dz = s.tz - s.z;
+          const d = Math.hypot(dx, dz);
+          if (d < 0.6) {
+            s.state = 'idle'; s.timer = 1.5 + this.rnd() * 5;
+            if (this.rnd() < 0.28) { s.sit = true; s.timer = 10 + this.rnd() * 18; }
+          } else {
+            const sp = s.speed * (s.confused > 0 ? 0.55 : 1);
+            const nx = s.x + (dx / d) * sp * dt, nz = s.z + (dz / d) * sp * dt;
+            let ok = isWalkable(nx, nz);
+            if (ok) {
+              for (const c of G.colliders) {
+                if (c.obb) continue;
+                const rr = c.r + 0.7;
+                if ((nx - c.x) ** 2 + (nz - c.z) ** 2 < rr * rr) { ok = false; break; }
+              }
             }
+            if (ok) { s.x = nx; s.z = nz; s.bob += dt * sp * 3.4; }
+            else { s.state = 'idle'; s.timer = 0.4; }
+            const want = Math.atan2(dx, dz);
+            let diff = want - s.yaw;
+            while (diff > Math.PI) diff -= TAU;
+            while (diff < -Math.PI) diff += TAU;
+            s.yaw += diff * Math.min(1, dt * 6);
           }
-          if (ok) { s.x = nx; s.z = nz; s.bob += dt * sp * 3.4; }
-          else { s.state = 'idle'; s.timer = 0.4; }
-          const want = Math.atan2(dx, dz);
-          let diff = want - s.yaw;
-          while (diff > Math.PI) diff -= TAU;
-          while (diff < -Math.PI) diff += TAU;
-          s.yaw += diff * Math.min(1, dt * 6);
         }
       }
       if (s.confused > 0) s.confused -= dt;
+      if (s.bumpT > 0 && (!s.scene || s.walker)) s.bumpT -= dt;
 
       // Informed students defend themselves; graduates are markedly better at it.
       const tier = TIERS[this.tier(s)];
@@ -9063,8 +11200,8 @@ class Life {
           }
           if (best) {
             s.fireCd = tier.fire * (0.7 + this.rnd() * 0.6);
-            s.yaw = Math.atan2(best.x - s.x, best.z - s.z);
-            const gy = groundH(s.x, s.z);
+            if (!s.scene && !s.cyclist) s.yaw = Math.atan2(best.x - s.x, best.z - s.z);
+            const gy = this.baseY(s);
             const dx = best.x - s.x, dy = best.y - (gy + 1.5), dz = best.z - s.z;
             const L = Math.hypot(dx, dy, dz) || 1;
             const spread = this.tier(s) === 3 ? 0.02 : 0.075;   // graduates aim better
@@ -9081,6 +11218,7 @@ class Life {
       }
     }
 
+    if (this.crowd) this.crowd.tickHearing(dt);
     if (this.mode === 'ride') this.updateRideDrones(dt, t);
     else this.updateFeed(dt, t);
 
@@ -9145,34 +11283,66 @@ class Life {
   }
 
   /* ---------- drawing ---------- */
-  draw(R, cam, basis, time) {
-    const gl = R.gl;
+  /* the pose for one student this frame, from whatever they are doing */
+  poseStudent(s, P, time, bm) {
+    const ride = this.mode === 'ride';
+    if (s.scene && !s.walker && this.crowd) this.crowd.poseInto(s, P, time);
+    else {
+      const W = s.W;
+      for (const k of ACT_KEYS) P[k] = W ? W[k] : 0;
+      P.t = time; P.seed = s.phase; P.v = 0; P.lv = s.id % 3; P.seat = 0.46; P.phone2 = 0;
+      P.lookYaw = s.ly || 0; P.lookPitch = s.lp || 0; P.ikL = s.ikL || null; P.ikR = s.ikR || null;
+      P.kick = 0; P.jump = 0; P.aim = 0; P.hold = false; P.grip = null; P.crank = 0; P.lean = 0; P.upright = false;
+      P.stride = s.stride || 1; P.swing = s.swing == null ? 1 : s.swing; P.state2 = null; P.blend = 0; P.talk = W ? W.talk : 0;
+      if (s.cyclist) { P.state = 'ride'; P.crank = s.crank; P.seat = 0.92; P.grip = CYCLIST_GRIP; P.phase = 0; P.speed = 0; }
+      else if (ride) { P.state = 'board'; P.phase = s.bob * 1.15; P.speed = 0; }
+      else if (s.walker) {
+        P.state = s.moving === false ? 'idle' : s.style === 'jog' ? 'run' : 'walk';
+        P.speed = s.style === 'jog' ? 0.55 : 0; P.phase = s.bob * 1.15;
+      } else {
+        const walking = s.state === 'walk';
+        P.state = walking ? 'walk' : (s.sit ? 'sitGround' : 'idle'); P.phase = s.bob * 1.15; P.speed = 0;
+      }
+    }
+    poseCharacter(s.ch, P, s.bones);
+    // where their head and right hand are now: for glances, bubbles, throws and catches
+    const B = s.bones, sc = s.ch.J.H / 1.75;
+    const hw = s.hw || (s.hw = [0, 0, 0]), hr = s.handR || (s.handR = [0, 0, 0]);
+    bonePoint(hw, bm, B, BONE.HEAD, 0, 0.17 * sc, 0.02);
+    bonePoint(hr, bm, B, BONE.HAND_R, 0, 0, 0);
+  }
 
+  draw(R, cam, basis, time) {
+    if (this.crowd) this.crowd.drawScene(R, cam);
+    const P = this._pose || (this._pose = {});
+    const ride = this.mode === 'ride';
+    const bm = this.bodyM || (this.bodyM = M4.create());
+    const tmpX = this.tmpX || (this.tmpX = M4.create());
+    const bmin = this._bmin || (this._bmin = [0, 0, 0]), bmax = this._bmax || (this._bmax = [0, 0, 0]);
     for (const s of this.students) {
-      const dx = s.x - cam.x, dz = s.z - cam.z;
-      if (dx * dx + dz * dz > 130 * 130) continue;
-      const walkBob = s.state === 'walk' ? Math.abs(Math.sin(s.bob)) * 0.045 : 0;
-      const idleBob = Math.sin(time * 1.1 + s.phase) * 0.012;
-      const y = this.mode === 'ride'
-        ? s.y + Math.abs(Math.sin(s.bob)) * 0.06
-        : groundH(s.x, s.z) + walkBob + idleBob;
+      const dx = s.x - cam.x, dz = s.z - cam.z, d2 = dx * dx + dz * dz;
+      if (d2 > 130 * 130) { s.hw = null; s.handR = null; continue; }
+      if (R.shadowPass && d2 > 48 * 48) continue;
+      const by = ride ? s.y : this.baseY(s);
+      bmin[0] = s.x - 1.3; bmin[1] = by - 0.3; bmin[2] = s.z - 1.3; bmax[0] = s.x + 1.3; bmax[1] = by + 2.4; bmax[2] = s.z + 1.3;
+      const vis = R.visible(bmin, bmax);
+      if (!vis && (d2 > 25 * 25 || s.posedAt === time)) continue;
+      if (s.cyclist) {
+        xformTo(this.model, s.x, by, s.z, 0, s.yaw, -s.lean);
+        if (vis) R.drawMesh(s.bikeMesh, this.model);
+        M4.mul(bm, this.model, xformTo(tmpX, 0, 0, -0.08, 0, 0, 0));
+      } else if (ride) {
+        M4.trs(this.model, s.x, by + Math.abs(Math.sin(s.bob)) * 0.06, s.z, s.yaw, 1, 1, 1);
+        if (vis) R.drawMesh(this.boardMesh, this.model, { tint: [1, 1, 1] });
+        M4.mul(bm, this.model, xformTo(tmpX, 0, 0.07, 0, 0, Math.PI / 2, 0));
+      } else M4.trs(bm, s.x, by, s.z, s.yaw, 1, 1, 1);
+      if (s.posedAt !== time) { s.posedAt = time; this.poseStudent(s, P, time, bm); }
+      if (!vis) continue;
       const t = this.tier(s);
-      const ride = this.mode === 'ride';
-      M4.trs(this.model, s.x, y, s.z, s.yaw, 1, 1, 1);
-      if (ride) R.drawMesh(this.boardMesh, this.model, { tint: [1, 1, 1] });
       const tint = s.confused > 0 ? [1.35, 0.7, 1.1] : WHITE3;
-      // pose: walking, standing, sitting in the grass, riding a board
-      const walking = s.state === 'walk';
-      const P = this._pose || (this._pose = {});
-      P.state = ride ? 'board' : walking ? 'walk' : (s.sit ? 'sitGround' : 'idle');
-      P.phase = s.bob * 1.15; P.speed = 0; P.t = time; P.seed = s.phase; P.lean = 0; P.aim = 0; P.hold = false; P.talk = 0;
-      P.lookYaw = 0; P.lookPitch = 0;
-      poseCharacter(s.ch, P, s.bones);
-      const bm = this.bodyM || (this.bodyM = M4.create());
-      if (ride) M4.mul(bm, this.model, xformTo(this.tmpX || (this.tmpX = M4.create()), 0, 0.07, 0, 0, Math.PI / 2, 0));
-      else bm.set(this.model);
-      R.drawMesh(s.ch.mesh, bm, { bones: s.bones, tint });
-      if (R.shadowPass && (s.x - cam.x) ** 2 + (s.z - cam.z) ** 2 > 60 * 60) continue;
+      R.drawMesh(R.shadowPass || d2 > 18 * 18 ? s.ch.lod : s.ch.mesh, bm, { bones: s.bones, tint });
+      if (R.shadowPass || d2 > 70 * 70) continue;
+      if (this.crowd && s.hold) this.crowd.drawHeld(R, s, bm);
 
       // worn marks of education — the whole win condition has to be readable
       const boneM = (i, ox, oy, oz, ry = 0, sc = 1) => {
@@ -9186,7 +11356,8 @@ class Life {
         R.drawMesh(this.marks.gown, boneM(BONE.CHEST, 0, J.neck - 0.34, -0.02, 0, 0.95), {});
         R.drawMesh(this.marks.cap, boneM(BONE.HEAD, 0, 0.36, 0, 0.2, 0.85), {});
       }
-      if (t >= 1) R.drawMesh(this.marks.book, boneM(BONE.HAND_R, 0, -0.02, 0.08, 0, 0.8), {});
+      const busy = s.holdTmp || s.holdTmp2 || (s.hold && s.hold.R) || s.guitar;
+      if (t >= 1 && !busy && !s.cyclist) R.drawMesh(this.marks.book, boneM(BONE.HAND_R, 0, -0.02, 0.08, 0, 0.8), {});
     }
 
     for (const d of this.drones) {
@@ -9213,17 +11384,32 @@ class Life {
   /* Status plates: which tier a student is at and what they still need.
      Persistent, not a toast — you should be able to plan a route by reading them. */
   drawPlates(R, cam, basis) {
+    // With a crowd this size a plate over every head is noise: show them for the
+    // people near you, for whoever is under the crosshair, and for everyone in
+    // range while you are aiming.
+    const G = this.game;
+    const ride = this.mode === 'ride';
+    const aiming = (G.anim && G.anim.aim > 0.3) || G.aimHeld;
+    const aimed = G._aimedStudent;
+    const e = G.cam, fx = -Math.sin(e.yaw) * Math.cos(e.pitch), fy = Math.sin(e.pitch), fz = -Math.cos(e.yaw) * Math.cos(e.pitch);
     for (const s of this.students) {
       const dist = Math.hypot(s.x - cam.x, s.z - cam.z);
-      if (dist > 62 || dist < 1.2) continue;
+      let lim = ride ? 62 : 0;
+      if (s === aimed) lim = 48;
+      else if (aiming && !ride) {
+        // while aiming, the people near the crosshair
+        const dx = s.x - e.x, dy = (s.hw ? s.hw[1] : 1.5) - e.y, dz = s.z - e.z, L = Math.hypot(dx, dy, dz) || 1;
+        if ((dx * fx + dy * fy + dz * fz) / L > 0.94) lim = 40;
+      }
+      if (dist > lim || dist < 1.2) continue;
       const t = this.tier(s);
       const q = QTYPES[s.wants];
       const tex = studentPlate(this.gl, t, s.wants, TIERS[t].name, q.name, QHEX[s.wants]);
-      const fade = clamp((62 - dist) / 16, 0, 1) * clamp((dist - 1.4) / 1.6, 0, 1);
+      const fade = clamp((lim - dist) / Math.min(8, lim * 0.35), 0, 1) * clamp((dist - 1.4) / 1.6, 0, 1);
       if (fade < 0.02) continue;
-      const sc = 1 + Math.min(dist / 26, 1.5);        // keep it readable far away
-      const baseY = (this.mode === 'ride' ? s.y : 0) + 2.34;
-      R.drawBillboard(tex, [s.x, baseY, s.z], 2.15 * sc, 1.01 * sc,
+      const sc = 0.85 + Math.min(dist / 26, 1.5);        // keep it readable far away
+      const baseY = this.mode === 'ride' ? s.y + 2.34 : (s.hw ? s.hw[1] + 0.72 : this.baseY(s) + 2.34);
+      R.drawBillboard(tex, [s.x, baseY + (sc - 1) * 0.3, s.z], 2.15 * sc, 1.01 * sc,
         [1, 1, 1, fade * (s.confused > 0 ? 0.65 : 1)], 0.28, basis);
     }
     for (const m of this.motes) {
@@ -9254,36 +11440,51 @@ class Life {
       R.drawMesh(mesh, this.model, { alpha: 0.95, tint: [1, 1, 1] });
     }
     // education auras and graduate halos, in the additive pass
+    const ride = this.mode === 'ride';
     for (const s of this.students) {
       const dist = Math.hypot(s.x - cam.x, s.z - cam.z);
       if (dist > 110) continue;
       const t = this.tier(s);
+      const by = ride ? 0 : this.baseY(s);
       if (s.confused > 0) {
-        M4.trs(this.model, s.x, 0.05, s.z, -time * 0.8, 1, 1, 1);
+        M4.trs(this.model, s.x, by + 0.05, s.z, -time * 0.8, 1, 1, 1);
         R.drawMesh(this.marks.aura, this.model,
           { alpha: 0.30 + 0.10 * Math.sin(time * 5 + s.phase), tint: [1.0, 0.30, 0.75] });
         continue;
       }
       if (t >= 1) {
         const a = TIERS[t].aura;
-        M4.trs(this.model, s.x, 0.05, s.z, time * 0.5, 1, 1, 1);
+        M4.trs(this.model, s.x, by + 0.05, s.z, time * 0.5, 1, 1, 1);
         R.drawMesh(this.marks.aura, this.model, { alpha: 0.34 * a, tint: [0.55, 1.0, 0.78] });
       }
       if (t >= 3) {
-        M4.trs(this.model, s.x, 1.98 + Math.sin(time * 1.3 + s.phase) * 0.05, s.z, time * 1.1, 1, 1, 1);
+        const hy = s.hw ? s.hw[1] + 0.34 : by + 1.98;
+        M4.trs(this.model, s.x, hy + Math.sin(time * 1.3 + s.phase) * 0.05, s.z, time * 1.1, 1, 1, 1);
         R.drawMesh(this.marks.halo, this.model, { alpha: 0.42, tint: [1.0, 0.86, 0.52] });
       }
     }
     for (const s of this.students) {
       if (s.sparkT <= 0) continue;
       const k = clamp(s.sparkT / 1.6, 0, 1);
-      M4.trs(this.model, s.x, 2.15 + (1 - k) * 0.75, s.z, time * 2.4, k, k, k);
+      const hy = s.hw ? s.hw[1] + 0.5 : (ride ? 0 : this.baseY(s)) + 2.15;
+      M4.trs(this.model, s.x, hy + (1 - k) * 0.75, s.z, time * 2.4, k, k, k);
       R.drawMesh(this.sparkMesh, this.model, { alpha: k, tint: s.sparkCol });
     }
   }
 }
 
 function pick(arr, rnd) { return arr[((rnd ? rnd() : Math.random()) * arr.length) | 0]; }
+
+/* a point in a bone's frame, through the model matrix, into the world */
+function bonePoint(out, model, bones, bone, x, y, z) {
+  const B = bones.subarray(bone * 16, bone * 16 + 16);
+  const bx = B[0] * x + B[4] * y + B[8] * z + B[12], by = B[1] * x + B[5] * y + B[9] * z + B[13], bz = B[2] * x + B[6] * y + B[10] * z + B[14];
+  out[0] = model[0] * bx + model[4] * by + model[8] * bz + model[12];
+  out[1] = model[1] * bx + model[5] * by + model[9] * bz + model[13];
+  out[2] = model[2] * bx + model[6] * by + model[10] * bz + model[14];
+  return out;
+}
+const CYCLIST_GRIP = [0.25, 1.02, 0.42];
 
 
 /* ==== hud.js ==== */
@@ -9492,6 +11693,8 @@ const HUD = {
     $('#st-int').textContent = `${s.interviews}/${s.interviewsMax}`;
     $('#st-con').textContent = `${s.connections}/${s.connectionsMax}`;
     $('#st-vau').textContent = `${s.vaults}/5`;
+    const rc = $('#st-reach');
+    if (rc && s.reach) rc.textContent = `${s.reach.n}/${s.reach.of}`;
     const t = $('#st-taught'), db = $('#st-deb'), mg = $('#st-marg');
     if (t) t.textContent = String(s.taught || 0);
     if (db) db.textContent = String(s.debunked || 0);
@@ -10669,6 +12872,9 @@ class Game {
 
     this.life = new Life(gl, this, 'walk');
     this.lives = { colloquium: this.life };
+    if (this.savedStudents && this.savedStudents.length === this.life.students.length) {
+      this.life.students.forEach((s, i) => { s.taught = this.savedStudents[i] | 0; });
+    }
 
     this.codex = { body: buildCodex(gl), sigil: buildCodexSigil(gl), page: buildCodexPage(gl), tabs: buildCodexTabs(gl) };
     this.pageTurn = 0; this._pt = 0;
@@ -10862,11 +13068,12 @@ class Game {
   save() {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
-        v: 2, progress: this.progress, conns: this.connectionsFound, vaults: this.vaultAnswers,
+        v: 3, progress: this.progress, conns: this.connectionsFound, vaults: this.vaultAnswers,
         taught: this.taught || 0, rescued: this.rescued || 0, debunked: this.debunked || 0,
         feed: this.feedCleared, secured: this.secured, found: this.found || {},
         challenged: this.challenged || {}, bossDone: this.bossDone || {},
-        citations: this.citations || 0,
+        citations: this.citations || 0, spread: this.spreadCount || 0, reachMark: this.reachMark || 0,
+        st: this.lives && this.lives.colloquium ? this.lives.colloquium.students.map((s) => s.taught) : this.savedStudents || [],
       }));
     } catch (e) { /* private browsing — play on without saving */ }
   }
@@ -10876,7 +13083,9 @@ class Game {
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return;
       const s = JSON.parse(raw);
-      if (s && (s.v === 1 || s.v === 2)) {
+      if (s && (s.v === 1 || s.v === 2 || s.v === 3)) {
+        this.spreadCount = s.spread || 0; this.reachMark = s.reachMark || 0;
+        this.savedStudents = s.v === 3 && Array.isArray(s.st) ? s.st : null;
         this.progress = s.progress || {};
         this.connectionsFound = s.conns || [];
         this.vaultAnswers = s.vaults || {};
@@ -11645,32 +13854,72 @@ class Game {
     const before = this.life.tier(s);
     const matched = s.wants === qi;
     const rescued = this.life.teach(s, col, line, matched);
-    this.life.addMote(s.x, 2.0, s.z, matched ? '+2' : '+1', QHEX[qi]);
+    s.lastConcept = concept;
+    // they turn and tell the people they are with
+    const told = this.life.crowd && s.scene ? this.life.crowd.spread(s, concept, col, QHEX[qi]) : 0;
+    const toldTxt = told ? ` — and they're telling ${told === 1 ? 'a friend' : `${told} friends`}` : '';
+    this.life.addMote(s.x, (s.hw ? s.hw[1] + 0.45 : 2.0), s.z, matched ? '+2' : '+1', QHEX[qi]);
     this.particles.burst(s.x, (s.y || 0) + 1.4, s.z, matched ? 40 : 22,
       { cols: [col, [1, 1, 1]], speed: 3.4, life: 0.9, size: 0.17, grav: 1.5, drag: 1.8 });
     this.taught = (this.taught || 0) + 1;
     if (rescued) this.rescued = (this.rescued || 0) + 1;
     const t = this.life.tier(s);
     if (t >= 3 && before < 3) {
-      HUD.banner('GRADUATE', `${concept} — they can teach this one themselves now`, '#ffd98a');
+      HUD.banner('GRADUATE', `${concept} — they can teach this one themselves now${toldTxt}`, '#ffd98a');
       Sfx.complete();
     } else if (t > before) {
       HUD.banner(TIERS[t].name.toUpperCase(),
-        `${concept}${t >= 2 ? ' — they will start answering drones' : ''}`,
+        `${concept}${t >= 2 && !told ? ' — they will start answering drones' : ''}${toldTxt}`,
         t >= 2 ? '#7df0ae' : '#8fd0ff');
       if (t >= 2) Sfx.complete(); else Sfx.insight();
     } else if (rescued) {
-      HUD.banner('MIND CLEARED', concept, '#7df0ae');
+      HUD.banner('MIND CLEARED', concept + toldTxt, '#7df0ae');
       Sfx.insight();
     } else {
       HUD.banner(matched ? 'EXACTLY WHAT THEY NEEDED' : 'PARTLY USEFUL',
-        matched ? concept : `${concept} — they wanted ${QTYPES[s.wants].name}`,
+        (matched ? concept : `${concept} — they wanted ${QTYPES[s.wants].name}`) + toldTxt,
         matched ? QHEX[qi] : '#a9b9cd');
       Sfx.insight();
     }
+    this.checkReach();
     this.refreshStats();
     this.refreshSecured();
     this.save();
+  }
+
+  /* someone heard an idea from a friend you taught */
+  onHeard(m, before, wasConfused) {
+    this.spreadCount = (this.spreadCount || 0) + 1;
+    if (wasConfused) this.rescued = (this.rescued || 0) + 1;
+    this._heardBatch = (this._heardBatch || 0) + 1;
+    clearTimeout(this._heardT);
+    this._heardT = setTimeout(() => {
+      const n = this._heardBatch; this._heardBatch = 0;
+      HUD.toast(`WORD OF MOUTH +${n}`, `${n === 1 ? 'Someone' : `${n} people`} heard it from a friend`);
+      Sfx.tone(660, 0.2, 'sine', 0.025, 990);
+      this.checkReach();
+      this.refreshStats(); this.refreshSecured(); this.save();
+    }, 1400);
+  }
+  /* reach: how many people on campus have heard at least one idea from you, directly or not */
+  reach() {
+    const L = this.lives && this.lives.colloquium;
+    if (!L) return { n: 0, of: 0 };
+    let n = 0;
+    for (const s of L.students) if (s.taught > 0) n++;
+    return { n, of: L.students.length };
+  }
+  checkReach() {
+    const r = this.reach().n;
+    const marks = [[10, 'THE IDEA IS OUT', 'Ten people have heard it — some of them from each other'],
+      [25, 'PEOPLE ARE TALKING', 'Twenty-five on campus have heard what the scientists told you'],
+      [50, 'IT\'S SPREADING', 'Fifty people reached. Groups pass things on faster than you can'],
+      [80, 'THE TALK OF CAMPUS', 'Eighty people. The feed is losing the argument'],
+      [120, 'EVERYONE\'S HEARD', 'A hundred and twenty people reached — word of mouth did most of it']];
+    this.reachMark = this.reachMark || 0;
+    for (const [n, title, sub] of marks) {
+      if (r >= n && this.reachMark < n) { this.reachMark = n; HUD.banner(`REACH ${n}`, `${title} — ${sub}`, '#9fe8c0'); Sfx.complete(); }
+    }
   }
 
   /* A claim that reaches you stops the world. There is no timer: the whole
@@ -11863,6 +14112,7 @@ class Game {
       connections: this.connectionsFound.length, connectionsMax: CONNECTIONS.length,
       vaults: this.countVaults(),
       taught: this.taught || 0,
+      reach: this.reach(),
       debunked: this.debunked || 0,
       marginalia: Object.keys(this.found || {}).length, marginaliaMax: MARGINALIA.length,
       endorsements: this.countEndorsements(), endorsementsMax: Object.keys(CHALLENGES).length,
@@ -11931,7 +14181,9 @@ class Game {
     const v = this.vaultAnswers[d.id] || {};
     const vTotal = VAULTS[d.id].questions.length;
     const vDone = Object.keys(v).length;
-    const ed = this.life ? this.life.districtEducated(d.id) : { done: 0, total: 4 };
+    const ed = this.lives && this.lives.colloquium ? this.lives.colloquium.districtEducated(d.id) : { done: 0, total: 6 };
+    ed.total = Math.min(6, ed.total || 6);
+    ed.done = Math.min(ed.done, ed.total);
     const feed = this.feedCleared[d.id] || 0;
     const tasks = [
       { key: 'interview', label: `Interview the researchers`, n: interviewed, of: people.length },
@@ -12312,6 +14564,10 @@ class Game {
     if (this.zip) { this.updateZip(dt); return; }
     const bx = c.x, bz = c.z;
     this.resolveMove(this.vel.x * dt, this.vel.z * dt);
+    if (this.level === 'colloquium') {
+      const [qx, qz] = this.life.bumpCheck(c.x, c.z, PLAYER_R * 0.8, this.footY, Math.hypot(this.vel.x, this.vel.z) > 1.2);
+      if ((qx !== c.x || qz !== c.z) && this.canStand(qx, qz)) { c.x = qx; c.z = qz; }
+    }
     // bleed off velocity in whichever axis actually got stopped
     if (Math.abs(c.x - bx) < Math.abs(this.vel.x * dt) * 0.5) this.vel.x *= 0.3;
     if (Math.abs(c.z - bz) < Math.abs(this.vel.z * dt) * 0.5) this.vel.z *= 0.3;
@@ -12371,6 +14627,23 @@ class Game {
     if (K['a'] || K['arrowleft']) steer += 1;
     if (K['d'] || K['arrowright']) steer -= 1;
     v.drive({ throttle: !!(K['w'] || K['arrowup']), brake: !!(K['s'] || K['arrowdown']), steer, sprint: !!K['shift'] }, dt, this);
+    // people are solid: you stop for them, and they let you know about it
+    const [qx, qz] = this.life.bumpCheck(v.x, v.z, v.P.r * 0.9, v.y, Math.abs(v.speed) > 1.5);
+    if (qx !== v.x || qz !== v.z) {
+      if (Math.abs(v.speed) > 4) this.shake = Math.max(this.shake, 0.25);
+      v.x = qx; v.z = qz; v.speed *= 0.4; v.updateModel();
+    }
+    // riding fast straight at someone makes them jump out of the way
+    if (Math.abs(v.speed) > 5) {
+      for (const s of this.life.students) {
+        if (s.cyclist || (s.bumpT || 0) > 0) continue;
+        const dx = s.x - v.x, dz = s.z - v.z;
+        if (dx * dx + dz * dz > 36) continue;
+        if (dx * Math.sin(v.yaw) + dz * Math.cos(v.yaw) < 1) continue;
+        s.bumpT = 1.4;
+        if (this.life.crowd && Math.random() < 0.6) this.life.crowd.say(s, pick(CHATTER.bike), 1.6);
+      }
+    }
     c.x = v.x; c.z = v.z; this.footY = v.y; c.y = v.y + 1.6;
     // like GTA: when you stop steering the camera, it swings back behind you
     if (performance.now() - this.lastLook > 1400 && Math.abs(v.speed) > 1.5) {
@@ -12663,7 +14936,7 @@ class Game {
     const fz = -Math.cos(c.yaw) * Math.cos(c.pitch);
     let best = null, bestDot = 0.965;
     for (const s of this.life.students) {
-      const dx = s.x - c.x, dy = 1.2 - c.y, dz = s.z - c.z;
+      const dx = s.x - c.x, dy = (s.hw ? s.hw[1] - 0.35 : 1.2) - c.y, dz = s.z - c.z;
       const L = Math.hypot(dx, dy, dz);
       if (L > 45) continue;
       const dot = (dx * fx + dy * fy + dz * fz) / (L || 1);
@@ -12693,6 +14966,7 @@ class Game {
     }
     // a student under the crosshair spells out exactly what they still need
     const st = this.aimStudent();
+    this._aimedStudent = st;
     if (st && (!this.target || this.target.dist > 6)) {
       const tier = this.life.tier(st);
       const q = QTYPES[st.wants];
@@ -12782,7 +15056,7 @@ class Game {
       P.phase = 0; P.speed = 0; P.lookYaw = 0; P.lookPitch = talking ? 0.05 : 0;
       poseCharacter(s.ch, P, s.bones);
       M4.trs(s.model, s.x, (s.y || 0) + (this.level === 'summit' ? 0.3 : 0.08), s.z, s.faceYaw, 1, 1, 1);
-      R.drawMesh(s.ch.mesh, s.model, { bones: s.bones });
+      R.drawMesh(R.shadowPass || dx * dx + dz * dz > 20 * 20 ? s.ch.lod : s.ch.mesh, s.model, { bones: s.bones });
     }
 
     this.life.draw(R, c, this.basis, this.time);
@@ -12826,7 +15100,7 @@ class Game {
     poseCharacter(this.avatar, P, this.avatarBones);
     if (v) M4.mul(this.avatarM, v.model, xformTo(this.tmpM2, 0, v.riderY || 0, v.riderZ || 0, 0, 0, 0));
     else M4.trs(this.avatarM, this.cam.x, this.footY, this.cam.z, this.bodyYaw, 1, 1, 1);
-    R.drawMesh(this.avatar.mesh, this.avatarM, { bones: this.avatarBones });
+    R.drawMesh(R.shadowPass ? this.avatar.lod : this.avatar.mesh, this.avatarM, { bones: this.avatarBones });
     // the Codex in the right hand
     const hand = this.avatarBones.subarray(BONE.HAND_R * 16, BONE.HAND_R * 16 + 16);
     const hm = M4.mul(this.tmpM, this.avatarM, hand);
@@ -12920,6 +15194,7 @@ class Game {
     R.drawParticles(this.particles.list, this.basis);
 
     this.life.drawPlates(R, c, this.basis);
+    if (this.life.crowd) this.life.crowd.drawBubbles(R, c, this.basis);
     for (const s of this.world.stations) {
       const dist = Math.hypot(s.x - c.x, s.z - c.z);
       if (dist > 62) continue;

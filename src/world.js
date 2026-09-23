@@ -188,7 +188,8 @@ function buildWorld(gl, roster) {
   const addObbs = (list) => { for (const o of list || []) { obbs.push(o); map.buildings.push(o); } };
   const addTree = (x, z, kind, s) => { const t = tree(W, Fo, x, z, H(x, z), kind, rnd, s); colliders.push({ x, z, r: t.r }); map.trees.push({ x, z, r: t.crown, kind }); return t; };
   const addLamp = (x, z, style) => { lights.push(lampPost(W.at(x, z), x, z, H(x, z), style)); colliders.push({ x, z, r: 0.25 }); };
-  const addBench = (x, z, yaw) => { bench(W.at(x, z), x, z, H(x, z), yaw); colliders.push({ x, z, r: 0.75 }); };
+  const seats = [];         // benches and café chairs people can sit on
+  const addBench = (x, z, yaw) => { bench(W.at(x, z), x, z, H(x, z), yaw); colliders.push({ x, z, r: 0.75 }); seats.push({ kind: 'bench', x, z, yaw }); };
   const lawn = (pts, stripeYaw = 0) => {
     const prev = W.frame;
     W.frame = uvFrame(0, 0, stripeYaw, 0);
@@ -514,7 +515,10 @@ function buildWorld(gl, roster) {
       roof: { type: 'hip', pitch: 0.65, M: MAT.clay, overhang: 0.5, chimneys: 2 } }, rnd);
     addObbs(r.colliders);
     W.frame = null; W.fan(rect(-20, 106, -8, 124), GM.setts, H, 0.06);
-    for (let i = 0; i < 6; i++) cafeSet(W.at(-14, 115), -17 + (i % 2) * 6, 108.5 + Math.floor(i / 2) * 6, 0.06, rnd, i % 3 ? [0.86, 0.82, 0.74] : [0.55, 0.2, 0.18]);
+    for (let i = 0; i < 6; i++) {
+      const chairs = cafeSet(W.at(-14, 115), -17 + (i % 2) * 6, 108.5 + Math.floor(i / 2) * 6, 0.06, rnd, i % 3 ? [0.86, 0.82, 0.74] : [0.55, 0.2, 0.18]);
+      for (const ch of chairs) seats.push({ kind: 'cafe', table: i, ...ch });
+    }
     map.labels.push({ x: -32, z: 115, text: 'THE BUTTERY (CAFÉ)', size: 0.55 });
   }
   {
@@ -786,7 +790,7 @@ function buildWorld(gl, roster) {
 
   return {
     chunks: mesh, foliage, glass, water, spinners: [], lights, stations, vaults, spots, slabs, pads: [], zips: [], pillars: [],
-    colliders, obbs, paths: PATHS, map, vehicles, synth, clockFaces, districts: DISTRICTS, spawn: { x: -6, z: 30, yaw: 0.35 },
+    colliders, obbs, paths: PATHS, map, vehicles, synth, clockFaces, districts: DISTRICTS, spawn: { x: -6, z: 30, yaw: 0.35 }, seats,
   };
 }
 

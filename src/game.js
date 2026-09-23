@@ -157,6 +157,9 @@ class Game {
 
     this.life = new Life(gl, this, 'walk');
     this.lives = { colloquium: this.life };
+    if (this.savedStudents && this.savedStudents.length === this.life.students.length) {
+      this.life.students.forEach((s, i) => { s.taught = this.savedStudents[i] | 0; });
+    }
 
     this.codex = { body: buildCodex(gl), sigil: buildCodexSigil(gl), page: buildCodexPage(gl), tabs: buildCodexTabs(gl) };
     this.pageTurn = 0; this._pt = 0;
@@ -350,11 +353,12 @@ class Game {
   save() {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
-        v: 2, progress: this.progress, conns: this.connectionsFound, vaults: this.vaultAnswers,
+        v: 3, progress: this.progress, conns: this.connectionsFound, vaults: this.vaultAnswers,
         taught: this.taught || 0, rescued: this.rescued || 0, debunked: this.debunked || 0,
         feed: this.feedCleared, secured: this.secured, found: this.found || {},
         challenged: this.challenged || {}, bossDone: this.bossDone || {},
-        citations: this.citations || 0,
+        citations: this.citations || 0, spread: this.spreadCount || 0, reachMark: this.reachMark || 0,
+        st: this.lives && this.lives.colloquium ? this.lives.colloquium.students.map((s) => s.taught) : this.savedStudents || [],
       }));
     } catch (e) { /* private browsing — play on without saving */ }
   }
@@ -364,7 +368,9 @@ class Game {
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return;
       const s = JSON.parse(raw);
-      if (s && (s.v === 1 || s.v === 2)) {
+      if (s && (s.v === 1 || s.v === 2 || s.v === 3)) {
+        this.spreadCount = s.spread || 0; this.reachMark = s.reachMark || 0;
+        this.savedStudents = s.v === 3 && Array.isArray(s.st) ? s.st : null;
         this.progress = s.progress || {};
         this.connectionsFound = s.conns || [];
         this.vaultAnswers = s.vaults || {};
@@ -1133,32 +1139,72 @@ class Game {
     const before = this.life.tier(s);
     const matched = s.wants === qi;
     const rescued = this.life.teach(s, col, line, matched);
-    this.life.addMote(s.x, 2.0, s.z, matched ? '+2' : '+1', QHEX[qi]);
+    s.lastConcept = concept;
+    // they turn and tell the people they are with
+    const told = this.life.crowd && s.scene ? this.life.crowd.spread(s, concept, col, QHEX[qi]) : 0;
+    const toldTxt = told ? ` — and they're telling ${told === 1 ? 'a friend' : `${told} friends`}` : '';
+    this.life.addMote(s.x, (s.hw ? s.hw[1] + 0.45 : 2.0), s.z, matched ? '+2' : '+1', QHEX[qi]);
     this.particles.burst(s.x, (s.y || 0) + 1.4, s.z, matched ? 40 : 22,
       { cols: [col, [1, 1, 1]], speed: 3.4, life: 0.9, size: 0.17, grav: 1.5, drag: 1.8 });
     this.taught = (this.taught || 0) + 1;
     if (rescued) this.rescued = (this.rescued || 0) + 1;
     const t = this.life.tier(s);
     if (t >= 3 && before < 3) {
-      HUD.banner('GRADUATE', `${concept} — they can teach this one themselves now`, '#ffd98a');
+      HUD.banner('GRADUATE', `${concept} — they can teach this one themselves now${toldTxt}`, '#ffd98a');
       Sfx.complete();
     } else if (t > before) {
       HUD.banner(TIERS[t].name.toUpperCase(),
-        `${concept}${t >= 2 ? ' — they will start answering drones' : ''}`,
+        `${concept}${t >= 2 && !told ? ' — they will start answering drones' : ''}${toldTxt}`,
         t >= 2 ? '#7df0ae' : '#8fd0ff');
       if (t >= 2) Sfx.complete(); else Sfx.insight();
     } else if (rescued) {
-      HUD.banner('MIND CLEARED', concept, '#7df0ae');
+      HUD.banner('MIND CLEARED', concept + toldTxt, '#7df0ae');
       Sfx.insight();
     } else {
       HUD.banner(matched ? 'EXACTLY WHAT THEY NEEDED' : 'PARTLY USEFUL',
-        matched ? concept : `${concept} — they wanted ${QTYPES[s.wants].name}`,
+        (matched ? concept : `${concept} — they wanted ${QTYPES[s.wants].name}`) + toldTxt,
         matched ? QHEX[qi] : '#a9b9cd');
       Sfx.insight();
     }
+    this.checkReach();
     this.refreshStats();
     this.refreshSecured();
     this.save();
+  }
+
+  /* someone heard an idea from a friend you taught */
+  onHeard(m, before, wasConfused) {
+    this.spreadCount = (this.spreadCount || 0) + 1;
+    if (wasConfused) this.rescued = (this.rescued || 0) + 1;
+    this._heardBatch = (this._heardBatch || 0) + 1;
+    clearTimeout(this._heardT);
+    this._heardT = setTimeout(() => {
+      const n = this._heardBatch; this._heardBatch = 0;
+      HUD.toast(`WORD OF MOUTH +${n}`, `${n === 1 ? 'Someone' : `${n} people`} heard it from a friend`);
+      Sfx.tone(660, 0.2, 'sine', 0.025, 990);
+      this.checkReach();
+      this.refreshStats(); this.refreshSecured(); this.save();
+    }, 1400);
+  }
+  /* reach: how many people on campus have heard at least one idea from you, directly or not */
+  reach() {
+    const L = this.lives && this.lives.colloquium;
+    if (!L) return { n: 0, of: 0 };
+    let n = 0;
+    for (const s of L.students) if (s.taught > 0) n++;
+    return { n, of: L.students.length };
+  }
+  checkReach() {
+    const r = this.reach().n;
+    const marks = [[10, 'THE IDEA IS OUT', 'Ten people have heard it — some of them from each other'],
+      [25, 'PEOPLE ARE TALKING', 'Twenty-five on campus have heard what the scientists told you'],
+      [50, 'IT\'S SPREADING', 'Fifty people reached. Groups pass things on faster than you can'],
+      [80, 'THE TALK OF CAMPUS', 'Eighty people. The feed is losing the argument'],
+      [120, 'EVERYONE\'S HEARD', 'A hundred and twenty people reached — word of mouth did most of it']];
+    this.reachMark = this.reachMark || 0;
+    for (const [n, title, sub] of marks) {
+      if (r >= n && this.reachMark < n) { this.reachMark = n; HUD.banner(`REACH ${n}`, `${title} — ${sub}`, '#9fe8c0'); Sfx.complete(); }
+    }
   }
 
   /* A claim that reaches you stops the world. There is no timer: the whole
@@ -1351,6 +1397,7 @@ class Game {
       connections: this.connectionsFound.length, connectionsMax: CONNECTIONS.length,
       vaults: this.countVaults(),
       taught: this.taught || 0,
+      reach: this.reach(),
       debunked: this.debunked || 0,
       marginalia: Object.keys(this.found || {}).length, marginaliaMax: MARGINALIA.length,
       endorsements: this.countEndorsements(), endorsementsMax: Object.keys(CHALLENGES).length,
@@ -1419,7 +1466,9 @@ class Game {
     const v = this.vaultAnswers[d.id] || {};
     const vTotal = VAULTS[d.id].questions.length;
     const vDone = Object.keys(v).length;
-    const ed = this.life ? this.life.districtEducated(d.id) : { done: 0, total: 4 };
+    const ed = this.lives && this.lives.colloquium ? this.lives.colloquium.districtEducated(d.id) : { done: 0, total: 6 };
+    ed.total = Math.min(6, ed.total || 6);
+    ed.done = Math.min(ed.done, ed.total);
     const feed = this.feedCleared[d.id] || 0;
     const tasks = [
       { key: 'interview', label: `Interview the researchers`, n: interviewed, of: people.length },
@@ -1800,6 +1849,10 @@ class Game {
     if (this.zip) { this.updateZip(dt); return; }
     const bx = c.x, bz = c.z;
     this.resolveMove(this.vel.x * dt, this.vel.z * dt);
+    if (this.level === 'colloquium') {
+      const [qx, qz] = this.life.bumpCheck(c.x, c.z, PLAYER_R * 0.8, this.footY, Math.hypot(this.vel.x, this.vel.z) > 1.2);
+      if ((qx !== c.x || qz !== c.z) && this.canStand(qx, qz)) { c.x = qx; c.z = qz; }
+    }
     // bleed off velocity in whichever axis actually got stopped
     if (Math.abs(c.x - bx) < Math.abs(this.vel.x * dt) * 0.5) this.vel.x *= 0.3;
     if (Math.abs(c.z - bz) < Math.abs(this.vel.z * dt) * 0.5) this.vel.z *= 0.3;
@@ -1859,6 +1912,23 @@ class Game {
     if (K['a'] || K['arrowleft']) steer += 1;
     if (K['d'] || K['arrowright']) steer -= 1;
     v.drive({ throttle: !!(K['w'] || K['arrowup']), brake: !!(K['s'] || K['arrowdown']), steer, sprint: !!K['shift'] }, dt, this);
+    // people are solid: you stop for them, and they let you know about it
+    const [qx, qz] = this.life.bumpCheck(v.x, v.z, v.P.r * 0.9, v.y, Math.abs(v.speed) > 1.5);
+    if (qx !== v.x || qz !== v.z) {
+      if (Math.abs(v.speed) > 4) this.shake = Math.max(this.shake, 0.25);
+      v.x = qx; v.z = qz; v.speed *= 0.4; v.updateModel();
+    }
+    // riding fast straight at someone makes them jump out of the way
+    if (Math.abs(v.speed) > 5) {
+      for (const s of this.life.students) {
+        if (s.cyclist || (s.bumpT || 0) > 0) continue;
+        const dx = s.x - v.x, dz = s.z - v.z;
+        if (dx * dx + dz * dz > 36) continue;
+        if (dx * Math.sin(v.yaw) + dz * Math.cos(v.yaw) < 1) continue;
+        s.bumpT = 1.4;
+        if (this.life.crowd && Math.random() < 0.6) this.life.crowd.say(s, pick(CHATTER.bike), 1.6);
+      }
+    }
     c.x = v.x; c.z = v.z; this.footY = v.y; c.y = v.y + 1.6;
     // like GTA: when you stop steering the camera, it swings back behind you
     if (performance.now() - this.lastLook > 1400 && Math.abs(v.speed) > 1.5) {
@@ -2151,7 +2221,7 @@ class Game {
     const fz = -Math.cos(c.yaw) * Math.cos(c.pitch);
     let best = null, bestDot = 0.965;
     for (const s of this.life.students) {
-      const dx = s.x - c.x, dy = 1.2 - c.y, dz = s.z - c.z;
+      const dx = s.x - c.x, dy = (s.hw ? s.hw[1] - 0.35 : 1.2) - c.y, dz = s.z - c.z;
       const L = Math.hypot(dx, dy, dz);
       if (L > 45) continue;
       const dot = (dx * fx + dy * fy + dz * fz) / (L || 1);
@@ -2181,6 +2251,7 @@ class Game {
     }
     // a student under the crosshair spells out exactly what they still need
     const st = this.aimStudent();
+    this._aimedStudent = st;
     if (st && (!this.target || this.target.dist > 6)) {
       const tier = this.life.tier(st);
       const q = QTYPES[st.wants];
@@ -2270,7 +2341,7 @@ class Game {
       P.phase = 0; P.speed = 0; P.lookYaw = 0; P.lookPitch = talking ? 0.05 : 0;
       poseCharacter(s.ch, P, s.bones);
       M4.trs(s.model, s.x, (s.y || 0) + (this.level === 'summit' ? 0.3 : 0.08), s.z, s.faceYaw, 1, 1, 1);
-      R.drawMesh(s.ch.mesh, s.model, { bones: s.bones });
+      R.drawMesh(R.shadowPass || dx * dx + dz * dz > 20 * 20 ? s.ch.lod : s.ch.mesh, s.model, { bones: s.bones });
     }
 
     this.life.draw(R, c, this.basis, this.time);
@@ -2314,7 +2385,7 @@ class Game {
     poseCharacter(this.avatar, P, this.avatarBones);
     if (v) M4.mul(this.avatarM, v.model, xformTo(this.tmpM2, 0, v.riderY || 0, v.riderZ || 0, 0, 0, 0));
     else M4.trs(this.avatarM, this.cam.x, this.footY, this.cam.z, this.bodyYaw, 1, 1, 1);
-    R.drawMesh(this.avatar.mesh, this.avatarM, { bones: this.avatarBones });
+    R.drawMesh(R.shadowPass ? this.avatar.lod : this.avatar.mesh, this.avatarM, { bones: this.avatarBones });
     // the Codex in the right hand
     const hand = this.avatarBones.subarray(BONE.HAND_R * 16, BONE.HAND_R * 16 + 16);
     const hm = M4.mul(this.tmpM, this.avatarM, hand);
@@ -2408,6 +2479,7 @@ class Game {
     R.drawParticles(this.particles.list, this.basis);
 
     this.life.drawPlates(R, c, this.basis);
+    if (this.life.crowd) this.life.crowd.drawBubbles(R, c, this.basis);
     for (const s of this.world.stations) {
       const dist = Math.hypot(s.x - c.x, s.z - c.z);
       if (dist > 62) continue;

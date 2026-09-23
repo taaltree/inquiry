@@ -203,6 +203,8 @@ const HUD = {
     $('#st-int').textContent = `${s.interviews}/${s.interviewsMax}`;
     $('#st-con').textContent = `${s.connections}/${s.connectionsMax}`;
     $('#st-vau').textContent = `${s.vaults}/5`;
+    const rc = $('#st-reach');
+    if (rc && s.reach) rc.textContent = `${s.reach.n}/${s.reach.of}`;
     const t = $('#st-taught'), db = $('#st-deb'), mg = $('#st-marg');
     if (t) t.textContent = String(s.taught || 0);
     if (db) db.textContent = String(s.debunked || 0);

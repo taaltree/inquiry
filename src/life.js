@@ -9,11 +9,12 @@
    technique, so combat is a knowledge check, never a reflex check.
    ============================================================ */
 
-const STUDENT_COUNT = 26;
 const SUMMIT_STUDENTS = 14;
 const DRONE_MAX = 4;
 const DRONE_MAX_UNARMED = 2;
-const WALKERS = 18;    // before you can answer back, the feed only works the crowd
+const WALKERS = 26;      // passers-by on the paths: some on phones, some with coffee, some in pairs
+const CYCLISTS = 7;      // students riding the paths and the lane
+const WALKER_STYLES = ['plain', 'phone', 'coffee', 'pair', 'pockets', 'straps', 'jog', 'plain', 'phone', 'pair', 'straps', 'coffee', 'pockets', 'pair'];
 
 /* Education is the win condition, so it has to be legible at a glance.
    Each tier adds an unmistakable silhouette cue and more agency in a fight. */
@@ -221,29 +222,68 @@ class Life {
     this.misinfoBolt = buildBoltMesh(gl, hex2rgb('#ff45a6'), 2.0);
     this.studentBolt = buildBoltMesh(gl, hex2rgb('#9fe8c0'), 1.6);
 
-    // Every student has a home district so "educate this district" is countable.
-    // Four per district, the remainder loitering in the atrium.
     this.students = [];
     if (this.mode === 'ride') {
       // grad students strung down the run, each looping their own stretch of it
       for (let i = 0; i < SUMMIT_STUDENTS; i++) this.students.push(this.spawnRider(i));
-    } else {
-      for (let i = 0; i < STUDENT_COUNT; i++) {
-        const home = i < DISTRICTS.length * 4 ? DISTRICTS[i % DISTRICTS.length] : null;
-        this.students.push(this.spawnStudent(i, home));
+      for (const s of this.students) {
+        s.ch = buildCharacter(gl, studentLook(900 + s.id * 137 + 5000));
+        s.bones = newBones(); s.sit = false;
       }
-      // passers-by: they walk the campus paths between buildings, like pedestrians on a street
+    } else {
+      // groups doing things together (crowd.js), then the people passing between them
+      this.crowd = new Crowd(gl, this, game);
       for (let i = 0; i < WALKERS; i++) {
-        const s = this.spawnStudent(STUDENT_COUNT + i, null);
-        s.walker = true; s.path = null; s.pi = 0; s.speed = 1.25 + this.rnd() * 0.45;
+        const style = WALKER_STYLES[i % WALKER_STYLES.length];
+        const s = this.spawnStudent(this.students.length, null);
+        s.walker = true; s.path = null; s.pi = 0; s.style = style;
+        s.speed = style === 'jog' ? 3.0 + this.rnd() * 0.7 : 1.15 + this.rnd() * 0.45;
+        s.act = newAct(); s.W = newAct(); s.hold = { R: style === 'coffee' ? 'coffee' : style === 'phone' ? 'phone' : null, L: null };
+        s.stride = 0.9 + this.rnd() * 0.25; s.swing = style === 'pockets' ? 0.15 : 0.8 + this.rnd() * 0.45;
+        s.lookOpts = { mixed: true, pack: style !== 'jog' };
+        this.students.push(s);
+        if (style === 'pair') {
+          // a friend walking alongside, talking
+          const f = this.spawnStudent(this.students.length, null);
+          f.walker = true; f.follow = s; f.act = newAct(); f.W = newAct(); f.hold = { R: null, L: null };
+          f.stride = s.stride; f.swing = 0.9; f.lookOpts = { mixed: true, pack: true }; f.style = 'friend';
+          const pair = { type: 'pair', members: [s, f], x: s.x, z: s.z, clock: 0, dist: 999, near: false };
+          s.scene = pair; f.scene = pair;
+          this.students.push(f);
+        }
+      }
+      this.bikeMeshes = [[0.08, 0.1, 0.12], [0.45, 0.06, 0.05], [0.08, 0.22, 0.4], [0.75, 0.74, 0.7], [0.12, 0.3, 0.16]]
+        .map((c, i) => buildBikeMesh(gl, c, i % 2 === 0));
+      for (let i = 0; i < CYCLISTS; i++) {
+        const s = this.spawnStudent(this.students.length, null);
+        s.cyclist = true; s.path = null; s.pi = 0; s.speed = 4.2 + this.rnd() * 1.8; s.v0 = s.speed;
+        s.act = newAct(); s.W = newAct(); s.hold = { R: null, L: null };
+        s.crank = 0; s.lean = 0; s.bikeMesh = this.bikeMeshes[i % this.bikeMeshes.length];
+        s.lookOpts = { mixed: true, pack: true };
         this.students.push(s);
       }
-    }
-
-    for (const s of this.students) {
-      s.ch = buildCharacter(gl, studentLook(900 + s.id * 137 + (this.mode === 'ride' ? 5000 : 0)));
-      s.bones = newBones();
-      s.sit = false;
+      // character meshes are shared from a pool of looks; bones are per person
+      this.lookPool = new Map();
+      for (const s of this.students) {
+        const o = s.lookOpts || {};
+        const kind = o.summer ? 'S' : 'M';
+        const n = kind === 'S' ? 40 : 64, idx = (s.id * 7) % n;
+        const key = kind + idx + (o.pack === false ? 'n' : '');
+        let ch = this.lookPool.get(key);
+        if (!ch) {
+          ch = buildCharacter(gl, studentLook((kind === 'S' ? 3100 : 5200) + idx * 137, { summer: kind === 'S', mixed: kind === 'M', pack: o.pack }));
+          this.lookPool.set(key, ch);
+        }
+        s.ch = ch; s.bones = newBones(); s.sit = false;
+      }
+      // a group near a department counts toward educating that department
+      for (const s of this.students) {
+        s.home = null;
+        if (!s.scene || s.walker) continue;
+        let best = null, bd = R_PLATFORM + 40;
+        for (const d of DISTRICTS) { const dd = Math.hypot(s.x - d.cx, s.z - d.cz); if (dd < bd) { bd = dd; best = d; } }
+        if (best) s.home = best.id;
+      }
     }
     this.gainPlates = {};        // "+1" / "+2" motes, built lazily
     this.drones = [];
@@ -269,6 +309,73 @@ class Life {
       wants: (this.rnd() * 5) | 0,          // the question type that helps them most
       line: '', lineT: 0,
     };
+  }
+
+  makeStudent(i, x, z, yaw) {
+    return {
+      id: i, home: null, hx: x, hz: z, roam: 0, x, z, yaw, tx: x, tz: z,
+      speed: 1.2 + this.rnd() * 0.6, state: 'idle', timer: this.rnd() * 4,
+      taught: 0, confused: 0, sparkT: 0, sparkCol: [1, 1, 1],
+      phase: this.rnd() * TAU, bob: 0, fireCd: 3 + this.rnd() * 5,
+      wants: (this.rnd() * 5) | 0, line: '', lineT: 0,
+    };
+  }
+
+  /* the nearest live drone within r (horizontal), or null */
+  nearDrone(x, z, r) {
+    let best = null, bd = r * r;
+    for (const d of this.drones) {
+      if (d.dead) continue;
+      const dd = (d.x - x) ** 2 + (d.z - z) ** 2;
+      if (dd < bd) { bd = dd; best = d; }
+    }
+    return best;
+  }
+
+  baseY(s) { return s.y0 != null ? s.y0 : groundH(s.x, s.z) + (s.post === 'seat' ? 0 : SURF_LIFT); }
+
+  /* heard it from a friend: half as good as hearing it from you, and it
+     can take someone as far as Informed but not to Graduate */
+  hear(m, from, col, hex, concept) {
+    const before = this.tier(m);
+    const wasConfused = m.confused > 0;
+    m.confused = 0;
+    if (m.taught < 3) m.taught += 1;
+    m.sparkT = 1.3; m.sparkCol = col || [0.6, 1, 0.8];
+    m.lastConcept = concept;
+    const y = this.baseY(m);
+    this.addMote(m.x, y + 2.0, m.z, '+1', hex || '#9fe8c0');
+    if (from && this.game.particles) {
+      const a = from.hw || [from.x, this.baseY(from) + 1.5, from.z], b = m.hw || [m.x, y + 1.5, m.z];
+      for (let i = 0; i < 10; i++) {
+        const k = i / 10;
+        this.game.particles.emit({ x: lerp(a[0], b[0], k), y: lerp(a[1], b[1], k) + Math.sin(k * Math.PI) * 0.4, z: lerp(a[2], b[2], k),
+          vx: (b[0] - a[0]) * 0.6, vy: 0.3, vz: (b[2] - a[2]) * 0.6, life: 0.5 + k * 0.4, size: 0.1,
+          r: col ? col[0] : 0.6, g: col ? col[1] : 1, b: col ? col[2] : 0.8, a0: 0.9, grav: 0, drag: 2 });
+      }
+    }
+    if (this.game.onHeard) this.game.onHeard(m, before, wasConfused);
+  }
+
+  /* you walked into someone: you stop, they react */
+  bumpCheck(px, pz, r, footY, moving) {
+    let ox = px, oz = pz;
+    for (const s of this.students) {
+      if (s.cyclist) continue;
+      const dx = ox - s.x, dz = oz - s.z;
+      if (Math.abs(dx) > 1.6 || Math.abs(dz) > 1.6) continue;
+      const lying = s.post === 'lieBack' || s.post === 'lieFront';
+      const rr = r + (lying ? 0.45 : 0.3);
+      const d = Math.hypot(dx, dz);
+      if (d >= rr || Math.abs(this.baseY(s) - footY) > 1.4) continue;
+      const k = (rr - d) / (d || 1);
+      ox += dx * k; oz += dz * k;
+      if (moving && (s.bumpT || 0) <= 0 && s.confused <= 0) {
+        s.bumpT = 1.5;
+        if (this.crowd) this.crowd.say(s, pick(CHATTER.bump, this.rnd), 1.6);
+      }
+    }
+    return [ox, oz];
   }
 
   spawnRider(i) {
@@ -323,11 +430,148 @@ class Life {
     if (matched) s.wants = (s.wants + 1 + ((this.rnd() * 4) | 0)) % 5;
     s.sparkT = 1.6;
     s.sparkCol = conceptCol;
-    s.state = 'idle';
-    s.timer = 1.4;
+    if (!s.scene && !s.walker && !s.cyclist) { s.state = 'idle'; s.timer = 1.4; }
     s.line = line;
     s.lineT = 3.2;
     return wasConfused;
+  }
+
+  /* ---------- passers-by ---------- */
+  lookToward(s, dt, p) {
+    let ly = 0, lp = 0;
+    if (p) {
+      const dx = p[0] - s.x, dz = p[2] - s.z;
+      let a = Math.atan2(dx, dz) - s.yaw;
+      while (a > Math.PI) a -= TAU; while (a < -Math.PI) a += TAU;
+      if (Math.abs(a) < 1.6) { ly = clamp(a, -1.25, 1.25); lp = clamp(Math.atan2(p[1] - (this.baseY(s) + 1.55), Math.hypot(dx, dz) + 0.01), -0.6, 0.9); }
+    }
+    s.ly = (s.ly || 0) + (ly - (s.ly || 0)) * (1 - Math.exp(-4 * dt));
+    s.lp = (s.lp || 0) + (lp - (s.lp || 0)) * (1 - Math.exp(-4 * dt));
+  }
+  easeAct(s, dt) {
+    const W = s.W, A = s.act, k = 1 - Math.exp(-6 * dt);
+    for (const key of ACT_KEYS) W[key] += (A[key] - W[key]) * k;
+  }
+  updateWalker(s, dt, t) {
+    const G = this.game, A = s.act;
+    for (const k of ACT_KEYS) A[k] = 0;
+    s.ikL = null; s.ikR = null;
+    let look = null;
+    const J = s.ch ? s.ch.J : null;
+    if (s.follow) {
+      // beside the friend they are walking with, a touch behind
+      const L = s.follow;
+      const lx = Math.cos(L.yaw), lz = -Math.sin(L.yaw), fx = Math.sin(L.yaw), fz = Math.cos(L.yaw);
+      const wx = L.x + lx * 0.72 - fx * 0.12, wz = L.z + lz * 0.72 - fz * 0.12;
+      const dx = wx - s.x, dz = wz - s.z;
+      if (Math.hypot(dx, dz) > 3) { s.x = wx; s.z = wz; } else { s.x += dx * Math.min(1, dt * 5); s.z += dz * Math.min(1, dt * 5); }
+      s.yaw = L.yaw; s.moving = L.moving !== false; s.bob = L.bob + 0.45; s.state = 'walk';
+    } else {
+      if (!s.path || s.pi >= s.path.length) {
+        if (!s.path) { const n0 = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0]; s.x = n0.x; s.z = n0.z; }
+        const n = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0];
+        s.path = G.nav.route(s.x, s.z, n.x, n.z); s.pi = 1;
+        s.side = (this.rnd() - 0.5) * 1.6;
+      }
+      const [tx0, tz0] = s.path[Math.min(s.pi, s.path.length - 1)];
+      const dx = tx0 - s.x, dz = tz0 - s.z, d = Math.hypot(dx, dz);
+      if (d < 1.2) s.pi++;
+      else {
+        let sp = s.speed * (s.confused > 0 ? 0.55 : 1) * (s.W.phone > 0.5 ? 0.85 : 1);
+        let nx = dx / d, nz = dz / d;
+        // step round the player instead of walking through them
+        const px = G.cam.x - s.x, pz = G.cam.z - s.z, pd = Math.hypot(px, pz);
+        if (pd < 2.4 && px * nx + pz * nz > 0) {
+          const sx = -nz, sz = nx, away = (px * sx + pz * sz) > 0 ? -1 : 1;
+          nx += sx * away * 0.9; nz += sz * away * 0.9;
+          const nl = Math.hypot(nx, nz); nx /= nl; nz /= nl;
+          if (pd < 1.2) sp *= 0.35;
+          if (pd < 3) look = [G.cam.x, G.cam.y, G.cam.z];
+        }
+        s.x += (nx - nz * s.side * 0.05) * sp * dt; s.z += (nz + nx * s.side * 0.05) * sp * dt;
+        s.bob += dt * sp * (s.style === 'jog' ? 2.2 : 3.4);
+        const want = Math.atan2(nx, nz);
+        let diff = want - s.yaw; while (diff > Math.PI) diff -= TAU; while (diff < -Math.PI) diff += TAU;
+        s.yaw += diff * Math.min(1, dt * 5);
+        s.moving = true;
+      }
+      s.state = 'walk';
+    }
+    if (s.pair || s.scene) {
+      // a pair walking together talk in turns, look at each other and laugh
+      const pr = s.scene, other = pr.members[0] === s ? pr.members[1] : pr.members[0];
+      if (pr.members[0] === s) {
+        pr.x = s.x; pr.z = s.z; pr.clock += dt;
+        pr.dist = Math.hypot(G.cam.x - s.x, G.cam.z - s.z); pr.near = pr.dist < 30;
+        pr.speakT = (pr.speakT || 2) - dt;
+        if (pr.speakT <= 0) {
+          pr.speakT = 2.5 + this.rnd() * 4; pr.speaker = pr.speaker ? 0 : 1;
+          if (this.rnd() < 0.3) { pr.laughT = pr.clock + 0.3; }
+          if (pr.near && this.rnd() < 0.5 && this.crowd) this.crowd.say(pr.members[pr.speaker], pick(CHATTER.chat, this.rnd));
+        }
+        if (pr.laughT && pr.clock > pr.laughT) {
+          pr.laughT = 0; pr.laughUntil = pr.clock + 1.4 + this.rnd();
+          if (pr.dist < 28) CrowdAudio.laughGroup(G, pr.members);
+        }
+      }
+      const speaking = pr.members[pr.speaker || 0] === s;
+      A.talk = speaking ? 0.55 : 0;
+      if (pr.laughUntil && pr.clock < pr.laughUntil) A.laugh = 0.8;
+      if (!look) look = other.hw || [other.x, this.baseY(other) + 1.55, other.z];
+    }
+    // habits
+    if (s.style === 'phone') { A.phone = 0.85; }
+    else if (s.style === 'coffee' && J) {
+      s.sipT = (s.sipT || 5) - dt;
+      if (s.sipT <= 0) { s.sipT = 7 + this.rnd() * 9; s.sipUntil = t + 1.3; }
+      if (t < (s.sipUntil || 0)) A.drink = 1;
+      else { const o = s.IKR || (s.IKR = {}); Object.assign(o, { x: -0.1, y: J.shY - 0.2, z: 0.26, w: 0.9, px: -1, py: -0.7, pz: 0, f: null }); s.ikR = o; }
+    } else if (s.style === 'pockets') A.pockets = 0.9;
+    else if (s.style === 'straps' && J && s.ch.look.backpack) {
+      const oL = s.IKL || (s.IKL = {}), oR = s.IKR || (s.IKR = {});
+      Object.assign(oL, { x: 0.1, y: J.shY - 0.06, z: 0.13, w: 0.85, px: 1, py: -0.8, pz: 0, f: null });
+      Object.assign(oR, { x: -0.1, y: J.shY - 0.06, z: 0.13, w: 0.85, px: -1, py: -0.8, pz: 0, f: null });
+      s.ikL = oL; s.ikR = oR;
+    }
+    if (s.confused > 0) { A.phone = 1; A.talk = 0; }
+    // a drone overhead turns heads
+    const dr = this.nearDrone(s.x, s.z, 14);
+    if (dr) look = [dr.x, dr.y, dr.z];
+    if ((s.bumpT || 0) > 0) look = [G.cam.x, G.cam.y, G.cam.z];
+    this.lookToward(s, dt, look);
+    this.easeAct(s, dt);
+  }
+  updateCyclist(s, dt, t) {
+    const G = this.game;
+    if (!s.path || s.pi >= s.path.length) {
+      if (!s.path) { const n0 = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0]; s.x = n0.x; s.z = n0.z; }
+      let n = null;
+      for (let k = 0; k < 6; k++) { n = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0]; if (Math.hypot(n.x - s.x, n.z - s.z) > 80) break; }
+      s.path = G.nav.route(s.x, s.z, n.x, n.z); s.pi = 1;
+    }
+    const [tx0, tz0] = s.path[Math.min(s.pi, s.path.length - 1)];
+    const dx = tx0 - s.x, dz = tz0 - s.z, d = Math.hypot(dx, dz);
+    if (d < 2.2) { s.pi++; return; }
+    // slow right down (and ring) for anyone in the way
+    const px = G.cam.x - s.x, pz = G.cam.z - s.z, pd = Math.hypot(px, pz);
+    const fx = Math.sin(s.yaw), fz = Math.cos(s.yaw);
+    let want = s.v0 * (s.confused > 0 ? 0.6 : 1);
+    if (pd < 8 && (px * fx + pz * fz) / (pd || 1) > 0.55 && !G.vehicle) {
+      want = pd < 3.2 ? 0 : 1.6;
+      if (!s.rang || t - s.rang > 5) { s.rang = t; CrowdAudio.bell(G, s); if (this.crowd && this.rnd() < 0.5) this.crowd.say(s, pick(['Coming through!', 'On your left!', 'Sorry!'], this.rnd), 1.6); }
+    }
+    s.speed += (want - s.speed) * (1 - Math.exp(-(want < s.speed ? 5 : 1.5) * dt));
+    const wantYaw = Math.atan2(dx, dz);
+    let diff = wantYaw - s.yaw; while (diff > Math.PI) diff -= TAU; while (diff < -Math.PI) diff += TAU;
+    const turn = clamp(diff * 2.5, -1.6, 1.6) * dt;
+    s.yaw += turn;
+    s.x += Math.sin(s.yaw) * s.speed * dt; s.z += Math.cos(s.yaw) * s.speed * dt;
+    const lean = clamp(Math.atan((turn / Math.max(dt, 1e-3)) * s.speed / 9.8), -0.45, 0.45);
+    s.lean += (lean - s.lean) * (1 - Math.exp(-5 * dt));
+    s.crank += s.speed * dt / 0.34 * 0.5;
+    s.state = 'ride';
+    const dr = this.nearDrone(s.x, s.z, 14);
+    this.lookToward(s, dt, dr ? [dr.x, dr.y, dr.z] : pd < 6 ? [G.cam.x, G.cam.y, G.cam.z] : null);
   }
 
   /* ---------- drones ---------- */
@@ -731,6 +975,7 @@ class Life {
     this.motes = this.motes.filter((m) => m.t < 2.4);
 
     /* students */
+    if (this.crowd) this.crowd.update(dt, t);
     for (const s of this.students) {
       s.timer -= dt;
       if (s.lineT > 0) s.lineT -= dt;
@@ -781,64 +1026,45 @@ class Life {
         continue;
       }
 
-      if (s.walker && G.nav) {
-        // follow a sat-nav route to somewhere else on campus, then choose another
-        if (!s.path || s.pi >= s.path.length) {
-          if (!s.path) { const n0 = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0]; s.x = n0.x; s.z = n0.z; }
-          const n = G.nav.nodes[(this.rnd() * G.nav.nodes.length) | 0];
-          s.path = G.nav.route(s.x, s.z, n.x, n.z); s.pi = 1;
-          // stay on the paths, a little to one side like real people
-          s.side = (this.rnd() - 0.5) * 1.6;
+      if (s.cyclist) { if (G.nav) this.updateCyclist(s, dt, t); }
+      else if (s.walker) { if (G.nav) this.updateWalker(s, dt, t); }
+      else if (s.scene) { /* crowd.js moves and poses them */ }
+      else {
+        if (s.state === 'idle' && s.timer <= 0) {
+          s.sit = false;
+          const p = this.randomPoint(s.hx, s.hz, s.roam);
+          s.tx = p.x; s.tz = p.z;
+          s.state = 'walk';
         }
-        const [tx0, tz0] = s.path[Math.min(s.pi, s.path.length - 1)];
-        const dx = tx0 - s.x, dz = tz0 - s.z, d = Math.hypot(dx, dz);
-        if (d < 1.2) s.pi++;
-        else {
-          const sp = s.speed * (s.confused > 0 ? 0.55 : 1);
-          const nx = dx / d, nz = dz / d;
-          s.x += (nx - nz * s.side * 0.05) * sp * dt; s.z += (nz + nx * s.side * 0.05) * sp * dt;
-          s.bob += dt * sp * 3.4;
-          const want = Math.atan2(dx, dz);
-          let diff = want - s.yaw; while (diff > Math.PI) diff -= TAU; while (diff < -Math.PI) diff += TAU;
-          s.yaw += diff * Math.min(1, dt * 5);
-        }
-        s.state = 'walk';
-        if (s.confused > 0) s.confused -= dt;
-        continue;
-      }
-      if (s.state === 'idle' && s.timer <= 0) {
-        s.sit = false;
-        const p = this.randomPoint(s.hx, s.hz, s.roam);
-        s.tx = p.x; s.tz = p.z;
-        s.state = 'walk';
-      }
-      if (s.state === 'walk') {
-        const dx = s.tx - s.x, dz = s.tz - s.z;
-        const d = Math.hypot(dx, dz);
-        if (d < 0.6) {
-          s.state = 'idle'; s.timer = 1.5 + this.rnd() * 5;
-          if (this.rnd() < 0.28) { s.sit = true; s.timer = 10 + this.rnd() * 18; }
-        }
-        else {
-          const sp = s.speed * (s.confused > 0 ? 0.55 : 1);
-          const nx = s.x + (dx / d) * sp * dt, nz = s.z + (dz / d) * sp * dt;
-          let ok = isWalkable(nx, nz);
-          if (ok) {
-            for (const c of G.colliders) {
-              const rr = c.r + 0.7;
-              if ((nx - c.x) ** 2 + (nz - c.z) ** 2 < rr * rr) { ok = false; break; }
+        if (s.state === 'walk') {
+          const dx = s.tx - s.x, dz = s.tz - s.z;
+          const d = Math.hypot(dx, dz);
+          if (d < 0.6) {
+            s.state = 'idle'; s.timer = 1.5 + this.rnd() * 5;
+            if (this.rnd() < 0.28) { s.sit = true; s.timer = 10 + this.rnd() * 18; }
+          } else {
+            const sp = s.speed * (s.confused > 0 ? 0.55 : 1);
+            const nx = s.x + (dx / d) * sp * dt, nz = s.z + (dz / d) * sp * dt;
+            let ok = isWalkable(nx, nz);
+            if (ok) {
+              for (const c of G.colliders) {
+                if (c.obb) continue;
+                const rr = c.r + 0.7;
+                if ((nx - c.x) ** 2 + (nz - c.z) ** 2 < rr * rr) { ok = false; break; }
+              }
             }
+            if (ok) { s.x = nx; s.z = nz; s.bob += dt * sp * 3.4; }
+            else { s.state = 'idle'; s.timer = 0.4; }
+            const want = Math.atan2(dx, dz);
+            let diff = want - s.yaw;
+            while (diff > Math.PI) diff -= TAU;
+            while (diff < -Math.PI) diff += TAU;
+            s.yaw += diff * Math.min(1, dt * 6);
           }
-          if (ok) { s.x = nx; s.z = nz; s.bob += dt * sp * 3.4; }
-          else { s.state = 'idle'; s.timer = 0.4; }
-          const want = Math.atan2(dx, dz);
-          let diff = want - s.yaw;
-          while (diff > Math.PI) diff -= TAU;
-          while (diff < -Math.PI) diff += TAU;
-          s.yaw += diff * Math.min(1, dt * 6);
         }
       }
       if (s.confused > 0) s.confused -= dt;
+      if (s.bumpT > 0 && (!s.scene || s.walker)) s.bumpT -= dt;
 
       // Informed students defend themselves; graduates are markedly better at it.
       const tier = TIERS[this.tier(s)];
@@ -853,8 +1079,8 @@ class Life {
           }
           if (best) {
             s.fireCd = tier.fire * (0.7 + this.rnd() * 0.6);
-            s.yaw = Math.atan2(best.x - s.x, best.z - s.z);
-            const gy = groundH(s.x, s.z);
+            if (!s.scene && !s.cyclist) s.yaw = Math.atan2(best.x - s.x, best.z - s.z);
+            const gy = this.baseY(s);
             const dx = best.x - s.x, dy = best.y - (gy + 1.5), dz = best.z - s.z;
             const L = Math.hypot(dx, dy, dz) || 1;
             const spread = this.tier(s) === 3 ? 0.02 : 0.075;   // graduates aim better
@@ -871,6 +1097,7 @@ class Life {
       }
     }
 
+    if (this.crowd) this.crowd.tickHearing(dt);
     if (this.mode === 'ride') this.updateRideDrones(dt, t);
     else this.updateFeed(dt, t);
 
@@ -935,34 +1162,66 @@ class Life {
   }
 
   /* ---------- drawing ---------- */
-  draw(R, cam, basis, time) {
-    const gl = R.gl;
+  /* the pose for one student this frame, from whatever they are doing */
+  poseStudent(s, P, time, bm) {
+    const ride = this.mode === 'ride';
+    if (s.scene && !s.walker && this.crowd) this.crowd.poseInto(s, P, time);
+    else {
+      const W = s.W;
+      for (const k of ACT_KEYS) P[k] = W ? W[k] : 0;
+      P.t = time; P.seed = s.phase; P.v = 0; P.lv = s.id % 3; P.seat = 0.46; P.phone2 = 0;
+      P.lookYaw = s.ly || 0; P.lookPitch = s.lp || 0; P.ikL = s.ikL || null; P.ikR = s.ikR || null;
+      P.kick = 0; P.jump = 0; P.aim = 0; P.hold = false; P.grip = null; P.crank = 0; P.lean = 0; P.upright = false;
+      P.stride = s.stride || 1; P.swing = s.swing == null ? 1 : s.swing; P.state2 = null; P.blend = 0; P.talk = W ? W.talk : 0;
+      if (s.cyclist) { P.state = 'ride'; P.crank = s.crank; P.seat = 0.92; P.grip = CYCLIST_GRIP; P.phase = 0; P.speed = 0; }
+      else if (ride) { P.state = 'board'; P.phase = s.bob * 1.15; P.speed = 0; }
+      else if (s.walker) {
+        P.state = s.moving === false ? 'idle' : s.style === 'jog' ? 'run' : 'walk';
+        P.speed = s.style === 'jog' ? 0.55 : 0; P.phase = s.bob * 1.15;
+      } else {
+        const walking = s.state === 'walk';
+        P.state = walking ? 'walk' : (s.sit ? 'sitGround' : 'idle'); P.phase = s.bob * 1.15; P.speed = 0;
+      }
+    }
+    poseCharacter(s.ch, P, s.bones);
+    // where their head and right hand are now: for glances, bubbles, throws and catches
+    const B = s.bones, sc = s.ch.J.H / 1.75;
+    const hw = s.hw || (s.hw = [0, 0, 0]), hr = s.handR || (s.handR = [0, 0, 0]);
+    bonePoint(hw, bm, B, BONE.HEAD, 0, 0.17 * sc, 0.02);
+    bonePoint(hr, bm, B, BONE.HAND_R, 0, 0, 0);
+  }
 
+  draw(R, cam, basis, time) {
+    if (this.crowd) this.crowd.drawScene(R, cam);
+    const P = this._pose || (this._pose = {});
+    const ride = this.mode === 'ride';
+    const bm = this.bodyM || (this.bodyM = M4.create());
+    const tmpX = this.tmpX || (this.tmpX = M4.create());
+    const bmin = this._bmin || (this._bmin = [0, 0, 0]), bmax = this._bmax || (this._bmax = [0, 0, 0]);
     for (const s of this.students) {
-      const dx = s.x - cam.x, dz = s.z - cam.z;
-      if (dx * dx + dz * dz > 130 * 130) continue;
-      const walkBob = s.state === 'walk' ? Math.abs(Math.sin(s.bob)) * 0.045 : 0;
-      const idleBob = Math.sin(time * 1.1 + s.phase) * 0.012;
-      const y = this.mode === 'ride'
-        ? s.y + Math.abs(Math.sin(s.bob)) * 0.06
-        : groundH(s.x, s.z) + walkBob + idleBob;
+      const dx = s.x - cam.x, dz = s.z - cam.z, d2 = dx * dx + dz * dz;
+      if (d2 > 130 * 130) { s.hw = null; s.handR = null; continue; }
+      if (R.shadowPass && d2 > 48 * 48) continue;
+      const by = ride ? s.y : this.baseY(s);
+      bmin[0] = s.x - 1.3; bmin[1] = by - 0.3; bmin[2] = s.z - 1.3; bmax[0] = s.x + 1.3; bmax[1] = by + 2.4; bmax[2] = s.z + 1.3;
+      const vis = R.visible(bmin, bmax);
+      if (!vis && (d2 > 25 * 25 || s.posedAt === time)) continue;
+      if (s.cyclist) {
+        xformTo(this.model, s.x, by, s.z, 0, s.yaw, -s.lean);
+        if (vis) R.drawMesh(s.bikeMesh, this.model);
+        M4.mul(bm, this.model, xformTo(tmpX, 0, 0, -0.08, 0, 0, 0));
+      } else if (ride) {
+        M4.trs(this.model, s.x, by + Math.abs(Math.sin(s.bob)) * 0.06, s.z, s.yaw, 1, 1, 1);
+        if (vis) R.drawMesh(this.boardMesh, this.model, { tint: [1, 1, 1] });
+        M4.mul(bm, this.model, xformTo(tmpX, 0, 0.07, 0, 0, Math.PI / 2, 0));
+      } else M4.trs(bm, s.x, by, s.z, s.yaw, 1, 1, 1);
+      if (s.posedAt !== time) { s.posedAt = time; this.poseStudent(s, P, time, bm); }
+      if (!vis) continue;
       const t = this.tier(s);
-      const ride = this.mode === 'ride';
-      M4.trs(this.model, s.x, y, s.z, s.yaw, 1, 1, 1);
-      if (ride) R.drawMesh(this.boardMesh, this.model, { tint: [1, 1, 1] });
       const tint = s.confused > 0 ? [1.35, 0.7, 1.1] : WHITE3;
-      // pose: walking, standing, sitting in the grass, riding a board
-      const walking = s.state === 'walk';
-      const P = this._pose || (this._pose = {});
-      P.state = ride ? 'board' : walking ? 'walk' : (s.sit ? 'sitGround' : 'idle');
-      P.phase = s.bob * 1.15; P.speed = 0; P.t = time; P.seed = s.phase; P.lean = 0; P.aim = 0; P.hold = false; P.talk = 0;
-      P.lookYaw = 0; P.lookPitch = 0;
-      poseCharacter(s.ch, P, s.bones);
-      const bm = this.bodyM || (this.bodyM = M4.create());
-      if (ride) M4.mul(bm, this.model, xformTo(this.tmpX || (this.tmpX = M4.create()), 0, 0.07, 0, 0, Math.PI / 2, 0));
-      else bm.set(this.model);
-      R.drawMesh(s.ch.mesh, bm, { bones: s.bones, tint });
-      if (R.shadowPass && (s.x - cam.x) ** 2 + (s.z - cam.z) ** 2 > 60 * 60) continue;
+      R.drawMesh(R.shadowPass || d2 > 18 * 18 ? s.ch.lod : s.ch.mesh, bm, { bones: s.bones, tint });
+      if (R.shadowPass || d2 > 70 * 70) continue;
+      if (this.crowd && s.hold) this.crowd.drawHeld(R, s, bm);
 
       // worn marks of education — the whole win condition has to be readable
       const boneM = (i, ox, oy, oz, ry = 0, sc = 1) => {
@@ -976,7 +1235,8 @@ class Life {
         R.drawMesh(this.marks.gown, boneM(BONE.CHEST, 0, J.neck - 0.34, -0.02, 0, 0.95), {});
         R.drawMesh(this.marks.cap, boneM(BONE.HEAD, 0, 0.36, 0, 0.2, 0.85), {});
       }
-      if (t >= 1) R.drawMesh(this.marks.book, boneM(BONE.HAND_R, 0, -0.02, 0.08, 0, 0.8), {});
+      const busy = s.holdTmp || s.holdTmp2 || (s.hold && s.hold.R) || s.guitar;
+      if (t >= 1 && !busy && !s.cyclist) R.drawMesh(this.marks.book, boneM(BONE.HAND_R, 0, -0.02, 0.08, 0, 0.8), {});
     }
 
     for (const d of this.drones) {
@@ -1003,17 +1263,32 @@ class Life {
   /* Status plates: which tier a student is at and what they still need.
      Persistent, not a toast — you should be able to plan a route by reading them. */
   drawPlates(R, cam, basis) {
+    // With a crowd this size a plate over every head is noise: show them for the
+    // people near you, for whoever is under the crosshair, and for everyone in
+    // range while you are aiming.
+    const G = this.game;
+    const ride = this.mode === 'ride';
+    const aiming = (G.anim && G.anim.aim > 0.3) || G.aimHeld;
+    const aimed = G._aimedStudent;
+    const e = G.cam, fx = -Math.sin(e.yaw) * Math.cos(e.pitch), fy = Math.sin(e.pitch), fz = -Math.cos(e.yaw) * Math.cos(e.pitch);
     for (const s of this.students) {
       const dist = Math.hypot(s.x - cam.x, s.z - cam.z);
-      if (dist > 62 || dist < 1.2) continue;
+      let lim = ride ? 62 : 0;
+      if (s === aimed) lim = 48;
+      else if (aiming && !ride) {
+        // while aiming, the people near the crosshair
+        const dx = s.x - e.x, dy = (s.hw ? s.hw[1] : 1.5) - e.y, dz = s.z - e.z, L = Math.hypot(dx, dy, dz) || 1;
+        if ((dx * fx + dy * fy + dz * fz) / L > 0.94) lim = 40;
+      }
+      if (dist > lim || dist < 1.2) continue;
       const t = this.tier(s);
       const q = QTYPES[s.wants];
       const tex = studentPlate(this.gl, t, s.wants, TIERS[t].name, q.name, QHEX[s.wants]);
-      const fade = clamp((62 - dist) / 16, 0, 1) * clamp((dist - 1.4) / 1.6, 0, 1);
+      const fade = clamp((lim - dist) / Math.min(8, lim * 0.35), 0, 1) * clamp((dist - 1.4) / 1.6, 0, 1);
       if (fade < 0.02) continue;
-      const sc = 1 + Math.min(dist / 26, 1.5);        // keep it readable far away
-      const baseY = (this.mode === 'ride' ? s.y : 0) + 2.34;
-      R.drawBillboard(tex, [s.x, baseY, s.z], 2.15 * sc, 1.01 * sc,
+      const sc = 0.85 + Math.min(dist / 26, 1.5);        // keep it readable far away
+      const baseY = this.mode === 'ride' ? s.y + 2.34 : (s.hw ? s.hw[1] + 0.72 : this.baseY(s) + 2.34);
+      R.drawBillboard(tex, [s.x, baseY + (sc - 1) * 0.3, s.z], 2.15 * sc, 1.01 * sc,
         [1, 1, 1, fade * (s.confused > 0 ? 0.65 : 1)], 0.28, basis);
     }
     for (const m of this.motes) {
@@ -1044,33 +1319,48 @@ class Life {
       R.drawMesh(mesh, this.model, { alpha: 0.95, tint: [1, 1, 1] });
     }
     // education auras and graduate halos, in the additive pass
+    const ride = this.mode === 'ride';
     for (const s of this.students) {
       const dist = Math.hypot(s.x - cam.x, s.z - cam.z);
       if (dist > 110) continue;
       const t = this.tier(s);
+      const by = ride ? 0 : this.baseY(s);
       if (s.confused > 0) {
-        M4.trs(this.model, s.x, 0.05, s.z, -time * 0.8, 1, 1, 1);
+        M4.trs(this.model, s.x, by + 0.05, s.z, -time * 0.8, 1, 1, 1);
         R.drawMesh(this.marks.aura, this.model,
           { alpha: 0.30 + 0.10 * Math.sin(time * 5 + s.phase), tint: [1.0, 0.30, 0.75] });
         continue;
       }
       if (t >= 1) {
         const a = TIERS[t].aura;
-        M4.trs(this.model, s.x, 0.05, s.z, time * 0.5, 1, 1, 1);
+        M4.trs(this.model, s.x, by + 0.05, s.z, time * 0.5, 1, 1, 1);
         R.drawMesh(this.marks.aura, this.model, { alpha: 0.34 * a, tint: [0.55, 1.0, 0.78] });
       }
       if (t >= 3) {
-        M4.trs(this.model, s.x, 1.98 + Math.sin(time * 1.3 + s.phase) * 0.05, s.z, time * 1.1, 1, 1, 1);
+        const hy = s.hw ? s.hw[1] + 0.34 : by + 1.98;
+        M4.trs(this.model, s.x, hy + Math.sin(time * 1.3 + s.phase) * 0.05, s.z, time * 1.1, 1, 1, 1);
         R.drawMesh(this.marks.halo, this.model, { alpha: 0.42, tint: [1.0, 0.86, 0.52] });
       }
     }
     for (const s of this.students) {
       if (s.sparkT <= 0) continue;
       const k = clamp(s.sparkT / 1.6, 0, 1);
-      M4.trs(this.model, s.x, 2.15 + (1 - k) * 0.75, s.z, time * 2.4, k, k, k);
+      const hy = s.hw ? s.hw[1] + 0.5 : (ride ? 0 : this.baseY(s)) + 2.15;
+      M4.trs(this.model, s.x, hy + (1 - k) * 0.75, s.z, time * 2.4, k, k, k);
       R.drawMesh(this.sparkMesh, this.model, { alpha: k, tint: s.sparkCol });
     }
   }
 }
 
 function pick(arr, rnd) { return arr[((rnd ? rnd() : Math.random()) * arr.length) | 0]; }
+
+/* a point in a bone's frame, through the model matrix, into the world */
+function bonePoint(out, model, bones, bone, x, y, z) {
+  const B = bones.subarray(bone * 16, bone * 16 + 16);
+  const bx = B[0] * x + B[4] * y + B[8] * z + B[12], by = B[1] * x + B[5] * y + B[9] * z + B[13], bz = B[2] * x + B[6] * y + B[10] * z + B[14];
+  out[0] = model[0] * bx + model[4] * by + model[8] * bz + model[12];
+  out[1] = model[1] * bx + model[5] * by + model[9] * bz + model[13];
+  out[2] = model[2] * bx + model[6] * by + model[10] * bz + model[14];
+  return out;
+}
+const CYCLIST_GRIP = [0.25, 1.02, 0.42];

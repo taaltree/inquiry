@@ -69,6 +69,7 @@ layout(location=6) in vec2 aTex;
 uniform mat4 uVP, uModel, uView;
 uniform mat3 uNormalMat;
 uniform mat4 uBones[14];
+uniform mat4 uBonesP[14];                    // each bone's parent, carried straight on through the joint
 uniform float uTime, uWind;
 out vec3 vWorld, vNrm, vCol, vView;
 out float vGlow;
@@ -77,9 +78,13 @@ flat out vec2 vTex;
 void main(){
   vec4 lp = vec4(aPos, 1.0);
   vec3 ln = aNrm;
-  if (aTex.y > 15.5) {                       // skinned: one bone per vertex
-    mat4 B = uBones[int(aTex.y - 16.0 + 0.5)];
+  float glow = aGlow;
+  if (aTex.y > 15.5) {                       // skinned: one bone, eased toward its parent near the joint
+    int bi = int(aTex.y - 16.0 + 0.5);
+    mat4 B = uBones[bi];
+    if (aGlow > 0.001) B = B * (1.0 - aGlow) + uBonesP[bi] * aGlow;
     lp = B * lp; ln = mat3(B) * ln;
+    glow = 0.0;                              // for skinned vertices the glow slot holds the blend weight
   }
   vec4 wp = uModel * lp;
   if (abs(aTex.y - 1.0) < 0.5) {             // foliage sways, more at the crown
@@ -90,7 +95,7 @@ void main(){
   }
   vWorld = wp.xyz;
   vNrm   = normalize(uNormalMat * ln);
-  vCol = aCol; vGlow = aGlow; vMat = aMat; vUV = aUV; vTex = aTex;
+  vCol = aCol; vGlow = glow; vMat = aMat; vUV = aUV; vTex = aTex;
   vView  = (uView * wp).xyz;
   gl_Position = uVP * wp;
 }`;
@@ -325,22 +330,30 @@ ${alphaTest ? `
   col = mix(col, fcol, clamp(fog, 0.0, 1.0));
 
   frag = vec4(col, alpha);
-  gbuf = vec4(normalize(mat3(uView) * Ng), -vView.z);
+  // people are small and round: tag them (a shorter normal) so the AO pass goes easy on them
+  gbuf = vec4(normalize(mat3(uView) * Ng) * (kind >= 16 ? 0.5 : 1.0), -vView.z);
 }`;
 
 /* ---------- depth-only, for the shadow map (skinning + wind + alpha test) ---------- */
 const VS_DEPTH = `#version 300 es
 layout(location=0) in vec3 aPos;
+layout(location=3) in float aGlow;
 layout(location=5) in vec2 aUV;
 layout(location=6) in vec2 aTex;
 uniform mat4 uLightVP, uModel;
 uniform mat4 uBones[14];
+uniform mat4 uBonesP[14];
 uniform float uTime, uWind;
 out vec2 vUV;
 flat out vec2 vTex;
 void main(){
   vec4 lp = vec4(aPos, 1.0);
-  if (aTex.y > 15.5) lp = uBones[int(aTex.y - 16.0 + 0.5)] * lp;
+  if (aTex.y > 15.5) {
+    int bi = int(aTex.y - 16.0 + 0.5);
+    mat4 B = uBones[bi];
+    if (aGlow > 0.001) B = B * (1.0 - aGlow) + uBonesP[bi] * aGlow;
+    lp = B * lp;
+  }
   vec4 wp = uModel * lp;
   if (abs(aTex.y - 1.0) < 0.5) {
     float ph = dot(wp.xz, vec2(0.11, 0.07)) + uTime * 1.3;
@@ -502,6 +515,7 @@ void main(){
   float depth = g.w;
   if (depth <= 0.0 || depth > uFar * 0.95) { frag = vec4(1.0); return; }
   vec3 P = viewPos(vUV, depth);
+  float person = length(g.xyz) < 0.75 ? 1.0 : 0.0;
   vec3 N = normalize(g.xyz);
   vec3 rnd = texture(uNoise, vUV * uRes / 4.0).xyz * 2.0 - 1.0;
   vec3 T = normalize(rnd - N * dot(rnd, N));
@@ -520,6 +534,7 @@ void main(){
     occ += (sd < -s.z - 0.04 ? 1.0 : 0.0) * range;
   }
   float ao = 1.0 - occ / float(${AO_SAMPLES});
+  ao = mix(ao, 1.0, person * 0.75);
   frag = vec4(vec3(pow(ao, 1.6)), 1.0);
 }`;
 
@@ -713,8 +728,8 @@ class Renderer {
     this.lightView = M4.create(); this.lightProj = M4.create();
     this.lightVP = [M4.create(), M4.create()];
     this.planes = new Float32Array(24);
-    this.bones0 = new Float32Array(14 * 16);
-    for (let i = 0; i < 14; i++) this.bones0.set(M4.create(), i * 16);
+    this.bones0 = new Float32Array(28 * 16);
+    for (let i = 0; i < 28; i++) this.bones0.set(M4.create(), i * 16);
 
     // one atlas, two cascades side by side
     this.shadow = makeFBO(gl, SHADOW_RES * 2, SHADOW_RES, { shadow: true });
@@ -906,7 +921,7 @@ class Renderer {
         gl.uniformMatrix4fv(p.u.uLightVP, false, this.lightVP[k]);
         gl.uniform1f(p.u.uTime, this.time || 0);
         gl.uniform1f(p.u.uWind, env.wind == null ? 1 : env.wind);
-        if (p.u.uBones) gl.uniformMatrix4fv(p.u.uBones, false, this.bones0);
+        this.setBones(p, this.bones0);
       }
       gl.activeTexture(gl.TEXTURE8);
       gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.mats.alb);
@@ -1002,7 +1017,7 @@ class Renderer {
       gl.uniform1i(p.u.uShadow, 7);
       gl.uniform1i(p.u.uAlb, 8);
       gl.uniform1i(p.u.uNrmT, 9);
-      if (p.u.uBones) gl.uniformMatrix4fv(p.u.uBones, false, this.bones0);
+      this.setBones(p, this.bones0);
       this.uploadLights(p);
     }
     this.prog = this.pScene;
@@ -1032,6 +1047,13 @@ class Renderer {
     this.leafMode = !!on;
   }
 
+  /* a pose is 14 bone matrices, then (optionally) 14 parent-continuation matrices */
+  setBones(p, B) {
+    const gl = this.gl;
+    if (p.u.uBones) gl.uniformMatrix4fv(p.u.uBones, false, B, 0, 224);
+    if (p.u.uBonesP) gl.uniformMatrix4fv(p.u.uBonesP, false, B, B.length >= 448 ? 224 : 0, 224);
+  }
+
   drawMesh(mesh, model, opts = {}) {
     const gl = this.gl;
     const m = model || IDENT;
@@ -1040,7 +1062,7 @@ class Renderer {
       if (opts.noShadow || (opts.alpha != null && opts.alpha < 0.9)) return;
       const p = this.leafMode ? this.pDepthA : this.pDepth;
       gl.uniformMatrix4fv(p.u.uModel, false, m);
-      if (opts.bones) gl.uniformMatrix4fv(p.u.uBones, false, opts.bones);
+      if (opts.bones) this.setBones(p, opts.bones);
       gl.bindVertexArray(mesh.vao);
       gl.drawElements(gl.TRIANGLES, mesh.count, mesh.u32 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT, 0);
       return;
@@ -1052,7 +1074,7 @@ class Renderer {
     gl.uniform1f(p.u.uHolo, opts.holo ? 1 : 0);
     gl.uniform1f(p.u.uAlpha, opts.alpha == null ? 1 : opts.alpha);
     gl.uniform1f(p.u.uEmissive, opts.emissive == null ? 1 : opts.emissive);
-    if (opts.bones) gl.uniformMatrix4fv(p.u.uBones, false, opts.bones);
+    if (opts.bones) this.setBones(p, opts.bones);
     const t = opts.tint || WHITE3;
     gl.uniform3f(p.u.uTint, t[0], t[1], t[2]);
     gl.bindVertexArray(mesh.vao);

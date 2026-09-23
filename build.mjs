@@ -183,7 +183,7 @@ if (problems.length) {
 
 /* ---------- assemble ---------- */
 const SCRIPTS = ['core.js', 'geom.js', 'textures.js', 'render.js', 'tod.js', 'arch.js', 'flora.js', 'props.js', 'world.js',
-  'rig.js', 'actors.js', 'portrait.js', 'campus.js', 'mountain.js', 'fx.js', 'vehicles.js', 'nav.js', 'life.js', 'hud.js', 'game.js'];
+  'rig.js', 'actors.js', 'portrait.js', 'campus.js', 'mountain.js', 'fx.js', 'vehicles.js', 'nav.js', 'crowd.js', 'life.js', 'hud.js', 'game.js'];
 
 const dataBlock = `/* content data — see the on-screen notice: all dialogue is written for this game */
 const ROSTER = ${JSON.stringify(roster)};

@@ -219,16 +219,20 @@ function punt(b, x, z, y, yaw) {
 
 /* café table with two chairs and a parasol */
 function cafeSet(b, x, z, y0, rnd, col) {
+  const chairs = [];
   b.add(pCyl(12), xform([x, y0 + 0.73, z], [0, 0, 0], [0.7, 0.03, 0.7]), PM.whiteP);
   b.add(pCyl(8), xform([x, y0 + 0.37, z], [0, 0, 0], [0.06, 0.72, 0.06]), PM.iron);
   for (let i = 0; i < 2; i++) {
-    const a = rnd() * TAU, cx = x + Math.cos(a) * 0.62, cz = z + Math.sin(a) * 0.62;
+    const a = (i === 0 ? rnd() * TAU : chairs[0].a + Math.PI * (0.75 + rnd() * 0.5)), cx = x + Math.cos(a) * 0.62, cz = z + Math.sin(a) * 0.62;
+    // whoever sits here faces the table
+    chairs.push({ a, x: x + Math.cos(a) * 0.66, z: z + Math.sin(a) * 0.66, yaw: Math.atan2(-Math.cos(a), -Math.sin(a)) });
     b.add(BOX, xform([cx, y0 + 0.45, cz], [0, -a, 0], [0.42, 0.04, 0.42]), PM.iron);
     b.add(BOX, xform([cx + Math.cos(a) * 0.2, y0 + 0.72, cz + Math.sin(a) * 0.2], [0, -a + Math.PI / 2, 0], [0.42, 0.5, 0.03]), PM.iron);
     for (const d of [[0.18, 0.18], [-0.18, 0.18], [0.18, -0.18], [-0.18, -0.18]]) b.add(BOX, xform([cx + d[0], y0 + 0.22, cz + d[1]], [0, 0, 0], [0.03, 0.44, 0.03]), PM.iron);
   }
   b.add(pCyl(6), xform([x, y0 + 1.3, z], [0, 0, 0], [0.04, 2.6, 0.04]), PM.whiteP);
   b.add(pCyl(8, false, true, 0.02, 0.5), xform([x, y0 + 2.45, z], [0, 0, 0], [2.6, 0.55, 2.6]), mat(TX.FABRIC, col || [0.85, 0.82, 0.74], { uv: 'prim', tu: 3, tv: 1 }));
+  return chairs;
 }
 
 /* a fingerpost with arms toward named places (the names are drawn as signs) */
